@@ -294,10 +294,7 @@ class ClinicalAgent:
                     for ex in evidence_context[1:]:
                         content += f"- Dokumen [**{ex['doc_id']}**] ({ex['department']}): {ex['excerpt'][:160]}...\n"
                 
-                content += (
-                    f"\n*Kerangka Algoritma*: Terintegrasi dengan **{algo_framework['ml_count']} Algoritma ML** & **{algo_framework['dl_count']} Deep Learning** ({algo_framework['mode'].title()} Mode).\n\n"
-                    f"---\n*{CLINICAL_DISCLAIMER}*"
-                )
+                content += f"\n---\n*{CLINICAL_DISCLAIMER}*"
             else:
                 content = (
                     f"{random_opener}\n\n"

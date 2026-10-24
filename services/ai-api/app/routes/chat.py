@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, ChatSession, ChatMessage, FeedbackRecord
+from app.models import User, ChatSession, ChatMessage, FeedbackRecord, AuditLog
 from app.security.auth import require_user
 from app.agents.clinical_agent import clinical_agent
 from app.agents.safety import mask_pii
@@ -27,8 +27,9 @@ class ChatMessageRequest(BaseModel):
 class FeedbackRequest(BaseModel):
     session_id: str
     message_id: str
-    feedback_type: str = Field(..., pattern="^(LIKE|DISLIKE)$", description="'LIKE' (+1.75%) atau 'DISLIKE' (-0.74%)")
-    notes: Optional[str] = None
+    feedback_type: str = Field(..., pattern="^(LIKE|DISLIKE)$", description="'LIKE' (Reward Positif) atau 'DISLIKE' (Penalti RLHF)")
+    improvement_category: Optional[str] = Field(None, description="Kategori perbaikan: 'BAHASA_TERLALU_MEDIS', 'INFORMASI_KURANG_LENGKAP', 'RUJUKAN_TIDAK_TEPAT', 'PROTOKOL_KURANG_RELEVAN', 'KURANG_EMPATIK', atau 'LAINNYA'")
+    notes: Optional[str] = Field(None, description="Catatan perbaikan klinis kontekstual dari pasien atau tenaga medis")
 
 def get_user_quota_status(user: User, db: Session) -> Dict[str, Any]:
     """
@@ -377,7 +378,7 @@ def reset_chat_quota_endpoint(
         "quota": get_user_quota_status(current_user, db)
     }
 
-# 6. Submit Feedback (Sprint 08 & Section 11)
+# 6. Submit Feedback (Reinforcement Learning from Human Feedback - RLHF)
 @router.post("/chat/feedback")
 def submit_chat_feedback(
     req: FeedbackRequest,
@@ -385,17 +386,38 @@ def submit_chat_feedback(
     db: Session = Depends(get_db)
 ):
     """
-    Menyimpan umpan balik Like (+1.75%) / Dislike (-0.74%) pengguna.
-    Menggunakan rumus: adjusted = clamp(base_score * (1 + reward_rate), 0, 1).
-    Mencegah duplikasi suara.
+    Menyimpan umpan balik Reinforcement Learning from Human Feedback (RLHF):
+    - LIKE: Sinyal Reward Positif (+1.0) untuk memperkuat bobot respon yang akurat.
+    - DISLIKE: Sinyal Penalti Negatif (-1.0) dengan opsi kategori perbaikan kontekstual
+      (bahasa terlalu medis, rujukan tidak tepat, informasi kurang lengkap, dll).
+    Mencatat log audit RLHF untuk siklus perbaikan berkelanjutan tanpa mengekspos
+    komputasi teknis ML ke tampilan pasien.
     """
     msg = db.query(ChatMessage).filter(ChatMessage.id == req.message_id).first()
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pesan tidak ditemukan.")
 
     base_score = 0.50
-    reward_rate = 0.0175 if req.feedback_type == "LIKE" else -0.0074
-    adjusted_score = max(0.0, min(1.0, base_score * (1.0 + reward_rate)))
+    if req.feedback_type == "LIKE":
+        reward_rate = 0.0175
+        adjusted_score = min(1.0, base_score * (1.0 + reward_rate))
+        rlhf_meta = {
+            "policy": "RLHF_PPO_REWARD",
+            "signal": 1.0,
+            "category": "HELPFUL_GROUNDED",
+            "notes": req.notes or "Penjelasan akurat dan membantu pasien."
+        }
+    else:
+        reward_rate = -0.0074
+        adjusted_score = max(0.0, base_score * (1.0 + reward_rate))
+        rlhf_meta = {
+            "policy": "RLHF_DPO_PENALTY",
+            "signal": -1.0,
+            "category": req.improvement_category or "KURANG_SESUAI",
+            "notes": req.notes or "Perlu penyesuaian kualitas klinis."
+        }
+
+    notes_str = json.dumps(rlhf_meta, ensure_ascii=False)
 
     existing_fb = db.query(FeedbackRecord).filter(
         FeedbackRecord.user_id == current_user.id,
@@ -403,11 +425,11 @@ def submit_chat_feedback(
     ).first()
 
     if existing_fb:
-        # Revise feedback
+        # Update existing feedback record
         existing_fb.feedback_type = req.feedback_type
         existing_fb.reward_rate = reward_rate
         existing_fb.adjusted_score = adjusted_score
-        existing_fb.notes = req.notes
+        existing_fb.notes = notes_str
         db.commit()
         db.refresh(existing_fb)
         fb_record = existing_fb
@@ -421,19 +443,31 @@ def submit_chat_feedback(
             base_score=base_score,
             adjusted_score=adjusted_score,
             model_version="groq-llama3.3-v1.0",
-            notes=req.notes
+            notes=notes_str
         )
         db.add(fb_record)
         db.commit()
         db.refresh(fb_record)
 
+    # Catat ke AuditLog untuk penyiapan dataset RLHF fine-tuning
+    audit_entry = AuditLog(
+        user_id=current_user.id,
+        action=f"RLHF_{req.feedback_type}_SIGNAL",
+        resource_type="CHAT_MESSAGE",
+        resource_id=req.message_id,
+        status="SUCCESS",
+        details=notes_str
+    )
+    db.add(audit_entry)
+    db.commit()
+
     return {
         "status": "success",
+        "message": "Terima kasih atas masukan Anda. Penilaian Anda telah dicatat untuk evaluasi tim medis.",
         "feedback_id": fb_record.id,
         "feedback_type": fb_record.feedback_type,
-        "reward_rate": fb_record.reward_rate,
-        "base_score": fb_record.base_score,
-        "adjusted_score": fb_record.adjusted_score,
+        "rlhf_signal": "POSITIVE_REWARD" if req.feedback_type == "LIKE" else "NEGATIVE_PENALTY",
+        "improvement_category": req.improvement_category if req.feedback_type == "DISLIKE" else None,
         "created_at": fb_record.created_at.isoformat()
     }
 

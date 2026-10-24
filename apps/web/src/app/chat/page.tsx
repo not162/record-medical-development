@@ -143,9 +143,25 @@ function ScanningDeteksiBahasaCard({
     }
   };
 
+  if (!isAdmin) {
+    // Tampilan native untuk pasien klinis:
+    // Tidak mengekspos token teknis (<2med_id>), latency ms, atau struktur machine learning
+    return (
+      <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
+        <div className="flex items-center gap-1.5">
+          <Stethoscope className="w-3.5 h-3.5 text-cyan-700 shrink-0" />
+          <span>Rujukan Layanan: <strong className="text-slate-800">{res.departemen_rekomendasi || defaultDept || "Poliklinik Terpadu"}</strong></span>
+        </div>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getUrgencyBadge()}`}>
+          Triase: {urgency}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 p-3 sm:p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-      {/* Header Scanning */}
+      {/* Header Scanning (Mode Admin / Tim Medis) */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-700 shadow-2xs">
@@ -353,6 +369,13 @@ export default function ChatPage() {
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
   const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
   const [showConsentModal, setShowConsentModal] = useState(false);
+
+  // RLHF Feedback State (Modal koreksi respon jika unlike)
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackMsgId, setFeedbackMsgId] = useState<string | null>(null);
+  const [feedbackCategory, setFeedbackCategory] = useState<string>("Bahasa terlalu rumit / teknis");
+  const [feedbackNotes, setFeedbackNotes] = useState<string>("");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
   const formatCountdown = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -736,7 +759,12 @@ export default function ChatPage() {
     }
   };
 
-  const handleFeedback = async (msgId: string, type: "LIKE" | "DISLIKE") => {
+  const handleFeedback = async (
+    msgId: string,
+    type: "LIKE" | "DISLIKE",
+    category?: string,
+    notes?: string
+  ) => {
     const token = localStorage.getItem("clinical_token");
     if (!token || !currentSessionId) return;
 
@@ -750,7 +778,9 @@ export default function ChatPage() {
         body: JSON.stringify({
           session_id: currentSessionId,
           message_id: msgId,
-          feedback_type: type
+          feedback_type: type,
+          improvement_category: category,
+          notes: notes
         })
       });
 
@@ -770,6 +800,21 @@ export default function ChatPage() {
         prev.map((msg) => (msg.id === msgId ? { ...msg, feedback: type } : msg))
       );
     }
+  };
+
+  const handleOpenDislikeModal = (msgId: string) => {
+    setFeedbackMsgId(msgId);
+    setFeedbackCategory("Bahasa terlalu rumit / teknis");
+    setFeedbackNotes("");
+    setFeedbackModalOpen(true);
+  };
+
+  const handleSubmitDislikeModal = async () => {
+    if (!feedbackMsgId) return;
+    setIsSubmittingFeedback(true);
+    await handleFeedback(feedbackMsgId, "DISLIKE", feedbackCategory, feedbackNotes);
+    setIsSubmittingFeedback(false);
+    setFeedbackModalOpen(false);
   };
 
   const handleViewCitation = async (chunkId: string) => {
@@ -1028,30 +1073,48 @@ export default function ChatPage() {
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-1 text-[11px] text-slate-500">
                   <span>{msg.timestamp}</span>
 
-                  {/* Doctor/User Feedback Buttons */}
+                  {/* Doctor/User Feedback Controls */}
                   {msg.sender === "assistant" && (
                     <div className="flex items-center gap-1.5 ml-auto sm:ml-2">
                       <button
                         onClick={() => handleFeedback(msg.id, "LIKE")}
-                        className={`p-1 rounded-lg hover:bg-slate-100 transition ${
-                          msg.feedback === "LIKE" ? "text-emerald-700 bg-emerald-50" : "text-slate-400 hover:text-slate-600"
+                        className={`p-1.5 rounded-lg border transition ${
+                          msg.feedback === "LIKE"
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                            : "bg-white border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300"
                         }`}
-                        title="Sesuai Pedoman (+1.75%)"
+                        title="Penjelasan bermanfaat dan mudah dipahami"
                       >
                         <ThumbsUp className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={() => handleFeedback(msg.id, "DISLIKE")}
-                        className={`p-1 rounded-lg hover:bg-slate-100 transition ${
-                          msg.feedback === "DISLIKE" ? "text-red-700 bg-red-50" : "text-slate-400 hover:text-slate-600"
+                        onClick={() => handleOpenDislikeModal(msg.id)}
+                        className={`p-1.5 rounded-lg border transition ${
+                          msg.feedback === "DISLIKE"
+                            ? "bg-amber-50 border-amber-200 text-amber-700"
+                            : "bg-white border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300"
                         }`}
-                        title="Kurang Sesuai / Butuh Revisi (-0.74%)"
+                        title="Beri masukan koreksi penjelasan klinis"
                       >
                         <ThumbsDown className="w-3.5 h-3.5" />
                       </button>
-                      {msg.feedback && (
-                        <span className="text-[10px] text-cyan-700 font-semibold">
-                          {msg.feedback === "LIKE" ? "+1.75%" : "-0.74%"}
+
+                      {/* Tampilan Status Feedback Pasien (Bukan AI slop/persentase RLHF teknis) */}
+                      {msg.feedback === "LIKE" && (
+                        <span className="text-[10px] text-emerald-700 font-medium px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
+                          Membantu
+                        </span>
+                      )}
+                      {msg.feedback === "DISLIKE" && (
+                        <span className="text-[10px] text-amber-700 font-medium px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200">
+                          Masukan Dicatat
+                        </span>
+                      )}
+
+                      {/* Khusus Admin: Indikator Bobot Penguatan RLHF */}
+                      {isAdmin && msg.feedback && (
+                        <span className="text-[9px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                          RLHF: {msg.feedback === "LIKE" ? "+1.0" : "-1.0"}
                         </span>
                       )}
                     </div>
@@ -1408,6 +1471,97 @@ export default function ChatPage() {
                 className="py-2.5 px-5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-semibold shadow-xs transition"
               >
                 Saya Memahami & Menyetujui
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Koreksi Kualitas Penjelasan Klinis (RLHF Reinforcement Loop) */}
+      {feedbackModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+                  <Stethoscope className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Koreksi Kualitas Penjelasan Klinis
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Bantu tim medis menyempurnakan keakuratan dan kenyamanan asisten edukasi
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setFeedbackModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-xs font-semibold text-slate-700">
+                Pilih Aspek yang Perlu Ditingkatkan:
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {[
+                  { id: "Bahasa terlalu rumit / teknis", label: "Bahasa terlalu rumit / teknis", desc: "Sulit dipahami masyarakat awam" },
+                  { id: "Informasi klinis kurang lengkap", label: "Informasi kurang lengkap", desc: "Penjelasan gejala/tindakan minim" },
+                  { id: "Rujukan poliklinik kurang tepat", label: "Rujukan spesialisasi meleset", desc: "Departemen poliklinik tidak cocok" },
+                  { id: "Kurang relevan dengan keluhan", label: "Kurang relevan", desc: "Menjawab di luar inti pertanyaan" },
+                  { id: "Penyampaian kurang empatik", label: "Kurang empatik / kaku", desc: "Gaya bahasa terasa robotik" },
+                  { id: "Lainnya / Masukan kustom", label: "Masukan lainnya", desc: "Catatan khusus dari pasien/dokter" },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setFeedbackCategory(opt.id)}
+                    className={`text-left p-2.5 rounded-xl border transition flex flex-col gap-0.5 ${
+                      feedbackCategory === opt.id
+                        ? "bg-cyan-50 border-cyan-500 ring-2 ring-cyan-500/20 text-cyan-900"
+                        : "bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-700"
+                    }`}
+                  >
+                    <span className="font-semibold text-xs">{opt.label}</span>
+                    <span className="text-[10px] text-slate-500">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Catatan Tambahan (Opsional):
+                </label>
+                <textarea
+                  rows={2}
+                  value={feedbackNotes}
+                  onChange={(e) => setFeedbackNotes(e.target.value)}
+                  placeholder="Contoh: Tolong berikan instruksi pertolongan pertama yang lebih jelas sebelum ke rumah sakit..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 focus:bg-white focus:ring-2 focus:ring-cyan-500/10 transition resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setFeedbackModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isSubmittingFeedback}
+                onClick={handleSubmitDislikeModal}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50"
+              >
+                {isSubmittingFeedback ? "Menyimpan Masukan..." : "Kirim Masukan Klinis"}
               </button>
             </div>
           </div>

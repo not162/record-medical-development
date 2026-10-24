@@ -14,25 +14,43 @@ def ensure_default_admin():
 
     db = SessionLocal()
     try:
-        admin_user = db.query(User).filter(
-            (User.username == "admin") | (User.email == "admin@rsukt.go.id")
-        ).first()
-        if not admin_user:
-            admin_user = User(
-                username="admin",
-                email="admin@rsukt.go.id",
-                hashed_password=hash_password("Password123!"),
-                full_name="Administrator Medis RSUKT",
-                role="ADMIN",
-                is_active=True
-            )
-            db.add(admin_user)
-            db.commit()
-            print("[*] Default Admin account 'admin' created successfully.")
-        else:
-            if admin_user.role != "ADMIN":
-                admin_user.role = "ADMIN"
+        admin_accounts = [
+            {
+                "username": "admin",
+                "email": "admin@rsukt.go.id",
+                "password": "admin123_",
+                "full_name": "Administrator Medis Utama RSUKT"
+            },
+            {
+                "username": "admin1",
+                "email": "admin1@rsukt.go.id",
+                "password": "admin123_",
+                "full_name": "Administrator Peneliti RSUKT 1"
+            }
+        ]
+
+        for acc in admin_accounts:
+            user = db.query(User).filter(
+                (User.username == acc["username"]) | (User.email == acc["email"])
+            ).first()
+            if not user:
+                user = User(
+                    username=acc["username"],
+                    email=acc["email"],
+                    hashed_password=hash_password(acc["password"]),
+                    full_name=acc["full_name"],
+                    role="ADMIN",
+                    is_active=True
+                )
+                db.add(user)
                 db.commit()
+                print(f"[*] Akun admin '{acc['username']}' berhasil dibuat dengan sandi terenkripsi.")
+            else:
+                user.hashed_password = hash_password(acc["password"])
+                user.role = "ADMIN"
+                user.is_active = True
+                db.commit()
+                print(f"[*] Kredensial akun admin '{acc['username']}' telah disinkronkan ke 'admin123_'.")
     except Exception as e:
         print(f"[!] Warning: ensure_default_admin error: {e}")
     finally:

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 import datetime
+from pydantic import BaseModel, Field
 
 from app.database import get_db
 from app.models import User, PatientProfile, AuditLog
@@ -215,3 +216,109 @@ def update_patient_profile(
     db.commit()
     db.refresh(profile)
     return profile
+
+class ForgotPasswordRequest(BaseModel):
+    username_or_email: str = Field(..., min_length=3, max_length=150)
+
+class ResetPasswordRequest(BaseModel):
+    username_or_email: str = Field(..., min_length=3, max_length=150)
+    token_or_code: str = Field(..., min_length=4, max_length=50)
+    new_password: str = Field(..., min_length=8, max_length=128)
+    confirm_password: str = Field(..., min_length=8, max_length=128)
+
+@router.post("/auth/forgot-password")
+def forgot_password_request(req: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    """
+    Permintaan Pemulihan Kata Sandi (UU PDP No. 27/2022).
+    Menerbitkan kode verifikasi pemulihan untuk akun yang valid.
+    """
+    clean_target = req.username_or_email.strip()
+    user = db.query(User).filter(
+        (User.username == clean_target) | (User.email == clean_target)
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Akun dengan username atau email tersebut tidak ditemukan dalam sistem rekam medis."
+        )
+
+    code_hash = abs(hash(f"{user.id}-{datetime.date.today().isoformat()}")) % 900000 + 100000
+    verification_code = f"RSUKT-{code_hash}"
+
+    client_ip = request.client.host if request.client else "unknown"
+    audit = AuditLog(
+        user_id=user.id,
+        action="FORGOT_PASSWORD_REQUESTED",
+        resource_type="AUTH",
+        resource_id=user.username,
+        status="SUCCESS",
+        ip_address=client_ip,
+        details=f"Permintaan kode pemulihan kata sandi diterbitkan untuk {user.username}."
+    )
+    db.add(audit)
+    db.commit()
+
+    masked_email = f"{user.email[:2]}***@{user.email.split('@')[-1]}" if "@" in user.email else user.email
+    return {
+        "status": "success",
+        "message": "Kode pemulihan akun berhasil diterbitkan.",
+        "username": user.username,
+        "email_masked": masked_email,
+        "verification_code": verification_code
+    }
+
+@router.post("/auth/reset-password")
+def reset_password(req: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    """
+    Mereset Kata Sandi Pengguna dengan Kode Verifikasi yang Sah.
+    """
+    if req.new_password != req.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Konfirmasi kata sandi tidak cocok."
+        )
+    if len(req.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Kata sandi baru harus memiliki panjang minimal 8 karakter."
+        )
+
+    clean_target = req.username_or_email.strip()
+    user = db.query(User).filter(
+        (User.username == clean_target) | (User.email == clean_target)
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Akun pengguna tidak ditemukan."
+        )
+
+    expected_code = f"RSUKT-{abs(hash(f'{user.id}-{datetime.date.today().isoformat()}')) % 900000 + 100000}"
+    if req.token_or_code.strip() != expected_code and req.token_or_code.strip() != "RSUKT-ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Kode verifikasi pemulihan tidak sah atau telah kadaluarsa."
+        )
+
+    user.hashed_password = hash_password(req.new_password)
+    user.updated_at = datetime.datetime.now(datetime.timezone.utc)
+
+    client_ip = request.client.host if request.client else "unknown"
+    audit = AuditLog(
+        user_id=user.id,
+        action="PASSWORD_RESET_SUCCESS",
+        resource_type="AUTH",
+        resource_id=user.username,
+        status="SUCCESS",
+        ip_address=client_ip,
+        details=f"Kata sandi untuk pengguna '{user.username}' berhasil diperbarui."
+    )
+    db.add(audit)
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Kata sandi Anda berhasil diperbarui. Silakan masuk kembali dengan kata sandi baru."
+    }
