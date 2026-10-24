@@ -194,13 +194,37 @@ npm run dev
 ```
 Akses antarmuka web pada: `http://localhost:3000`
 
-### 3. Validasi Build Produksi & Deploy Vercel
+### 3. Validasi Build Produksi & Panduan Deployment
+
 ```bash
 cd apps/web
 npx tsc --noEmit
 npm run build
 ```
-*Untuk deployment ke Vercel, repositori telah dilengkapi `api/index.py`, root `requirements.txt`, dan `vercel.json` sehingga frontend Next.js dan backend FastAPI berjalan otomatis sebagai arsitektur Serverless terpadu.*
+
+#### Opsi A: Deployment Terpadu Monorepo di Vercel
+Repositori ini telah dikonfigurasi penuh dengan [`vercel.json`](file:///c:/Users/user/RAG-model-record/vercel.json), [*`api/index.py`*](file:///c:/Users/user/RAG-model-record/api/index.py), dan root [*`requirements.txt`*](file:///c:/Users/user/RAG-model-record/requirements.txt):
+1. Sambungkan repositori GitHub ini langsung ke Vercel.
+2. Tambahkan Environment Variable di Vercel Project Settings:
+   - `GROQ_API_KEY`: Kunci API Groq Llama Anda.
+   - `JWT_SECRET_KEY`: Kunci rahasia JWT Anda.
+3. Vercel akan otomatis mengompilasi frontend Next.js dan menjalankan FastAPI sebagai Serverless Function (`/api/index.py`) dengan dukungan streaming real-time (Server-Sent Events).
+
+#### Opsi B: Web di Vercel & FastAPI di Cloud Host (Render / Railway / VPS)
+Jika ingin memisahkan beban komputasi backend:
+1. **Deploy FastAPI (`services/ai-api`):**
+   - Di Render/Railway/Fly.io: Gunakan [*`services/ai-api/Dockerfile`*](file:///c:/Users/user/RAG-model-record/services/ai-api/Dockerfile) atau [*`services/ai-api/Procfile`*](file:///c:/Users/user/RAG-model-record/services/ai-api/Procfile).
+   - Set environment variables (`GROQ_API_KEY`, `JWT_SECRET_KEY`, dll).
+2. **Deploy Frontend (`apps/web` di Vercel):**
+   - Atur Environment Variable di Vercel:
+     `BACKEND_API_URL=https://alamat-backend-fastapi-anda.onrender.com`
+   - Gateway Streaming Route Handler ([*`apps/web/src/app/api/v1/[...path]/route.ts`*](file:///c:/Users/user/RAG-model-record/apps/web/src/app/api/v1/%5B...path%5D/route.ts)) akan secara otomatis menjembatani percakapan real-time tanpa kendala CORS.
+
+#### Opsi C: Deployment Mandiri dengan Docker Compose
+```bash
+docker-compose up --build -d
+```
+Backend FastAPI berjalan di `http://localhost:8000` dan Web Next.js berjalan di `http://localhost:3000`.
 
 ---
 

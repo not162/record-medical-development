@@ -59,9 +59,12 @@ def ensure_default_admin():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize database tables on startup
-    Base.metadata.create_all(bind=engine)
-    print(f"[*] Database initialized at: {settings.DATABASE_PATH}")
-    ensure_default_admin()
+    try:
+        Base.metadata.create_all(bind=engine)
+        print(f"[*] Database initialized at: {settings.DATABASE_PATH}")
+        ensure_default_admin()
+    except Exception as e:
+        print(f"[!] Warning: Database initialization exception (handled for serverless): {e}")
     yield
     print("[*] Shutting down Clinical AI API service...")
 
@@ -72,10 +75,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS
+# Configure CORS - supports localhost, vercel.app, render.com and custom production domains
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https://.*(\.vercel\.app|\.onrender\.com|\.railway\.app)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -3,6 +3,12 @@
   "framework": "nextjs",
   "buildCommand": "cd apps/web && npm run build",
   "outputDirectory": "apps/web/.next",
+  "functions": {
+    "api/**/*.py": {
+      "includeFiles": "services/ai-api/**",
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api/v1/:path*",
