@@ -1,8 +1,20 @@
 import re
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, TypedDict
+
+class EmergencyPattern(TypedDict):
+    category: str
+    keywords: List[str]
+    min_matches: int
+
+class ContraindicationPattern(TypedDict):
+    drugs: List[str]
+    conditions: List[str]
+    category: str
+    explanation: str
+    safer_alternative: str
 
 # Red flag emergency patterns in Indonesian clinical context
-EMERGENCY_PATTERNS = [
+EMERGENCY_PATTERNS: List[EmergencyPattern] = [
     {
         "category": "Kardiologi - Infark Miokard Akut",
         "keywords": ["nyeri dada", "dada ditekan", "dada kiri", "menjalar ke lengan", "menjalar ke rahang", "keringat dingin", "tembus ke punggung"],
@@ -36,7 +48,7 @@ EMERGENCY_PATTERNS = [
 ]
 
 # Absolute clinical contraindication patterns
-CONTRAINDICATION_PATTERNS = [
+CONTRAINDICATION_PATTERNS: List[ContraindicationPattern] = [
     {
         "drugs": ["propranolol", "atenolol", "bisoprolol", "carvedilol", "metoprolol", "beta blocker", "beta-blocker"],
         "conditions": ["asma", "asthma", "bronkospasme", "bronkial", "mengi"],

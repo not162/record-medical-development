@@ -6,10 +6,28 @@ import {
   ThumbsUp, ThumbsDown, FileText,
   Activity, Plus, MessageSquare, ExternalLink, X,
   Languages, ChevronDown, ChevronUp, Sparkles, Layers,
-  Cpu, History, ArrowRight, ShieldCheck, Stethoscope,
-  Trash2, Shield, Lock, FileCheck, CheckCircle2
+  Cpu, History, ShieldCheck, Stethoscope,
+  Trash2, Shield, Lock, FileCheck,
+  Clock, AlertTriangle, PhoneCall, Calendar, Download, RefreshCw, Zap, Brain
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+
+export interface QuotaStatus {
+  quota_used: number;
+  quota_max: number;
+  quota_remaining: number;
+  is_clinic_health_lock: boolean;
+  reset_at: string | null;
+  seconds_remaining: number;
+  window_hours: number;
+  policy: string;
+  referral_info: {
+    emergency_phone: string;
+    hospital_name: string;
+    clinic_name: string;
+    operating_hours: string;
+  };
+}
 
 interface Citation {
   chunk_id: string;
@@ -330,8 +348,125 @@ export default function ChatPage() {
   const [inputQuery, setInputQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [modelSize, setModelSize] = useState("70b");
+  const [reasoningMode, setReasoningMode] = useState<"thinking" | "fast">("thinking");
+  const [quotaStatus, setQuotaStatus] = useState<QuotaStatus | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState<number>(0);
   const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
   const [showConsentModal, setShowConsentModal] = useState(false);
+
+  const formatCountdown = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  };
+
+  const fetchQuota = useCallback(async () => {
+    const token = localStorage.getItem("clinical_token");
+    if (!token) return;
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/quota", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data: QuotaStatus = await res.json();
+        setQuotaStatus(data);
+        if (data.seconds_remaining) {
+          setSecondsLeft(data.seconds_remaining);
+        }
+      }
+    } catch {
+      // offline fallback
+    }
+  }, []);
+
+  const handleResetQuota = async () => {
+    const token = localStorage.getItem("clinical_token");
+    if (!token) return;
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/quota/reset", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setQuotaStatus(data.quota);
+        setSecondsLeft(0);
+        alert("Siklus kuota 24 jam berhasil di-reset untuk pengujian.");
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleDownloadSummary = () => {
+    let summaryText = `RESUME KONSULTASI KLINIS ELEKTRONIK (RME) - RSUKT\n`;
+    summaryText += `Standar Regulasi: Permenkes No. 12 Tahun 2025 | UU PDP No. 27 Tahun 2022 | ISO 27001\n`;
+    summaryText += `Tanggal Unduh: ${new Date().toLocaleString("id-ID")}\n`;
+    summaryText += `ID Sesi: ${currentSessionId || "N/A"}\n`;
+    summaryText += `Mode Penalaran: ${reasoningMode.toUpperCase()}\n`;
+    summaryText += `Status Kuota: ${quotaStatus ? quotaStatus.quota_used : 0}/7 Respon (Siklus 24 Jam Penuh)\n`;
+    summaryText += `============================================================\n\n`;
+    messages.forEach((m, idx) => {
+      summaryText += `[${idx + 1}] [${m.sender.toUpperCase()}] ${m.timestamp}\n`;
+      summaryText += `${m.content}\n\n`;
+      if (m.scanningDeteksiBahasa?.scanning_result) {
+        const sr = m.scanningDeteksiBahasa.scanning_result;
+        summaryText += `   Triase Klinis: ${sr.urgensi_triase} | ICD-10: ${sr.icd10_code || "-"} | Spesialisasi: ${sr.departemen_rekomendasi}\n\n`;
+      }
+    });
+    summaryText += `============================================================\n`;
+    summaryText += `CATATAN RUJUKAN KLINIS:\n`;
+    summaryText += `Hasil konsultasi AI di atas adalah Clinical Decision Support System (CDSS) dan bukan diagnosis definitif. Pasien wajib menjalani evaluasi tatap muka oleh dokter ber-SIP di poliklinik rawat jalan RSUKT atau IGD 119.\n`;
+
+    const blob = new Blob([summaryText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Resume_RME_RSUKT_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  useEffect(() => {
+    let ignore = false;
+    const initQuota = async () => {
+      const token = localStorage.getItem("clinical_token");
+      if (!token || ignore) return;
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/chat/quota", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok && !ignore) {
+          const data: QuotaStatus = await res.json();
+          setQuotaStatus(data);
+          if (data.seconds_remaining) {
+            setSecondsLeft(data.seconds_remaining);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    initQuota();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!secondsLeft || secondsLeft <= 0) return;
+    const timer = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (!prev || prev <= 1) {
+          fetchQuota();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [secondsLeft, fetchQuota]);
 
   const handleDeleteSession = async (sessId: string) => {
     if (!confirm("Hapus sesi percakapan ini secara permanen sesuai hak privasi GDPR & Permenkes?")) return;
@@ -482,6 +617,11 @@ export default function ChatPage() {
     e.preventDefault();
     if (!inputQuery.trim() || isGenerating) return;
 
+    if (quotaStatus?.is_clinic_health_lock && !isAdmin) {
+      alert("Batas 7 keluaran AI harian tercapai. Sesi dialihkan ke Clinic Health Reset selama 24 jam penuh.");
+      return;
+    }
+
     const query = inputQuery.trim();
     setInputQuery("");
 
@@ -529,12 +669,37 @@ export default function ChatPage() {
           },
           body: JSON.stringify({
             session_id: activeSessId,
-            content: query
+            content: query,
+            reasoning_mode: reasoningMode
           })
         });
 
+        if (res.status === 429) {
+          const errData = await res.json();
+          if (errData.detail?.quota_status) {
+            setQuotaStatus(errData.detail.quota_status);
+            setSecondsLeft(errData.detail.quota_status.seconds_remaining || 86400);
+          }
+          const lockedReply: Message = {
+            id: `lock-${Date.now()}`,
+            sender: "assistant",
+            content: "⚠️ **BATAS KONSULTASI AI HARIAN TERCAPAI (7/7 RESPON)** ⚠️\n\nSesuai standar Permenkes No. 12 Tahun 2025 demi keselamatan pasien, sesi dialihkan ke Clinic Health Reset selama 1 hari / 24 jam penuh.\n\nSilakan hubungi IGD 119 atau jadwalkan kunjungan ke Poliklinik Fisik RSUKT untuk pemeriksaan medis langsung oleh dokter.",
+            department: "Clinic Health",
+            safetyAlert: true,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMessages((prev) => [...prev, lockedReply]);
+          return;
+        }
+
         if (res.ok) {
           const data = await res.json();
+          if (data.quota_status) {
+            setQuotaStatus(data.quota_status);
+            if (data.quota_status.seconds_remaining) {
+              setSecondsLeft(data.quota_status.seconds_remaining);
+            }
+          }
           const asst = data.assistant_message;
           const reply: Message = {
             id: asst.id,
@@ -699,8 +864,8 @@ export default function ChatPage() {
       {/* Main Chat Workspace */}
       <div className="flex-1 flex flex-col h-full max-w-4xl w-full mx-auto p-3 sm:p-5 overflow-hidden">
         {/* Top Header Banner */}
-        <div className="mb-3 px-3.5 py-2 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700">
-          <div className="flex items-center gap-2">
+        <div className="mb-3 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-2.5 text-xs text-slate-700">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setIsHistoryDrawerOpen(!isHistoryDrawerOpen)}
               className="xl:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -708,27 +873,87 @@ export default function ChatPage() {
             >
               <History className="w-3.5 h-3.5 text-cyan-600" />
             </button>
-            <Activity className="w-4 h-4 text-cyan-600 shrink-0" />
-            <span className="text-xs font-medium truncate">
-              Asisten AI Klinis • <strong className="text-cyan-800 font-semibold">{modelSize === "70b" ? "Llama 3.3 70B" : "Llama 3.1 8B"}</strong>
-            </span>
+
+            <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 font-medium shadow-2xs">
+              <Activity className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+              <span>Llama {modelSize === "70b" ? "3.3 70B" : "3.1 8B"}</span>
+            </div>
+
+            {/* Reasoning Mode Toggle */}
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  setReasoningMode("thinking");
+                  setModelSize("70b");
+                }}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
+                  reasoningMode === "thinking"
+                    ? "bg-white text-indigo-700 shadow-2xs border border-indigo-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+                title="Llama 3.3 70B Gold Standard: Mengintegrasikan 17 Algoritma ML & 8 Deep Learning dari raw dataset"
+              >
+                <Brain className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Thinking Mode</span>
+                <span className="hidden sm:inline px-1 py-0.2 rounded bg-indigo-50 text-indigo-700 text-[9px] font-mono">
+                  17 ML & 8 DL
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setReasoningMode("fast");
+                  setModelSize("8b");
+                }}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
+                  reasoningMode === "fast"
+                    ? "bg-white text-amber-700 shadow-2xs border border-amber-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+                title="Llama 3.1 8B Fast: Dibatasi 5 Algoritma ML & 2 Deep Learning pada graf pengetahuan"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-600" />
+                <span>Fast Mode</span>
+                <span className="hidden sm:inline px-1 py-0.2 rounded bg-amber-50 text-amber-700 text-[9px] font-mono">
+                  5 ML & 2 DL
+                </span>
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Daily Quota Counter Badge (Max 7 / 24 Hours) */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border bg-slate-50 border-slate-200 text-[11px] shadow-2xs">
+              <Clock className="w-3.5 h-3.5 text-cyan-600" />
+              <span className="text-slate-500">Kuota AI:</span>
+              <span className={`font-bold ${
+                quotaStatus && quotaStatus.quota_used >= 7
+                  ? "text-red-600"
+                  : quotaStatus && quotaStatus.quota_used >= 5
+                  ? "text-amber-600"
+                  : "text-emerald-700"
+              }`}>
+                {quotaStatus ? quotaStatus.quota_used : 0}/7 Respon
+              </span>
+              <span className="text-slate-400 text-[10px] hidden sm:inline">| 24 Jam</span>
+            </div>
+
             <button
               type="button"
               onClick={() => setShowConsentModal(true)}
-              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold flex items-center gap-1 transition"
+              className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold flex items-center gap-1 transition"
               title="Kepatuhan Regulasi ISO 27001, GDPR, HIPAA & Permenkes No. 12/2025"
             >
               <Shield className="w-3 h-3 text-cyan-600" />
-              <span>Informed Consent</span>
+              <span>Consent</span>
             </button>
 
             <span className="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-semibold flex items-center gap-1.5 shadow-2xs">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Rujukan Protokol Klinis Terverifikasi</span>
-              <span className="hidden sm:inline text-[9px] text-emerald-600 font-normal">| UU PDP No. 27/2022 • ISO 27001 • HIPAA • Permenkes</span>
+              <span className="hidden sm:inline">Terverifikasi RSUKT</span>
+              <span className="text-[9px] text-emerald-600 font-normal">| Permenkes 12/2025</span>
             </span>
           </div>
         </div>
@@ -859,11 +1084,97 @@ export default function ChatPage() {
           )}
         </div>
 
+        {/* Clinic Health Reset Looping Card (Maksimal 7 Keluaran AI / 24 Jam Penuh) */}
+        {quotaStatus?.is_clinic_health_lock && (
+          <div className="mb-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-red-50 via-white to-amber-50 border-2 border-red-300 shadow-md space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600 shrink-0 mt-0.5">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-sm font-bold text-red-900">
+                      Batas Konsultasi AI Harian Tercapai (7/7 Respon)
+                    </h4>
+                    <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-mono font-semibold">
+                      Dialihkan ke Clinic Health Reset
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Sesuai regulasi rekam medis Permenkes No. 12 Tahun 2025 demi keselamatan klinis pasien, keluaran Asisten AI dibatasi 7 respon dalam jendela 24 jam penuh. Pasien dialihkan untuk pemeriksaan fisik langsung oleh dokter spesialis di poliklinik rumah sakit.
+                  </p>
+                </div>
+              </div>
+
+              {/* 24-Hour Live Countdown Clock */}
+              <div className="shrink-0 bg-white p-3 rounded-xl border border-red-200 shadow-2xs text-left sm:text-right">
+                <div className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center sm:justify-end gap-1">
+                  <Clock className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                  <span>Reset Sesi Dalam</span>
+                </div>
+                <div className="text-lg sm:text-xl font-mono font-bold text-red-600 mt-0.5">
+                  {formatCountdown(secondsLeft)}
+                </div>
+                <div className="text-[9px] text-slate-400">1 hari / 24 jam penuh</div>
+              </div>
+            </div>
+
+            {/* Direct Clinical Physical Referral CTAs */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+              <a
+                href="tel:119"
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-xs"
+              >
+                <PhoneCall className="w-4 h-4" />
+                <span>Hubungi IGD 119</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => alert("Membuka loket pendaftaran Poliklinik Fisik Rawat Jalan RSUKT.")}
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-bold transition shadow-xs"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Jadwalkan Poli Fisik</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadSummary}
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-bold transition shadow-2xs"
+              >
+                <Download className="w-4 h-4 text-slate-600" />
+                <span>Unduh Resume RME</span>
+              </button>
+            </div>
+
+            {isAdmin && (
+              <div className="pt-2.5 border-t border-red-100 flex items-center justify-between text-xs flex-wrap gap-2">
+                <span className="text-[11px] text-slate-500 font-mono">Mode Admin: Uji Coba Reset Kuota</span>
+                <button
+                  type="button"
+                  onClick={handleResetQuota}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-semibold flex items-center gap-1.5 transition"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Reset Siklus 24 Jam</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Mobile-Friendly Composer Input Area */}
         <form onSubmit={handleSendMessage} className="relative mt-auto">
-          <div className="bg-white p-2 rounded-2xl border border-slate-300 focus-within:border-cyan-600 focus-within:ring-2 focus-within:ring-cyan-500/10 shadow-xs transition">
+          <div className={`p-2 rounded-2xl border shadow-xs transition ${
+            quotaStatus?.is_clinic_health_lock
+              ? "bg-slate-100 border-red-200"
+              : "bg-white border-slate-300 focus-within:border-cyan-600 focus-within:ring-2 focus-within:ring-cyan-500/10"
+          }`}>
             <textarea
               rows={2}
+              disabled={Boolean(quotaStatus?.is_clinic_health_lock)}
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -872,30 +1183,47 @@ export default function ChatPage() {
                   handleSendMessage(e);
                 }
               }}
-              placeholder="Jelaskan keluhan Anda dalam bahasa awam (misal: 'Dada sakit dan sesak saat rebahan')..."
-              className="w-full bg-transparent p-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none resize-none"
+              placeholder={
+                quotaStatus?.is_clinic_health_lock
+                  ? "Batas 7 keluaran AI tercapai. Sesi dialihkan ke Clinic Health Reset (24 Jam Penuh). Silakan hubungi IGD 119 atau kunjungi Poliklinik Fisik RSUKT..."
+                  : "Jelaskan keluhan Anda dalam bahasa awam (misal: 'Dada sakit dan sesak saat rebahan')..."
+              }
+              className="w-full bg-transparent p-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none resize-none disabled:opacity-60"
             />
 
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 px-1 sm:px-2">
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                <span className="text-[11px] hidden sm:inline">Model:</span>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <span className="text-[11px] hidden sm:inline">Mode Penalaran:</span>
                 <select
-                  value={modelSize}
-                  onChange={(e) => setModelSize(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-cyan-500"
+                  value={reasoningMode}
+                  onChange={(e) => {
+                    const m = e.target.value as "thinking" | "fast";
+                    setReasoningMode(m);
+                    setModelSize(m === "thinking" ? "70b" : "8b");
+                  }}
+                  className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-cyan-500 font-medium"
                 >
-                  <option value="70b">Llama 3.3 70B (Gold Standard)</option>
-                  <option value="8b">Llama 3.1 8B (Fast)</option>
+                  <option value="thinking">Thinking Mode (Llama Gold Standard: 17 ML & 8 DL)</option>
+                  <option value="fast">Fast Mode (Llama Fast: 5 ML & 2 DL)</option>
                 </select>
               </div>
 
               <button
                 type="submit"
-                disabled={!inputQuery.trim() || isGenerating}
+                disabled={!inputQuery.trim() || isGenerating || Boolean(quotaStatus?.is_clinic_health_lock)}
                 className="py-2 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-40 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 ml-auto"
               >
-                <span>Kirim</span>
-                <Send className="w-3.5 h-3.5" />
+                {quotaStatus?.is_clinic_health_lock ? (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Terkunci</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Kirim</span>
+                    <Send className="w-3.5 h-3.5" />
+                  </>
+                )}
               </button>
             </div>
           </div>

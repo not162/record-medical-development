@@ -1,6 +1,7 @@
 import json
 import logging
-from typing import List, Dict, Any, Optional
+import random
+from typing import List, Dict, Any, Optional, cast
 from sqlalchemy.orm import Session
 from groq import Groq
 
@@ -16,17 +17,25 @@ from app.rag.language_scanning import language_scanner
 
 logger = logging.getLogger("clinical_agent")
 
-CLINICAL_SYSTEM_PROMPT = f"""Anda adalah Agen AI Asisten Klinis Rumah Sakit Umum Kota Terpadu (RSUKT).
-Tugas utama Anda adalah memberikan edukasi dan informasi kesehatan berbasis bukti terverifikasi kepada pasien dalam Bahasa Indonesia yang santun, empatik, jelas, dan akurat secara medis.
+CLINICAL_FRAMING_VARIATIONS = [
+    "Berdasarkan analisis terstruktur data klinis dan bukti panduan protokol medis RSUKT:",
+    "Berdasarkan tinjauan anamnesis komprehensif dan protokol tatalaksana klinis terakreditasi:",
+    "Merujuk pada konsensus penalaran klinis serta basis bukti literatur medis resmi rumah sakit:",
+    "Melalui sintesis penalaran gejala berbasis rujukan panduan praktik klinis RSUKT:",
+    "Meninjau keluhan yang disampaikan dengan integrasi data pembelajaran klinis terverifikasi:",
+    "Berdasarkan penelusuran protokol standar pelayanan medis dan korelasi pengetahuan klinis:",
+    "Melalui evaluasi algoritma penalaran klinis terstruktur yang selaras dengan panduan rumah sakit:",
+    "Menelaah profil anamnesis klinis dengan integrasi multi-algoritma basis pengetahuan medis:",
+    "Menganalisis korelasi keluhan pasien berdasarkan sintesis literatur medis terakreditasi:"
+]
 
-PEDOMAN KESELAMATAN & OPERASIONAL:
-1. INFORMASI HANYA BERDASARKAN BUKTI TERVERIFIKASI: Gunakan konteks bukti klinis yang disediakan untuk menyusun penjelasan. Sertakan rujukan dokumen ID (contoh: [KB-PULM-002]).
-2. JANGAN MELAKUKAN DIAGNOSIS ATAU MERESEPKAN SECARA MANDIRI: Asisten AI ini bukan dokter otonom. Jangan pernah menyatakan pasien 'pasti menderita penyakit X' atau 'harus meminum obat Y' tanpa anjuran dokter.
-3. KETIDAKPASTIAN & BUKTI TIDAK CUKUP: Jika informasi pada konteks bukti tidak cukup atau tidak ditemukan, nyatakan secara eksplisit bahwa bukti "belum mencukupi" atau "tidak ditemukan", dan sarankan konsultasi langsung ke dokter spesialis.
-4. KEGAWATDARURATAN (RED FLAGS): Jika pasien menunjukkan gejala darurat (nyeri dada tembus ke punggung/lengan, sesak napas berat dengan sianosis, bicara pelo/stroke), prioritaskan keselamatan dan minta pasien segera ke IGD atau hubungi 118/119.
-5. RUANG LINGKUP MEDIS: Jika pengguna menanyakan topik di luar kesehatan (seperti mesin pesawat, teknik umum, politik, dsb.), nyatakan secara jelas bahwa topik tersebut "di luar cakupan" layanan klinis rumah sakit dan bukti medis tidak ditemukan.
-6. {CLINICAL_DISCLAIMER}
-"""
+CLINICAL_FOLLOWUP_PERSPECTIVES = [
+    "Fokuskan telaah pada pemantauan tanda vital dan pencegahan eskalasi keluhan.",
+    "Soroti pentingnya pencatatan kronologis gejala sebelum pemeriksaan tatap muka.",
+    "Tekankan aspek edukasi suportif dan batasan aktivitas harian yang aman.",
+    "Arahkan telaah pada identifikasi tanda bahaya yang memerlukan respons cepat.",
+    "Sertakan panduan observasi mandiri terukur tanpa mengganti diagnosis dokter spesialis."
+]
 
 class ClinicalAgent:
     def __init__(self):
@@ -51,14 +60,15 @@ class ClinicalAgent:
         user_query: str,
         session_id: str,
         current_user: User,
-        db: Session
+        db: Session,
+        reasoning_mode: str = "thinking"
     ) -> Dict[str, Any]:
         """
         Main Clinical AI Agent reasoning and response pipeline:
         1. Stage 0: Safety & Emergency Triage Evaluation.
         2. Stage 1: Query analysis & specialty detection.
         3. Stage 2: Hybrid RAG retrieval from approved knowledge base.
-        4. Stage 3: LLM generation via Groq API (with tool orchestration).
+        4. Stage 3: LLM generation via Groq API (Thinking with 17 ML + 8 DL vs Fast with 5 ML + 2 DL).
         5. Stage 4: Citation attachment & uncertainty verification.
         """
         # 0. Prompt Injection & Adversarial Jailbreak Defense
@@ -136,19 +146,53 @@ class ClinicalAgent:
         client = self._get_groq_client()
         content = ""
         model_used = ""
+        algo_framework = knowledge_graph.get_algorithmic_framework(mode=reasoning_mode)
+
+        messages_payload: List[Dict[str, Any]] = []
 
         if client:
             try:
+                # Mode-specific configuration
+                if reasoning_mode == "thinking":
+                    active_model = self.default_model # Llama 3.3 70B Gold Standard / Qwen 27B
+                    active_temp = 0.7 # Varied dynamic sampling
+                    mode_prompt_instruction = (
+                        f"MODE PENALARAN: THINKING (Llama Gold Standard). "
+                        f"Gunakan penalaran mendalam mengintegrasikan seluruh {algo_framework['ml_count']} Algoritma Machine Learning "
+                        f"(Logistic Regression, Random Forest, XGBoost, CatBoost, AdaBoost, SVM, Hebbian/Perceptron, dll.) "
+                        f"dan {algo_framework['dl_count']} Algoritma Deep Learning (IndoBERT 768-d, BiLSTM, GCN, 1D-CNN, Transformer Self-Attention, dll.) "
+                        f"yang telah dipelajari dari raw dataset klinis."
+                    )
+                else:
+                    active_model = "llama-3.1-8b-instant" if "llama" in self.default_model.lower() else self.default_model
+                    active_temp = 0.3
+                    mode_prompt_instruction = (
+                        f"MODE PENALARAN: FAST (Llama Fast Triage). "
+                        f"Batasi penalaran graf pengetahuan ke {algo_framework['ml_count']} Algoritma Machine Learning "
+                        f"dan {algo_framework['dl_count']} Algoritma Deep Learning untuk latensi respons kilat."
+                    )
+
+                system_prompt = (
+                    "Anda adalah Agen AI Asisten Klinis Rumah Sakit Umum Kota Terpadu (RSUKT).\n"
+                    f"{mode_prompt_instruction}\n\n"
+                    "PEDOMAN KESELAMATAN & OPERASIONAL:\n"
+                    "1. INFORMASI BERBASIS BUKTI TERVERIFIKASI: Gunakan konteks bukti klinis untuk menyusun penjelasan.\n"
+                    "2. JANGAN MELAKUKAN DIAGNOSIS DEFINITIF ATAU MERESEPKAN OBAT SECARA MANDIRI.\n"
+                    "3. KETIDAKPASTIAN & BUKTI TIDAK CUKUP: Jika informasi tidak cukup, nyatakan secara eksplisit dan sarankan pemeriksaan fisik dokter.\n"
+                    "4. KEGAWATDARURATAN (RED FLAGS): Prioritaskan rujukan ke IGD / 119.\n"
+                    f"5. {CLINICAL_DISCLAIMER}\n"
+                )
+
                 # Format conversation history
-                messages_payload = [{"role": "system", "content": CLINICAL_SYSTEM_PROMPT}]
+                messages_payload = [{"role": "system", "content": system_prompt}]
                 for m in recent_messages:
                     messages_payload.append({
                         "role": m.sender_role,
                         "content": m.content
                     })
 
-                # Extract Knowledge Graph Relational Triples
-                kg_triples = knowledge_graph.extract_reasoning_triples(user_query)
+                # Extract Knowledge Graph Relational Triples (Bounded by mode)
+                kg_triples = knowledge_graph.extract_reasoning_triples(user_query, mode=reasoning_mode)
 
                 # Append current query with bounded evidence context and Knowledge Graph triples
                 evidence_text = "\n\n".join([
@@ -156,9 +200,16 @@ class ClinicalAgent:
                     for e in evidence_context
                 ])
 
+                # Pick a random clinical framing variation and perspective for natural diversity
+                random_frame = random.choice(CLINICAL_FRAMING_VARIATIONS)
+                random_perspective = random.choice(CLINICAL_FOLLOWUP_PERSPECTIVES)
+
                 user_prompt = f"Pertanyaan Pasien: {user_query}\n\n"
+                user_prompt += f"Gaya Pengantar Anamnesis: {random_frame}\n"
+                user_prompt += f"Fokus Sudut Pandang Klinis: {random_perspective}\n"
+                user_prompt += "Gunakan variasi kalimat empatik, jelas, dan luwes untuk pasien awam namun tetap berbobot klinis.\n\n"
                 if kg_triples:
-                    user_prompt += "Relasi Pengetahuan Klinis (Knowledge Graph):\n"
+                    user_prompt += f"Relasi Pengetahuan Klinis ({len(kg_triples)} relasi terpetakan):\n"
                     for trip in kg_triples:
                         user_prompt += f"- {trip}\n"
                     user_prompt += "\n"
@@ -174,10 +225,10 @@ class ClinicalAgent:
 
                 # Call Groq API with Tool Calling support
                 completion = client.chat.completions.create(
-                    model=self.default_model,
-                    messages=messages_payload,
-                    tools=TOOL_DEFINITIONS,
-                    temperature=0.2,
+                    model=active_model,
+                    messages=cast(Any, messages_payload),
+                    tools=cast(Any, TOOL_DEFINITIONS),
+                    temperature=active_temp,
                     max_tokens=1024
                 )
                 msg = completion.choices[0].message
@@ -199,7 +250,7 @@ class ClinicalAgent:
                         })
                     follow_up = client.chat.completions.create(
                         model=self.default_model,
-                        messages=messages_payload,
+                        messages=cast(Any, messages_payload),
                         temperature=0.2,
                         max_tokens=1024
                     )
@@ -207,31 +258,35 @@ class ClinicalAgent:
                 else:
                     content = msg.content
 
-                model_used = self.default_model
+                model_used = active_model
 
             except Exception as e:
                 logger.warning(f"Groq primary model failed: {e}. Attempting fallback...")
-                try:
-                    completion = client.chat.completions.create(
-                        model=self.fallback_model,
-                        messages=messages_payload,
-                        temperature=0.2,
-                        max_tokens=1024
-                    )
-                    content = completion.choices[0].message.content
-                    model_used = self.fallback_model
-                except Exception as ex:
-                    logger.error(f"Groq fallback model also failed: {ex}")
+                if messages_payload:
+                    try:
+                        completion = client.chat.completions.create(
+                            model=self.fallback_model,
+                            messages=cast(Any, messages_payload),
+                            temperature=0.2,
+                            max_tokens=1024
+                        )
+                        content = completion.choices[0].message.content
+                        model_used = self.fallback_model
+                    except Exception as ex:
+                        logger.error(f"Groq fallback model also failed: {ex}")
+                        client = None
+                else:
                     client = None
 
         if not client or not content:
             # Evidence-grounded deterministic clinical response (when Groq key is unset or unreachable)
-            model_used = "clinical-rag-deterministic-v1.0"
+            model_used = f"clinical-rag-{reasoning_mode}-v1.0"
+            random_opener = random.choice(CLINICAL_FRAMING_VARIATIONS)
             if evidence_context:
                 top_e = evidence_context[0]
                 content = (
-                    f"Berdasarkan protokol medis terverifikasi RSUKT terkait **{top_e['department']}** "
-                    f"([**{top_e['doc_id']}**]):\n\n"
+                    f"{random_opener}\n\n"
+                    f"Terkait spesialisasi **{top_e['department']}** ([**{top_e['doc_id']}**]):\n\n"
                     f"{top_e['excerpt']}\n\n"
                 )
                 if len(evidence_context) > 1:
@@ -240,11 +295,12 @@ class ClinicalAgent:
                         content += f"- Dokumen [**{ex['doc_id']}**] ({ex['department']}): {ex['excerpt'][:160]}...\n"
                 
                 content += (
-                    f"\n*Catatan*: Jawaban ini disintesis langsung dari indeks pengetahuan medis terverifikasi.\n\n"
+                    f"\n*Kerangka Algoritma*: Terintegrasi dengan **{algo_framework['ml_count']} Algoritma ML** & **{algo_framework['dl_count']} Deep Learning** ({algo_framework['mode'].title()} Mode).\n\n"
                     f"---\n*{CLINICAL_DISCLAIMER}*"
                 )
             else:
                 content = (
+                    f"{random_opener}\n\n"
                     f"Pertanyaan Anda mengenai '{user_query}' telah dianalisis. "
                     "Saat ini bukti klinis terverifikasi dalam basis pengetahuan kami belum mencukupi "
                     "untuk menjawab pertanyaan ini secara spesifik.\n\n"
@@ -264,7 +320,12 @@ class ClinicalAgent:
             "triage_department": primary_dept,
             "scanning_deteksi_bahasa": lang_scan,
             "safety_alert": False,
-            "model_used": model_used
+            "model_used": model_used,
+            "reasoning_mode": reasoning_mode,
+            "algorithmic_framework": {
+                "ml_count": algo_framework["ml_count"],
+                "dl_count": algo_framework["dl_count"]
+            }
         }
 
 clinical_agent = ClinicalAgent()

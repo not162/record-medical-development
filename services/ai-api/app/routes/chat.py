@@ -22,12 +22,63 @@ class CreateSessionRequest(BaseModel):
 class ChatMessageRequest(BaseModel):
     session_id: str = Field(..., description="ID sesi percakapan klinis aktif")
     content: str = Field(..., min_length=1, max_length=3000, description="Pesan pertanyaan pengguna")
+    reasoning_mode: Optional[str] = Field("thinking", description="Mode penalaran: 'thinking' (17 ML & 8 DL) atau 'fast' (5 ML & 2 DL)")
 
 class FeedbackRequest(BaseModel):
     session_id: str
     message_id: str
     feedback_type: str = Field(..., pattern="^(LIKE|DISLIKE)$", description="'LIKE' (+1.75%) atau 'DISLIKE' (-0.74%)")
     notes: Optional[str] = None
+
+def get_user_quota_status(user: User, db: Session) -> Dict[str, Any]:
+    """
+    Menghitung status kuota keluaran AI dalam jendela bergulir 24 jam penuh (1 hari).
+    Batas kuota ketat: 7 kali keluaran asisten AI per pasien.
+    Jika batas tercapai, sesi looping terkunci ke Clinic Health Reset (Permenkes No. 12/2025).
+    """
+    now = datetime.datetime.now(datetime.timezone.utc)
+    window_start = now - datetime.timedelta(hours=24)
+
+    # Ambil pesan asisten dalam 24 jam terakhir pada semua sesi milik pengguna
+    recent_assistant_msgs = db.query(ChatMessage).join(
+        ChatSession, ChatMessage.session_id == ChatSession.id
+    ).filter(
+        ChatSession.user_id == user.id,
+        ChatSession.is_deleted == False,
+        ChatMessage.sender_role == "assistant",
+        ChatMessage.created_at >= window_start
+    ).order_by(ChatMessage.created_at.asc()).all()
+
+    count = len(recent_assistant_msgs)
+    quota_max = 7
+    is_locked = count >= quota_max
+
+    if count > 0:
+        first_in_window = recent_assistant_msgs[0].created_at
+        if first_in_window.tzinfo is None:
+            first_in_window = first_in_window.replace(tzinfo=datetime.timezone.utc)
+        reset_at = first_in_window + datetime.timedelta(hours=24)
+        seconds_remaining = max(0, int((reset_at - now).total_seconds()))
+    else:
+        reset_at = None
+        seconds_remaining = 0
+
+    return {
+        "quota_used": count,
+        "quota_max": quota_max,
+        "quota_remaining": max(0, quota_max - count),
+        "is_clinic_health_lock": is_locked,
+        "reset_at": reset_at.isoformat() if reset_at else None,
+        "seconds_remaining": seconds_remaining,
+        "window_hours": 24,
+        "policy": "Permenkes No. 12 Tahun 2025 & CDSS Safety Protocol",
+        "referral_info": {
+            "emergency_phone": "119",
+            "hospital_name": "Rumah Sakit Umum Kota Terpadu (RSUKT)",
+            "clinic_name": "Poliklinik Rawat Jalan Terpadu",
+            "operating_hours": "24 Jam Penuh (IGD 119) / 08.00 - 20.00 WIB (Poli Fisik)"
+        }
+    }
 
 class CitationResponse(BaseModel):
     chunk_id: str
@@ -198,6 +249,23 @@ def send_chat_message(
     if session.user_id != current_user.id and current_user.role != "ADMIN":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Akses ditolak.")
 
+    # Check 24-hour Quota Limit (Maksimum 7 output / 24 jam penuh)
+    quota = get_user_quota_status(current_user, db)
+    if quota["is_clinic_health_lock"] and current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "error": "CLINIC_HEALTH_LIMIT_REACHED",
+                "message": (
+                    "Batas konsultasi AI harian telah tercapai (7/7 respon). "
+                    "Demi keselamatan medis pasien sesuai standar Permenkes No. 12 Tahun 2025, "
+                    "sesi AI dialihkan ke Clinic Health Reset selama 24 jam penuh. "
+                    "Silakan kunjungi poliklinik fisik RSUKT atau hubungi IGD 119."
+                ),
+                "quota_status": quota
+            }
+        )
+
     # Sanitize and Mask PII (Sprint 09 Security Hardening)
     sanitized_content = mask_pii(req.content)
 
@@ -211,12 +279,14 @@ def send_chat_message(
     db.commit()
     db.refresh(user_msg)
 
-    # Process via Clinical AI Agent
+    # Process via Clinical AI Agent with Reasoning Mode
+    mode = req.reasoning_mode if req.reasoning_mode in ["thinking", "fast"] else "thinking"
     agent_output = clinical_agent.process_message(
         user_query=sanitized_content,
         session_id=session.id,
         current_user=current_user,
-        db=db
+        db=db,
+        reasoning_mode=mode
     )
 
     # Save Assistant Message
@@ -240,8 +310,13 @@ def send_chat_message(
     db.commit()
     db.refresh(assistant_msg)
 
+    # Calculate updated quota
+    updated_quota = get_user_quota_status(current_user, db)
+
     return {
         "session_id": session.id,
+        "reasoning_mode": mode,
+        "quota_status": updated_quota,
         "user_message": {
             "id": user_msg.id,
             "sender_role": user_msg.sender_role,
@@ -258,8 +333,48 @@ def send_chat_message(
             "scanning_deteksi_bahasa": agent_output.get("scanning_deteksi_bahasa"),
             "safety_alert": assistant_msg.safety_alert,
             "model_used": agent_output.get("model_used"),
+            "algorithmic_framework": agent_output.get("algorithmic_framework"),
             "created_at": assistant_msg.created_at.isoformat()
         }
+    }
+
+# 5b. Get User Quota Status (7 outputs / 24h reset)
+@router.get("/chat/quota")
+def get_chat_quota_endpoint(
+    current_user: User = Depends(require_user),
+    db: Session = Depends(get_db)
+):
+    """Mengambil status kuota harian (maks 7 respon) dan status Clinic Health Reset 24 jam."""
+    return get_user_quota_status(current_user, db)
+
+# 5c. Reset User Quota (Admin & Testing Override)
+@router.post("/chat/quota/reset")
+def reset_chat_quota_endpoint(
+    current_user: User = Depends(require_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Mereset kuota konsultasi dengan memindahkan timestamp pesan asisten ke luar jendela 24 jam.
+    Memungkinkan pengujian ulang siklus Clinic Health Reset tanpa menunggu 24 jam.
+    """
+    now = datetime.datetime.now(datetime.timezone.utc)
+    past_25h = now - datetime.timedelta(hours=25)
+
+    assistant_msgs = db.query(ChatMessage).join(
+        ChatSession, ChatMessage.session_id == ChatSession.id
+    ).filter(
+        ChatSession.user_id == current_user.id,
+        ChatMessage.sender_role == "assistant"
+    ).all()
+
+    for m in assistant_msgs:
+        m.created_at = past_25h
+
+    db.commit()
+    return {
+        "status": "success",
+        "message": "Siklus kuota konsultasi 24 jam berhasil di-reset.",
+        "quota": get_user_quota_status(current_user, db)
     }
 
 # 6. Submit Feedback (Sprint 08 & Section 11)
