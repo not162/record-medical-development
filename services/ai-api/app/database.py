@@ -14,13 +14,17 @@ engine = create_engine(
     echo=False
 )
 
-# Enable Foreign Keys and WAL mode for SQLite
+# Enable Foreign Keys, WAL mode, Memory Cache, and Mmap for SQLite optimization
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys = ON")
     cursor.execute("PRAGMA journal_mode = WAL")
     cursor.execute("PRAGMA synchronous = NORMAL")
+    cursor.execute("PRAGMA cache_size = -64000") # 64MB Cache in RAM
+    cursor.execute("PRAGMA temp_store = MEMORY")  # Store temp tables/indices in RAM
+    cursor.execute("PRAGMA mmap_size = 268435456") # 256MB memory-mapped I/O
+    cursor.execute("PRAGMA busy_timeout = 5000")   # 5-second concurrency lock wait
     cursor.close()
 
 from sqlalchemy.orm import DeclarativeBase, sessionmaker

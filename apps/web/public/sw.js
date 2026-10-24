@@ -30,7 +30,18 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Let API requests pass through with network-first
+  // Bypass Service Worker completely for SSE streams and real-time streaming
+  const acceptHeader = event.request.headers.get('accept') || '';
+  if (
+    acceptHeader.includes('text/event-stream') ||
+    event.request.url.includes('/stream') ||
+    event.request.url.includes('/chat/stream') ||
+    event.request.url.includes('/realtime')
+  ) {
+    return; // Pass through to native browser network stack for real-time zero-buffering
+  }
+
+  // Let other API requests pass through with network-first
   if (event.request.url.includes('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))

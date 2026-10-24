@@ -60,6 +60,9 @@ class ChatSession(Base):
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
+    __table_args__ = (
+        Index("ix_chat_messages_session_created", "session_id", "created_at"),
+    )
     
     id: Any = Column(String(36), primary_key=True, default=generate_uuid)
     session_id: Any = Column(String(36), ForeignKey("chat_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -69,7 +72,7 @@ class ChatMessage(Base):
     citations: Any = Column(Text, nullable=True) # JSON array of citations
     triage_department: Any = Column(String(50), nullable=True)
     safety_alert: Any = Column(Boolean, default=False, nullable=False)
-    created_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)
+    created_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False, index=True)
     
     session = relationship("ChatSession", back_populates="messages")
     feedback = relationship("FeedbackRecord", back_populates="message", uselist=False)
@@ -81,7 +84,7 @@ class FeedbackRecord(Base):
     user_id: Any = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     session_id: Any = Column(String(36), ForeignKey("chat_sessions.id", ondelete="CASCADE"), nullable=False)
     message_id: Any = Column(String(36), ForeignKey("chat_messages.id", ondelete="CASCADE"), nullable=False, index=True)
-    feedback_type: Any = Column(String(10), nullable=False) # "LIKE" or "DISLIKE"
+    feedback_type: Any = Column(String(10), nullable=False, index=True) # "LIKE" or "DISLIKE"
     reward_rate: Any = Column(Float, nullable=False) # +0.0175 or -0.0074
     base_score: Any = Column(Float, default=0.5, nullable=False)
     adjusted_score: Any = Column(Float, nullable=False)
@@ -105,7 +108,7 @@ class DatasetRecord(Base):
     record_timestamp: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)
     access_scope: Any = Column(String(50), default="PUBLIC", nullable=False) # "PUBLIC", "CLINICAL_RESTRICTED", "PATIENT_AUTHORIZED"
     checksum: Any = Column(String(64), nullable=False)
-    approval_status: Any = Column(String(30), default="PENDING", nullable=False) # "PENDING", "APPROVED", "REJECTED", "QUARANTINED"
+    approval_status: Any = Column(String(30), default="PENDING", nullable=False, index=True) # "PENDING", "APPROVED", "REJECTED", "QUARANTINED"
     created_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)
 
 class DatasetImportManifest(Base):
@@ -134,7 +137,7 @@ class AuditLog(Base):
     status: Any = Column(String(20), default="SUCCESS", nullable=False) # "SUCCESS", "FAILURE", "FORBIDDEN"
     ip_address: Any = Column(String(50), nullable=True)
     details: Any = Column(Text, nullable=True)
-    created_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)
+    created_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False, index=True)
     
     user = relationship("User", back_populates="audit_logs")
 

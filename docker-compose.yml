@@ -16,6 +16,16 @@ services:
       - backend
       - frontend
 
+  redis:
+    image: redis:7-alpine
+    container_name: web_klinik_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+
   backend:
     build:
       context: .
@@ -30,10 +40,13 @@ services:
       - GROQ_DEFAULT_MODEL=qwen/qwen3.8-27b
       - GROQ_FALLBACK_MODEL=openai/gpt-oss-120b
       - JWT_SECRET_KEY=super-secret-clinical-ai-jwt-key-change-in-production-2026
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./database:/app/database
       - ./datasets:/app/datasets
       - ./models:/app/models
+    depends_on:
+      - redis
     restart: unless-stopped
 
   frontend:
@@ -52,3 +65,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  redis_data:

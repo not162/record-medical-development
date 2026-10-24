@@ -9,6 +9,7 @@ from app.models import User, DatasetRecord
 from app.security.auth import require_user, require_admin
 from app.rag.hybrid_search import hybrid_rag_engine
 from app.rag.metrics import evaluate_retrieval
+from app.cache import cache_manager, make_cache_key
 
 router = APIRouter(tags=["Knowledge Index & Semantic Search"])
 
@@ -26,7 +27,13 @@ def search_clinical_knowledge(
     """
     Pencarian Semantik Hibrida Pengetahuan Medis Terverifikasi (FTS5 BM25 + sqlite-vec + RRF).
     HANYA mengembalikan rekam yang telah disetujui (APPROVED) oleh administrator.
+    Dilengkapi caching Redis / In-memory untuk respon instan sub-millisecond.
     """
+    cache_key = make_cache_key("rag:search", req.query.strip().lower(), req.top_k, req.department)
+    cached_result = cache_manager.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+
     result = hybrid_rag_engine.retrieve(
         query=req.query,
         db=db,
@@ -34,6 +41,7 @@ def search_clinical_knowledge(
         access_scope="PUBLIC",
         department_filter=req.department
     )
+    cache_manager.set(cache_key, result, ttl=300)
     return result
 
 @router.post("/admin/rag/index")
@@ -46,6 +54,8 @@ def trigger_rag_indexing(
     Hanya dapat dijalankan oleh ADMINISTRATOR.
     """
     index_result = hybrid_rag_engine.index_approved_records(db=db)
+    cache_manager.delete_pattern("rag:*")
+    cache_manager.delete_pattern("admin:*")
     return index_result
 
 @router.get("/admin/rag/status")

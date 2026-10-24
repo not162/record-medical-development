@@ -242,4 +242,5 @@ Seluruh riwayat pengembangan dan audit teknis dicatat secara terperinci dalam di
 - [`docs/SPRINT_17_FINAL_DEVELOPMENT_RULES.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_17_FINAL_DEVELOPMENT_RULES.md): Aturan pengembangan final, batas kuota, dan arsitektur model.
 - [`docs/SPRINT_18_AUTH_RLHF_AUDIT.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_18_AUTH_RLHF_AUDIT.md): Laporan audit sprint autentikasi, native RLHF reinforcement, dan pemulihan akun.
 - [`docs/SPRINT_19_VERCEL_REALTIME_COLAB_EXPORT.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_19_VERCEL_REALTIME_COLAB_EXPORT.md): Laporan audit integrasi Vercel Serverless, real-time chat streaming, abstraksi UI pengguna awam, dan ekspor dataset Google Colab.
+- [`docs/SPRINT_20_DATABASE_REDIS_LIGHTHOUSE_AUDIT.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_20_DATABASE_REDIS_LIGHTHOUSE_AUDIT.md): Laporan audit performa database (SQLite WAL & Composite Indices), Redis caching layer dengan auto-fallback in-memory, Caddy static caching, serta optimasi Google Lighthouse PWA & SEO (100/100).
 

@@ -39,6 +39,22 @@
     # Kompresi ultra-cepat zstd dan gzip
     encode zstd gzip
 
+    # Caching Static Assets untuk Skor Lighthouse Maksimal (100/100 Cache Policy)
+    @static {
+        path /_next/static/* /icons/* /favicon.ico
+    }
+    header @static {
+        Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Manifest PWA & Service Worker dengan revalidasi adaptif
+    @pwaAssets {
+        path /manifest.json /sw.js
+    }
+    header @pwaAssets {
+        Cache-Control "public, max-age=86400, stale-while-revalidate=3600"
+    }
+
     # Header Keamanan Standar Medis & PWA
     header {
         X-Content-Type-Options "nosniff"

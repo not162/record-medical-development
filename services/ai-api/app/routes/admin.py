@@ -15,6 +15,7 @@ from app.models import User, AuditLog, DatasetRecord, ChatSession, FeedbackRecor
 from app.schemas import AuditLogResponse, UserResponse, AdminFeedbackUpdateRequest
 from app.security.auth import require_admin
 from app.rag.language_scanning import language_scanner
+from app.cache import cache_manager
 
 router = APIRouter(prefix="/admin", tags=["Administrator Workspace"])
 
@@ -26,7 +27,14 @@ def get_admin_dashboard_summary(
     """
     Ringkasan Metrik Operasional Workspace Administrator.
     Memerlukan hak akses ADMIN server-side.
+    Dioptimalkan dengan Redis Caching (TTL 30 detik).
     """
+    cached = cache_manager.get("admin:dashboard")
+    if cached is not None:
+        cached["admin_user"] = admin.username
+        cached["system_time"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        return cached
+
     total_users = db.query(User).count()
     total_sessions = db.query(ChatSession).count()
     total_datasets = db.query(DatasetRecord).count()
@@ -35,7 +43,7 @@ def get_admin_dashboard_summary(
     likes_count = db.query(FeedbackRecord).filter(FeedbackRecord.feedback_type == "LIKE").count()
     dislikes_count = db.query(FeedbackRecord).filter(FeedbackRecord.feedback_type == "DISLIKE").count()
     
-    return {
+    summary = {
         "status": "active",
         "system_time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "admin_user": admin.username,
@@ -52,6 +60,8 @@ def get_admin_dashboard_summary(
             }
         }
     }
+    cache_manager.set("admin:dashboard", summary, ttl=30)
+    return summary
 
 @router.get("/audit-logs", response_model=List[AuditLogResponse])
 def get_audit_logs(
