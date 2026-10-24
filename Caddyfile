@@ -1,0 +1,55 @@
+# Caddyfile - Reverse Proxy Produksi Web Klinik RSUKT
+# Mendukung HTTP/2, HTTP/3, Otomatisasi TLS, dan Real-Time SSE Streaming
+
+{
+    admin off
+}
+
+:80, :443 {
+    # Reverse proxy backend FastAPI untuk seluruh panggilan /api/v1/*
+    handle /api/v1/* {
+        reverse_proxy backend:8000 {
+            # Kunci utama respons streaming real-time: flush seketika tanpa buffering
+            flush_interval -1
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Accel-Buffering no
+        }
+    }
+
+    # Endpoint health check
+    handle /health {
+        reverse_proxy backend:8000 {
+            header_up Host {upstream_hostport}
+        }
+    }
+
+    # Reverse proxy ke antarmuka Next.js Web Klinik
+    handle {
+        reverse_proxy frontend:3000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Kompresi ultra-cepat zstd dan gzip
+    encode zstd gzip
+
+    # Header Keamanan Standar Medis & PWA
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    # Log akses terstruktur
+    log {
+        output stdout
+        format console
+    }
+}

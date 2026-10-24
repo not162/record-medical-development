@@ -24,13 +24,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "RSUKT Clinical AI Suite | Chatbot & Research Workspace",
-  description: "Sistem Kecerdasan Buatan Medis Terpadu RS RSUKT: Evidence-Grounded RAG, Safety Guardrail, & Research Management",
+  title: "Web Klinik RSUKT | Asisten AI Klinis Real-Time & Rekam Medis",
+  description: "Web Klinik RSUKT: Sistem Asisten AI Medis Pasien Real-Time, Scanning Bahasa Klinis, dan Rekam Medis Elektronik Terpadu",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "RSUKT AI",
+    title: "Web Klinik",
   },
   icons: {
     icon: "/icons/icon-192.png",

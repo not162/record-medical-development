@@ -1,7 +1,7 @@
 {
-  "name": "RSUKT AI - Sistem Asisten Klinis Pasien",
-  "short_name": "RSUKT AI",
-  "description": "Asisten Medis Pasien Berbasis Bukti Klinis Terverifikasi & Scanning Bahasa Klinis",
+  "name": "Web Klinik RSUKT - Asisten Medis AI Real-Time",
+  "short_name": "Web Klinik",
+  "description": "Aplikasi Web Klinik RSUKT: Asisten Medis Pasien Berbasis Bukti Klinis Terverifikasi & Scanning Bahasa Klinis Real-Time",
   "start_url": "/chat",
   "id": "/chat",
   "scope": "/",
@@ -11,6 +11,22 @@
   "background_color": "#f8fafc",
   "theme_color": "#0891b2",
   "categories": ["medical", "health", "productivity"],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tampilan Konsultasi Real-Time Web Klinik Mobile"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Workspace Riset & Obrolan Real-Time Web Klinik Desktop"
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-192.png",

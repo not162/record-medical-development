@@ -1,6 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+
+const emptySubscribe = () => () => {};
+
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
 import { 
   Send, Bot, User as UserIcon,
   ThumbsUp, ThumbsDown, FileText,
@@ -318,14 +328,10 @@ function ScanningDeteksiBahasaCard({
 }
 
 export default function ChatPage() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const { role } = useAuth();
   const isAdmin = role === "ADMIN";
   const isEffectiveAdmin = mounted && isAdmin;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -984,7 +990,11 @@ export default function ChatPage() {
             {!isEffectiveAdmin ? (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-50/70 border border-cyan-200 text-cyan-900 text-xs font-semibold shadow-2xs">
                 <Stethoscope className="w-4 h-4 text-cyan-700 shrink-0" />
-                <span>Asisten Edukasi Klinis RSUKT</span>
+                <span>Web Klinik RSUKT</span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  AI Real-Time
+                </span>
               </div>
             ) : (
               <div className="flex items-center gap-2 flex-wrap">
@@ -1203,7 +1213,7 @@ export default function ChatPage() {
 
           {isGenerating && (
             <div className="flex gap-2 sm:gap-3 items-center text-xs text-slate-500">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-600 flex items-center justify-center text-white shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-600 flex items-center justify-center text-white shrink-0 shadow-xs">
                 <Bot className="w-4 h-4 animate-spin" />
               </div>
               <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-2">
@@ -1211,7 +1221,10 @@ export default function ChatPage() {
                 <div className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce delay-100"></div>
                 <div className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce delay-200"></div>
                 <span className="ml-1 text-slate-700 font-medium text-xs">
-                  Scanning deteksi bahasa & menyintesis bukti protokol medis...
+                  AI Real-Time memproses scanning bahasa & bukti klinis...
+                </span>
+                <span className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold hidden sm:inline">
+                  LIVE STREAM
                 </span>
               </div>
             </div>
