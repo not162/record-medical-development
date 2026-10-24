@@ -120,12 +120,7 @@ function ScanningDeteksiBahasaCard({
   const [showPipelineDetails, setShowPipelineDetails] = useState(false);
 
   if (!scan || !scan.scanning_result) {
-    return (
-      <div className="flex items-center gap-2 text-[11px] text-slate-500 bg-slate-100/80 px-2.5 py-1 rounded-lg border border-slate-200">
-        <Languages className="w-3.5 h-3.5 text-cyan-600" />
-        <span>Triase: <strong className="text-slate-800">{defaultDept || "Umum"}</strong></span>
-      </div>
-    );
+    return null;
   }
 
   const res = scan.scanning_result;
@@ -342,31 +337,7 @@ export default function ChatPage() {
       content: "Halo! Saya Asisten AI Klinis Rumah Sakit Umum Kota Terpadu (RSUKT). Anda dapat mendiskusikan informasi kesehatan umum, penjelasan gejala, atau protokol klinis rumah sakit.\n\nSetiap jawaban yang saya berikan akan dirujuk ke dokumen bukti protokol medis yang telah disetujui oleh tim medis kami. Bagaimana saya dapat membantu Anda hari ini?",
       department: "Umum",
       timestamp: "Baru saja",
-      scanningDeteksiBahasa: {
-        language_detection: {
-          source_language_code: "id_layman_colloquial",
-          source_language_label: "Bahasa Indonesia Awam",
-          latency_ms: 1.15,
-          confidence: 0.994,
-        },
-        bpe_tokens: ["ha@@", "lo", "asi@@", "sten", "kli@@", "nis", "rsukt"],
-        target_steering_token: "<2med_id>",
-        scanning_result: {
-          bahasa_awam: "Sapaan pembuka konsultasi pasien",
-          bahasa_medis_klinis: "Triase & Anamnesis Awal Pelayanan Medis",
-          icd10_code: "Z00.0",
-          urgensi_triase: "HIJAU",
-          departemen_rekomendasi: "Umum / Triase Terpadu",
-        },
-        beam_search: {
-          beam_width: 3,
-          top_candidates: [
-            { candidate: "Triase & Anamnesis Awal Pasien", probability: 0.985, icd10: "Z00.0" },
-            { candidate: "Konsultasi Informasi Preventif", probability: 0.842, icd10: "Z71.9" },
-            { candidate: "Edukasi Gaya Hidup & Kesehatan", probability: 0.670, icd10: "Z71.3" }
-          ]
-        }
-      }
+      scanningDeteksiBahasa: null,
     },
   ]);
   const [inputQuery, setInputQuery] = useState("");
@@ -618,22 +589,7 @@ export default function ChatPage() {
             content: "Halo! Sesi konsultasi klinis baru telah dibuka. Silakan ajukan pertanyaan atau jelaskan keluhan Anda.",
             department: "Umum",
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            scanningDeteksiBahasa: {
-              language_detection: {
-                source_language_code: "id_layman",
-                source_language_label: "Bahasa Indonesia",
-                latency_ms: 1.1,
-                confidence: 0.99,
-              },
-              target_steering_token: "<2med_id>",
-              scanning_result: {
-                bahasa_awam: "Sesi Konsultasi Baru",
-                bahasa_medis_klinis: "Anamnesis Awal Pasien Baru",
-                icd10_code: "Z00.0",
-                urgensi_triase: "HIJAU",
-                departemen_rekomendasi: "Umum",
-              }
-            }
+            scanningDeteksiBahasa: null,
           }
         ]);
         fetchSessions();
@@ -1174,8 +1130,8 @@ export default function ChatPage() {
                     </div>
                   )}
 
-                  {/* Scanning Deteksi Bahasa: Awam ➔ Medis Klinis Card */}
-                  {msg.sender === "assistant" && (
+                  {/* Scanning Deteksi Bahasa: Awam ➔ Medis Klinis Card (hanya jika ada hasil deteksi asli) */}
+                  {msg.sender === "assistant" && Boolean(msg.scanningDeteksiBahasa?.scanning_result) && (
                     <ScanningDeteksiBahasaCard
                       scan={msg.scanningDeteksiBahasa}
                       defaultDept={msg.department}
