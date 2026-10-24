@@ -323,8 +323,15 @@ function ScanningDeteksiBahasaCard({
 }
 
 export default function ChatPage() {
+  const [mounted, setMounted] = useState(false);
   const { role } = useAuth();
   const isAdmin = role === "ADMIN";
+  const isEffectiveAdmin = mounted && isAdmin;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
@@ -979,8 +986,8 @@ export default function ChatPage() {
                 <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 text-cyan-600" />
                 <div className="flex-1 truncate">
                   <div className="font-medium truncate">{sess.title}</div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    {new Date(sess.updated_at).toLocaleDateString("id-ID")} • {sess.message_count} pesan
+                  <div className="text-[10px] text-slate-500 mt-0.5" suppressHydrationWarning>
+                    {mounted ? new Date(sess.updated_at).toLocaleDateString("id-ID") : ""} • {sess.message_count} pesan
                   </div>
                 </div>
               </button>
@@ -1018,7 +1025,7 @@ export default function ChatPage() {
             </button>
 
             {/* Tampilan Header: Pasien Awam (Hospital Native) vs Admin Workspace */}
-            {!isAdmin ? (
+            {!isEffectiveAdmin ? (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-50/70 border border-cyan-200 text-cyan-900 text-xs font-semibold shadow-2xs">
                 <Stethoscope className="w-4 h-4 text-cyan-700 shrink-0" />
                 <span>Asisten Edukasi Klinis RSUKT</span>
@@ -1172,7 +1179,7 @@ export default function ChatPage() {
                     <ScanningDeteksiBahasaCard
                       scan={msg.scanningDeteksiBahasa}
                       defaultDept={msg.department}
-                      isAdmin={isAdmin}
+                      isAdmin={isEffectiveAdmin}
                     />
                   )}
                 </div>
@@ -1220,7 +1227,7 @@ export default function ChatPage() {
                       )}
 
                       {/* Khusus Admin: Indikator Bobot Penguatan RLHF */}
-                      {isAdmin && msg.feedback && (
+                      {isEffectiveAdmin && msg.feedback && (
                         <span className="text-[9px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                           RLHF: {msg.feedback === "LIKE" ? "+1.0" : "-1.0"}
                         </span>
@@ -1320,7 +1327,7 @@ export default function ChatPage() {
               </button>
             </div>
 
-            {isAdmin && (
+            {isEffectiveAdmin && (
               <div className="pt-2.5 border-t border-red-100 flex items-center justify-between text-xs flex-wrap gap-2">
                 <span className="text-[11px] text-slate-500 font-mono">Mode Admin: Uji Coba Reset Kuota</span>
                 <button
@@ -1363,7 +1370,7 @@ export default function ChatPage() {
             />
 
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 px-1 sm:px-2">
-              {isAdmin ? (
+              {isEffectiveAdmin ? (
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <span className="text-[11px] hidden sm:inline">Mode Penalaran:</span>
                   <select
