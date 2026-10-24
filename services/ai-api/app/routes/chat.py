@@ -1,6 +1,8 @@
 import json
 import datetime
+import time
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
@@ -338,6 +340,130 @@ def send_chat_message(
             "created_at": assistant_msg.created_at.isoformat()
         }
     }
+
+# 5a. Stream Chat Message Real-Time (Server-Sent Events)
+@router.post("/chat/messages/stream")
+def stream_chat_message(
+    req: ChatMessageRequest,
+    current_user: User = Depends(require_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Mengirim pesan ke Asisten AI Klinis dengan respons streaming real-time (SSE).
+    Menghasilkan token kata demi kata secara mengalir untuk pengalaman konsultasi alami.
+    """
+    session = db.query(ChatSession).filter(
+        ChatSession.id == req.session_id,
+        ChatSession.is_deleted == False
+    ).first()
+
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesi percakapan tidak ditemukan.")
+
+    if session.user_id != current_user.id and current_user.role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Akses ditolak.")
+
+    # Check 24-hour Quota Limit
+    quota = get_user_quota_status(current_user, db)
+    if quota["is_clinic_health_lock"] and current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "error": "CLINIC_HEALTH_LIMIT_REACHED",
+                "message": "Batas 7 keluaran AI harian tercapai. Sesi dialihkan ke Clinic Health Reset.",
+                "quota_status": quota
+            }
+        )
+
+    # 1. PII Masking
+    masked_query = mask_pii(req.content)
+
+    # 2. Scanning Deteksi Bahasa: Awam ➔ Medis Klinis
+    scan_meta = language_scanner.scan_input(masked_query)
+
+    # 3. Simpan Pesan Pengguna
+    user_msg = ChatMessage(
+        session_id=session.id,
+        sender_role="user",
+        content=req.content
+    )
+    db.add(user_msg)
+    db.commit()
+    db.refresh(user_msg)
+
+    # 4. Generator function for SSE
+    def event_generator():
+        # Yield start event dengan hasil scanning
+        yield f"data: {json.dumps({'type': 'start', 'scanning': scan_meta, 'user_message_id': user_msg.id}, ensure_ascii=False)}\n\n"
+
+        mode = req.reasoning_mode if req.reasoning_mode in ["thinking", "fast"] else "thinking"
+
+        agent_output = clinical_agent.process_message(
+            user_query=masked_query,
+            session_id=session.id,
+            current_user=current_user,
+            db=db,
+            reasoning_mode=mode
+        )
+
+        full_content = agent_output["content"]
+
+        # Stream chunks (kata per kata) secara real-time
+        words = full_content.split(" ")
+        for i, word in enumerate(words):
+            token_chunk = word + (" " if i < len(words) - 1 else "")
+            yield f"data: {json.dumps({'type': 'token', 'token': token_chunk}, ensure_ascii=False)}\n\n"
+            time.sleep(0.012)
+
+        # 5. Persistensi Pesan Asisten ke Database
+        assistant_msg = ChatMessage(
+            session_id=session.id,
+            sender_role="assistant",
+            content=full_content,
+            evidence_context=json.dumps(agent_output["evidence_context"]),
+            citations=json.dumps(agent_output["citations"]),
+            triage_department=agent_output["triage_department"],
+            safety_alert=agent_output["safety_alert"]
+        )
+        db.add(assistant_msg)
+
+        if session.title == "Konsultasi Klinis Baru":
+            snippet = req.content.strip().split("\n")[0][:45]
+            session.title = snippet if len(snippet) < 45 else f"{snippet}..."
+        session.updated_at = datetime.datetime.now(datetime.timezone.utc)
+        db.commit()
+        db.refresh(assistant_msg)
+
+        updated_quota = get_user_quota_status(current_user, db)
+
+        done_payload = {
+            "type": "done",
+            "session_id": session.id,
+            "quota_status": updated_quota,
+            "assistant_message": {
+                "id": assistant_msg.id,
+                "sender_role": assistant_msg.sender_role,
+                "content": assistant_msg.content,
+                "evidence_context": agent_output["evidence_context"],
+                "citations": agent_output["citations"],
+                "triage_department": assistant_msg.triage_department,
+                "scanning_deteksi_bahasa": agent_output.get("scanning_deteksi_bahasa") or scan_meta,
+                "safety_alert": assistant_msg.safety_alert,
+                "model_used": agent_output.get("model_used"),
+                "created_at": assistant_msg.created_at.isoformat()
+            }
+        }
+        yield f"data: {json.dumps(done_payload, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 # 5b. Get User Quota Status (7 outputs / 24h reset)
 @router.get("/chat/quota")

@@ -194,12 +194,21 @@ npm run dev
 ```
 Akses antarmuka web pada: `http://localhost:3000`
 
-### 3. Validasi Build Produksi
+### 3. Validasi Build Produksi & Deploy Vercel
 ```bash
 cd apps/web
 npx tsc --noEmit
 npm run build
 ```
+*Untuk deployment ke Vercel, repositori telah dilengkapi `api/index.py`, root `requirements.txt`, dan `vercel.json` sehingga frontend Next.js dan backend FastAPI berjalan otomatis sebagai arsitektur Serverless terpadu.*
+
+---
+
+## 🔬 Ekspor Dataset Pelatihan Google Colab
+
+Administrator dapat mengekspor seluruh korpus percakapan tanya-jawab klinis langsung dari antarmuka Admin (`/admin/dashboard` atau `/admin/feedback`):
+- **Format CSV:** Siap diimpor ke pustaka `pandas`, `scikit-learn`, atau analisis statistik spreadsheet.
+- **Format JSONL (ChatML):** Terformat standar `{"messages": [{"role": "system"}, {"role": "user"}, {"role": "assistant"}], "colab_training_metadata": {...}}` yang kompatibel dengan pipeline fine-tuning Hugging Face TRL (SFT/DPO), Unsloth, dan PyTorch di Google Colab.
 
 ---
 
@@ -208,3 +217,5 @@ npm run build
 Seluruh riwayat pengembangan dan audit teknis dicatat secara terperinci dalam direktori `docs/`:
 - [`docs/SPRINT_17_FINAL_DEVELOPMENT_RULES.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_17_FINAL_DEVELOPMENT_RULES.md): Aturan pengembangan final, batas kuota, dan arsitektur model.
 - [`docs/SPRINT_18_AUTH_RLHF_AUDIT.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_18_AUTH_RLHF_AUDIT.md): Laporan audit sprint autentikasi, native RLHF reinforcement, dan pemulihan akun.
+- [`docs/SPRINT_19_VERCEL_REALTIME_COLAB_EXPORT.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_19_VERCEL_REALTIME_COLAB_EXPORT.md): Laporan audit integrasi Vercel Serverless, real-time chat streaming, abstraksi UI pengguna awam, dan ekspor dataset Google Colab.
+

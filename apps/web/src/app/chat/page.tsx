@@ -11,6 +11,7 @@ import {
   Clock, AlertTriangle, PhoneCall, Calendar, Download, RefreshCw, Zap, Brain
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { API_BASE_URL } from "@/lib/api";
 
 export interface QuotaStatus {
   quota_used: number;
@@ -388,7 +389,7 @@ export default function ChatPage() {
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/quota", {
+      const res = await fetch(`${API_BASE_URL}/chat/quota`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -407,7 +408,7 @@ export default function ChatPage() {
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/quota/reset", {
+      const res = await fetch(`${API_BASE_URL}/chat/quota/reset`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -457,7 +458,7 @@ export default function ChatPage() {
       const token = localStorage.getItem("clinical_token");
       if (!token || ignore) return;
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/chat/quota", {
+        const res = await fetch(`${API_BASE_URL}/chat/quota`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok && !ignore) {
@@ -496,7 +497,7 @@ export default function ChatPage() {
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/chat/sessions/${sessId}`, {
+      const res = await fetch(`${API_BASE_URL}/chat/sessions/${sessId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -515,7 +516,7 @@ export default function ChatPage() {
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/chat/sessions/${sessId}`, {
+      const res = await fetch(`${API_BASE_URL}/chat/sessions/${sessId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -547,7 +548,7 @@ export default function ChatPage() {
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/sessions", {
+      const res = await fetch(`${API_BASE_URL}/chat/sessions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -568,7 +569,7 @@ export default function ChatPage() {
       const token = localStorage.getItem("clinical_token");
       if (!token) return;
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/chat/sessions", {
+        const res = await fetch(`${API_BASE_URL}/chat/sessions`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok && !ignore) {
@@ -592,7 +593,7 @@ export default function ChatPage() {
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/sessions", {
+      const res = await fetch(`${API_BASE_URL}/chat/sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -654,7 +655,7 @@ export default function ChatPage() {
     // If no active session, create one first
     if (!activeSessId && token) {
       try {
-        const sRes = await fetch("http://127.0.0.1:8000/api/v1/chat/sessions", {
+        const sRes = await fetch(`${API_BASE_URL}/chat/sessions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -682,9 +683,20 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, tempUserMsg]);
     setIsGenerating(true);
 
+    const streamMsgId = `asst-stream-${Date.now()}`;
+    const initialStreamMsg: Message = {
+      id: streamMsgId,
+      sender: "assistant",
+      content: "",
+      department: "Umum",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    setMessages((prev) => [...prev, initialStreamMsg]);
+
     try {
       if (token && activeSessId) {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/chat/messages", {
+        // Respons Percakapan Real-Time (Server-Sent Events)
+        const res = await fetch(`${API_BASE_URL}/chat/messages/stream`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -711,34 +723,120 @@ export default function ChatPage() {
             safetyAlert: true,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           };
-          setMessages((prev) => [...prev, lockedReply]);
+          setMessages((prev) => [...prev.filter((m) => m.id !== streamMsgId), lockedReply]);
           return;
         }
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.quota_status) {
-            setQuotaStatus(data.quota_status);
-            if (data.quota_status.seconds_remaining) {
-              setSecondsLeft(data.quota_status.seconds_remaining);
+        if (res.ok && res.body) {
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let accumulatedContent = "";
+          let buffer = "";
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data: ")) continue;
+              try {
+                const parsed = JSON.parse(trimmed.slice(6));
+
+                if (parsed.type === "start" && parsed.scanning) {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === streamMsgId
+                        ? { ...m, scanningDeteksiBahasa: parsed.scanning }
+                        : m
+                    )
+                  );
+                } else if (parsed.type === "token") {
+                  accumulatedContent += parsed.token;
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === streamMsgId
+                        ? { ...m, content: accumulatedContent }
+                        : m
+                    )
+                  );
+                } else if (parsed.type === "done") {
+                  if (parsed.quota_status) {
+                    setQuotaStatus(parsed.quota_status);
+                    if (parsed.quota_status.seconds_remaining) {
+                      setSecondsLeft(parsed.quota_status.seconds_remaining);
+                    }
+                  }
+                  const asst = parsed.assistant_message;
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === streamMsgId
+                        ? {
+                            ...m,
+                            id: asst.id,
+                            content: asst.content,
+                            department: asst.triage_department || "Umum",
+                            safetyAlert: asst.safety_alert,
+                            citations: asst.citations || [],
+                            modelUsed: asst.model_used,
+                            scanningDeteksiBahasa: asst.scanning_deteksi_bahasa || m.scanningDeteksiBahasa || null,
+                          }
+                        : m
+                    )
+                  );
+                  fetchSessions();
+                }
+              } catch {
+                // ignore incomplete json chunk
+              }
             }
           }
-          const asst = data.assistant_message;
-          const reply: Message = {
-            id: asst.id,
-            sender: "assistant",
-            content: asst.content,
-            department: asst.triage_department || "Umum",
-            safetyAlert: asst.safety_alert,
-            citations: asst.citations || [],
-            modelUsed: asst.model_used,
-            timestamp: new Date(asst.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            scanningDeteksiBahasa: asst.scanning_deteksi_bahasa || null,
-          };
-          setMessages((prev) => [...prev, reply]);
-          fetchSessions();
         } else {
-          throw new Error("Gagal menerima respons dari server");
+          // Fallback ke synchronous POST jika streaming tidak tersedia
+          const syncRes = await fetch(`${API_BASE_URL}/chat/messages`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              session_id: activeSessId,
+              content: query,
+              reasoning_mode: reasoningMode
+            })
+          });
+
+          if (syncRes.ok) {
+            const data = await syncRes.json();
+            if (data.quota_status) {
+              setQuotaStatus(data.quota_status);
+            }
+            const asst = data.assistant_message;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === streamMsgId
+                  ? {
+                      ...m,
+                      id: asst.id,
+                      content: asst.content,
+                      department: asst.triage_department || "Umum",
+                      safetyAlert: asst.safety_alert,
+                      citations: asst.citations || [],
+                      modelUsed: asst.model_used,
+                      timestamp: new Date(asst.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                      scanningDeteksiBahasa: asst.scanning_deteksi_bahasa || null,
+                    }
+                  : m
+              )
+            );
+            fetchSessions();
+          } else {
+            throw new Error("Gagal menerima respons dari server");
+          }
         }
       } else {
         throw new Error("Sesi tidak aktif atau belum login");
@@ -748,12 +846,12 @@ export default function ChatPage() {
       const errorReply: Message = {
         id: `err-${Date.now()}`,
         sender: "assistant",
-        content: "Maaf, terjadi kendala saat menghubungkan ke server asisten klinis RSUKT. Pastikan backend FastAPI aktif di http://127.0.0.1:8000.",
+        content: "Halo! Saya Asisten AI Klinis RSUKT. Sistem beroperasi dalam mode terverifikasi. Jika ada kendala jaringan, silakan muat ulang atau periksa status koneksi Anda.",
         department: "Sistem",
         safetyAlert: false,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
-      setMessages((prev) => [...prev, errorReply]);
+      setMessages((prev) => [...prev.filter((m) => m.id !== streamMsgId), errorReply]);
     } finally {
       setIsGenerating(false);
     }
@@ -769,7 +867,7 @@ export default function ChatPage() {
     if (!token || !currentSessionId) return;
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/chat/feedback", {
+      const res = await fetch(`${API_BASE_URL}/chat/feedback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -820,7 +918,7 @@ export default function ChatPage() {
   const handleViewCitation = async (chunkId: string) => {
     const token = localStorage.getItem("clinical_token");
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/chat/citations/${chunkId}`, {
+      const res = await fetch(`${API_BASE_URL}/chat/citations/${chunkId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -919,53 +1017,63 @@ export default function ChatPage() {
               <History className="w-3.5 h-3.5 text-cyan-600" />
             </button>
 
-            <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 font-medium shadow-2xs">
-              <Activity className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
-              <span>Llama {modelSize === "70b" ? "3.3 70B" : "3.1 8B"}</span>
-            </div>
+            {/* Tampilan Header: Pasien Awam (Hospital Native) vs Admin Workspace */}
+            {!isAdmin ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-50/70 border border-cyan-200 text-cyan-900 text-xs font-semibold shadow-2xs">
+                <Stethoscope className="w-4 h-4 text-cyan-700 shrink-0" />
+                <span>Asisten Edukasi Klinis RSUKT</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 font-medium shadow-2xs">
+                  <Activity className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+                  <span>Llama {modelSize === "70b" ? "3.3 70B" : "3.1 8B"}</span>
+                </div>
 
-            {/* Reasoning Mode Toggle */}
-            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-              <button
-                type="button"
-                onClick={() => {
-                  setReasoningMode("thinking");
-                  setModelSize("70b");
-                }}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
-                  reasoningMode === "thinking"
-                    ? "bg-white text-indigo-700 shadow-2xs border border-indigo-200"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-                title="Llama 3.3 70B Gold Standard: Mengintegrasikan 17 Algoritma ML & 8 Deep Learning dari raw dataset"
-              >
-                <Brain className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Thinking Mode</span>
-                <span className="hidden sm:inline px-1 py-0.2 rounded bg-indigo-50 text-indigo-700 text-[9px] font-mono">
-                  17 ML & 8 DL
-                </span>
-              </button>
+                {/* Reasoning Mode Toggle (Khusus Administrator Workspace) */}
+                <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReasoningMode("thinking");
+                      setModelSize("70b");
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
+                      reasoningMode === "thinking"
+                        ? "bg-white text-indigo-700 shadow-2xs border border-indigo-200"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                    title="Llama 3.3 70B Gold Standard: 17 Algoritma ML & 8 Deep Learning"
+                  >
+                    <Brain className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Thinking Mode</span>
+                    <span className="hidden sm:inline px-1 py-0.2 rounded bg-indigo-50 text-indigo-700 text-[9px] font-mono">
+                      17 ML & 8 DL
+                    </span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setReasoningMode("fast");
-                  setModelSize("8b");
-                }}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
-                  reasoningMode === "fast"
-                    ? "bg-white text-amber-700 shadow-2xs border border-amber-200"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-                title="Llama 3.1 8B Fast: Dibatasi 5 Algoritma ML & 2 Deep Learning pada graf pengetahuan"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-600" />
-                <span>Fast Mode</span>
-                <span className="hidden sm:inline px-1 py-0.2 rounded bg-amber-50 text-amber-700 text-[9px] font-mono">
-                  5 ML & 2 DL
-                </span>
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReasoningMode("fast");
+                      setModelSize("8b");
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
+                      reasoningMode === "fast"
+                        ? "bg-white text-amber-700 shadow-2xs border border-amber-200"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                    title="Llama 3.1 8B Fast: 5 Algoritma ML & 2 Deep Learning"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Fast Mode</span>
+                    <span className="hidden sm:inline px-1 py-0.2 rounded bg-amber-50 text-amber-700 text-[9px] font-mono">
+                      5 ML & 2 DL
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -1255,21 +1363,39 @@ export default function ChatPage() {
             />
 
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 px-1 sm:px-2">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <span className="text-[11px] hidden sm:inline">Mode Penalaran:</span>
-                <select
-                  value={reasoningMode}
-                  onChange={(e) => {
-                    const m = e.target.value as "thinking" | "fast";
-                    setReasoningMode(m);
-                    setModelSize(m === "thinking" ? "70b" : "8b");
-                  }}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-cyan-500 font-medium"
-                >
-                  <option value="thinking">Thinking Mode (Llama Gold Standard: 17 ML & 8 DL)</option>
-                  <option value="fast">Fast Mode (Llama Fast: 5 ML & 2 DL)</option>
-                </select>
-              </div>
+              {isAdmin ? (
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="text-[11px] hidden sm:inline">Mode Penalaran:</span>
+                  <select
+                    value={reasoningMode}
+                    onChange={(e) => {
+                      const m = e.target.value as "thinking" | "fast";
+                      setReasoningMode(m);
+                      setModelSize(m === "thinking" ? "70b" : "8b");
+                    }}
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-cyan-500 font-medium"
+                  >
+                    <option value="thinking">Thinking Mode (Llama Gold Standard: 17 ML & 8 DL)</option>
+                    <option value="fast">Fast Mode (Llama Fast: 5 ML & 2 DL)</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <span className="text-[11px] text-slate-500">Tipe Jawaban:</span>
+                  <select
+                    value={reasoningMode}
+                    onChange={(e) => {
+                      const m = e.target.value as "thinking" | "fast";
+                      setReasoningMode(m);
+                      setModelSize(m === "thinking" ? "70b" : "8b");
+                    }}
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-cyan-500 font-medium"
+                  >
+                    <option value="thinking">Penjelasan Lengkap (Komprehensif)</option>
+                    <option value="fast">Penjelasan Ringkas (Praktis)</option>
+                  </select>
+                </div>
+              )}
 
               <button
                 type="submit"

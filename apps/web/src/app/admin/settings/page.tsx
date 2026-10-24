@@ -5,6 +5,7 @@ import {
   Settings, Shield, Cpu, Database, 
   Activity, CheckCircle2, RefreshCw, Server, AlertTriangle
 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface HealthData {
   status: string;
@@ -45,7 +46,7 @@ export default function AdminSettingsPage() {
   const fetchHealth = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/health");
+      const res = await fetch(`${API_BASE_URL}/health`);
       if (res.ok) {
         const data = await res.json();
         setHealth(data);
@@ -61,7 +62,7 @@ export default function AdminSettingsPage() {
     let ignore = false;
     const run = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/health");
+        const res = await fetch(`${API_BASE_URL}/health`);
         if (res.ok && !ignore) {
           const data = await res.json();
           setHealth(data);
@@ -82,7 +83,7 @@ export default function AdminSettingsPage() {
     setPingStatus(null);
     const start = performance.now();
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/health");
+      const res = await fetch(`${API_BASE_URL}/health`);
       const elapsed = Math.round(performance.now() - start);
       if (res.ok) {
         setPingStatus(`Koneksi Aktif & Sehat (Latency: ${elapsed}ms)`);
@@ -104,10 +105,11 @@ export default function AdminSettingsPage() {
     setAuditRunning(true);
     setAuditError(null);
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/admin/audit/run-periodic", {
+      const token = localStorage.getItem("clinical_token") || localStorage.getItem("token") || "";
+      const res = await fetch(`${API_BASE_URL}/admin/audit/run-periodic`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       if (res.ok) {

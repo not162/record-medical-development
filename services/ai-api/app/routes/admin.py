@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pathlib import Path
@@ -6,11 +7,14 @@ import datetime
 import os
 import sys
 import json
+import csv
+import io
 
 from app.database import get_db
 from app.models import User, AuditLog, DatasetRecord, ChatSession, FeedbackRecord, ChatMessage
 from app.schemas import AuditLogResponse, UserResponse, AdminFeedbackUpdateRequest
 from app.security.auth import require_admin
+from app.rag.language_scanning import language_scanner
 
 router = APIRouter(prefix="/admin", tags=["Administrator Workspace"])
 
@@ -1412,6 +1416,156 @@ def get_periodic_audit_report_detail(
 
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+# ==============================================================================
+# 18. EXPORT CONVERSATIONS DATASET UNTUK GOOGLE COLAB (CSV & JSONL)
+# ==============================================================================
+
+@router.get("/conversations/export")
+def export_conversations_for_colab(
+    format: str = Query("jsonl", pattern="^(csv|jsonl)$"),
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Mengekspor seluruh interaksi percakapan klinis antara AI dan pengguna awam
+    dalam format CSV atau JSONL terstruktur yang siap pakai untuk pelatihan (fine-tuning) di Google Colab.
+    Mematuhi prinsip de-identifikasi data privasi UU PDP No. 27/2022 & ISO 27001.
+    """
+    assistant_msgs = db.query(ChatMessage).filter(
+        ChatMessage.sender_role == "assistant"
+    ).order_by(ChatMessage.created_at.asc()).all()
+
+    timestamp_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d_%H%M%S")
+    filename = f"rsukt_colab_conversations_{timestamp_str}.{format}"
+
+    feedbacks = db.query(FeedbackRecord).all()
+    feedback_map = {f.message_id: f for f in feedbacks}
+
+    records = []
+    for asst in assistant_msgs:
+        user_msg = db.query(ChatMessage).filter(
+            ChatMessage.session_id == asst.session_id,
+            ChatMessage.sender_role == "user",
+            ChatMessage.created_at <= asst.created_at
+        ).order_by(ChatMessage.created_at.desc()).first()
+
+        user_content = user_msg.content if user_msg else "Keluhan Pasien"
+        fb = feedback_map.get(asst.id)
+
+        scan = language_scanner.scan_input(user_content)
+        scan_res = scan.get("scanning_result", {}) if scan else {}
+        layman_detected = scan_res.get("bahasa_awam", user_content)
+        med_translated = scan_res.get("bahasa_medis_klinis", asst.triage_department or "Umum")
+        icd10 = scan_res.get("icd10_code", "Z00.0")
+        triase = scan_res.get("urgensi_triase", "HIJAU")
+        dept = scan_res.get("departemen_rekomendasi", asst.triage_department or "Umum")
+
+        records.append({
+            "session_id": asst.session_id,
+            "message_id": asst.id,
+            "created_at": asst.created_at.isoformat(),
+            "patient_query_layman": user_content,
+            "clinical_translation": med_translated,
+            "icd10_code": icd10,
+            "triage_level": triase,
+            "recommended_department": dept,
+            "ai_response": asst.content,
+            "model_used": "groq-llama3.3-70b-versatile",
+            "feedback_type": fb.feedback_type if fb else "UNRATED",
+            "rlhf_notes": fb.notes if fb else "",
+        })
+
+    if format == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+        headers = [
+            "session_id", "message_id", "created_at", "patient_query_layman",
+            "clinical_translation", "icd10_code", "triage_level",
+            "recommended_department", "ai_response", "model_used",
+            "feedback_type", "rlhf_notes"
+        ]
+        writer.writerow(headers)
+        for r in records:
+            writer.writerow([
+                r["session_id"], r["message_id"], r["created_at"], r["patient_query_layman"],
+                r["clinical_translation"], r["icd10_code"], r["triage_level"],
+                r["recommended_department"], r["ai_response"], r["model_used"],
+                r["feedback_type"], r["rlhf_notes"]
+            ])
+        output.seek(0)
+
+        db.add(AuditLog(
+            user_id=admin.id,
+            action="EXPORT_CONVERSATIONS_CSV",
+            resource_type="COLAB_DATASET",
+            resource_id=filename,
+            details=f"Admin {admin.username} mengekspor {len(records)} percakapan klinis ke format CSV untuk Google Colab"
+        ))
+        db.commit()
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+
+    else:
+        lines = []
+        for r in records:
+            jsonl_obj = {
+                "id": r["message_id"],
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Anda adalah Asisten AI Klinis RSUKT (Rumah Sakit Umum Kota Terpadu) yang mematuhi standar Permenkes No. 12 Tahun 2025 dan UU PDP No. 27/2022. Berikan edukasi klinis berbasis bukti protokol medis terakreditasi, ramah bagi pasien awam, dan sertakan rujukan poliklinik atau IGD."
+                    },
+                    {
+                        "role": "user",
+                        "content": r["patient_query_layman"]
+                    },
+                    {
+                        "role": "assistant",
+                        "content": r["ai_response"]
+                    }
+                ],
+                "colab_training_metadata": {
+                    "session_id": r["session_id"],
+                    "icd10_code": r["icd10_code"],
+                    "triage_level": r["triage_level"],
+                    "department": r["recommended_department"],
+                    "clinical_translation": r["clinical_translation"],
+                    "model_used": r["model_used"],
+                    "feedback_type": r["feedback_type"],
+                    "rlhf_notes": r["rlhf_notes"],
+                    "colab_instruction_tuning_ready": True
+                }
+            }
+            lines.append(json.dumps(jsonl_obj, ensure_ascii=False))
+
+        output_str = "\n".join(lines) + ("\n" if lines else "")
+
+        db.add(AuditLog(
+            user_id=admin.id,
+            action="EXPORT_CONVERSATIONS_JSONL",
+            resource_type="COLAB_DATASET",
+            resource_id=filename,
+            details=f"Admin {admin.username} mengekspor {len(records)} percakapan klinis ke format JSONL untuk Google Colab"
+        ))
+        db.commit()
+
+        return StreamingResponse(
+            iter([output_str]),
+            media_type="application/x-ndjson",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+
 
 
 

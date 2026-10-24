@@ -3,8 +3,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { 
   ThumbsUp, ThumbsDown, Download, RefreshCw, 
-  Search, CheckCircle2, AlertCircle, Edit3, MessageSquare, Sparkles, X, User
+  Search, CheckCircle2, AlertCircle, Edit3, MessageSquare, Sparkles, X, User,
+  FileSpreadsheet, FileCode
 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface FeedbackItem {
   id: string;
@@ -60,8 +62,8 @@ export default function AdminFeedbackPage() {
 
     try {
       const url = filterType === "ALL" 
-        ? "http://127.0.0.1:8000/api/v1/admin/feedback" 
-        : `http://127.0.0.1:8000/api/v1/admin/feedback?feedback_type=${filterType}`;
+        ? `${API_BASE_URL}/admin/feedback` 
+        : `${API_BASE_URL}/admin/feedback?feedback_type=${filterType}`;
 
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
@@ -87,8 +89,8 @@ export default function AdminFeedbackPage() {
       if (!token) return;
       try {
         const url = filterType === "ALL" 
-          ? "http://127.0.0.1:8000/api/v1/admin/feedback" 
-          : `http://127.0.0.1:8000/api/v1/admin/feedback?feedback_type=${filterType}`;
+          ? `${API_BASE_URL}/admin/feedback` 
+          : `${API_BASE_URL}/admin/feedback?feedback_type=${filterType}`;
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -114,7 +116,7 @@ export default function AdminFeedbackPage() {
     if (!token) return;
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/admin/feedback/export-preference", {
+      const res = await fetch(`${API_BASE_URL}/admin/feedback/export-preference`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -123,11 +125,12 @@ export default function AdminFeedbackPage() {
         setExportResult({
           count: data.total_preference_pairs,
           filename: data.filename,
-          url: `http://127.0.0.1:8000${data.download_url}`
+          url: data.download_url.startsWith("http") ? data.download_url : `${API_BASE_URL.replace("/api/v1", "")}${data.download_url}`
         });
 
         // Trigger direct browser download
-        const dlRes = await fetch(`http://127.0.0.1:8000${data.download_url}`, {
+        const downloadApi = data.download_url.startsWith("http") ? data.download_url : `${API_BASE_URL.replace("/api/v1", "")}${data.download_url}`;
+        const dlRes = await fetch(downloadApi, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (dlRes.ok) {
@@ -150,6 +153,32 @@ export default function AdminFeedbackPage() {
     }
   };
 
+  const handleExportColab = async (format: "csv" | "jsonl") => {
+    const token = localStorage.getItem("clinical_token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/conversations/export?format=${format}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `rsukt_colab_conversations_${Date.now()}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+      } else {
+        alert("Gagal mengekspor percakapan untuk Google Colab.");
+      }
+    } catch (err: unknown) {
+      alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
   const handleSaveNotes = async () => {
     if (!selectedFeedback) return;
     setSavingNote(true);
@@ -157,7 +186,7 @@ export default function AdminFeedbackPage() {
     if (!token) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/admin/feedback/${selectedFeedback.id}`, {
+      const res = await fetch(`${API_BASE_URL}/admin/feedback/${selectedFeedback.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -211,6 +240,24 @@ export default function AdminFeedbackPage() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-emerald-600" : ""}`} />
             <span>Segarkan</span>
+          </button>
+
+          <button
+            onClick={() => handleExportColab("csv")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sky-300 bg-sky-50 hover:bg-sky-100 text-xs text-sky-800 font-medium shadow-sm transition"
+            title="Ekspor seluruh obrolan pasien-AI format CSV untuk analisis tabel dan dataset Colab"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-sky-600" />
+            <span>Ekspor CSV (Colab)</span>
+          </button>
+
+          <button
+            onClick={() => handleExportColab("jsonl")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-300 bg-purple-50 hover:bg-purple-100 text-xs text-purple-800 font-medium shadow-sm transition"
+            title="Ekspor seluruh obrolan format JSONL ChatML siap fine-tuning model di Google Colab"
+          >
+            <FileCode className="w-3.5 h-3.5 text-purple-600" />
+            <span>Ekspor JSONL (Colab)</span>
           </button>
 
           <button

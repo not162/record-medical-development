@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { BookOpen, Search, RefreshCw, BarChart2, ShieldCheck, Database, Layers, CheckCircle2 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface RAGStatus {
   status: string;
@@ -48,7 +49,7 @@ export default function AdminKnowledgeBasePage() {
     setLoadingStatus(true);
     const token = localStorage.getItem("clinical_token");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/admin/rag/status", {
+      const res = await fetch(`${API_BASE_URL}/admin/rag/status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -63,7 +64,25 @@ export default function AdminKnowledgeBasePage() {
   };
 
   useEffect(() => {
-    fetchStatus();
+    let ignore = false;
+    const run = async () => {
+      const token = localStorage.getItem("clinical_token");
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/rag/status`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok && !ignore) {
+          const data = await res.json();
+          setStatusData(data);
+        }
+      } catch {
+        // offline / mock fallback display
+      }
+    };
+    run();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleTriggerIndex = async () => {
@@ -71,7 +90,7 @@ export default function AdminKnowledgeBasePage() {
     setNotification(null);
     const token = localStorage.getItem("clinical_token");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/admin/rag/index", {
+      const res = await fetch(`${API_BASE_URL}/admin/rag/index`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -91,7 +110,7 @@ export default function AdminKnowledgeBasePage() {
     setEvaluating(true);
     const token = localStorage.getItem("clinical_token");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/admin/rag/evaluate", {
+      const res = await fetch(`${API_BASE_URL}/admin/rag/evaluate`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -112,7 +131,7 @@ export default function AdminKnowledgeBasePage() {
     setSearching(true);
     const token = localStorage.getItem("clinical_token");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/rag/search", {
+      const res = await fetch(`${API_BASE_URL}/rag/search`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

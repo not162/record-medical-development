@@ -5,9 +5,9 @@ import Link from "next/link";
 import { 
   Users, MessageSquare, CheckCircle2, 
   ThumbsUp, Activity, ShieldAlert, Cpu, ArrowUpRight,
-  RefreshCw
+  RefreshCw, FileSpreadsheet, FileCode, Download
 } from "lucide-react";
-import { api, AuditLog } from "@/lib/api";
+import { api, AuditLog, API_BASE_URL } from "@/lib/api";
 
 interface DashboardSummary {
   status: string;
@@ -32,6 +32,7 @@ export default function AdminDashboardPage() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportingFormat, setExportingFormat] = useState<string | null>(null);
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
@@ -98,6 +99,34 @@ export default function AdminDashboardPage() {
   const metrics = dashboardData?.metrics || defaultMetrics;
   const feedback = metrics.feedback_metrics;
 
+  const handleExportColab = async (format: "csv" | "jsonl") => {
+    const token = localStorage.getItem("clinical_token") || localStorage.getItem("token");
+    if (!token) return;
+    setExportingFormat(format);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/conversations/export?format=${format}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `rsukt_colab_conversations_${Date.now()}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+      } else {
+        alert("Gagal mengekspor percakapan untuk Google Colab.");
+      }
+    } catch (err: unknown) {
+      alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setExportingFormat(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Title & Refresh */}
@@ -125,6 +154,46 @@ export default function AdminDashboardPage() {
           {error}
         </div>
       )}
+
+      {/* Ekspor Google Colab Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl shadow-sm border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-amber-400 text-slate-900">
+              Colab Training Ready
+            </span>
+            <span className="text-xs text-slate-300">Format ChatML & Tabular CSV</span>
+          </div>
+          <h3 className="text-base font-bold text-white mt-1">
+            Ekspor Dataset Percakapan Klinis untuk Pelatihan di Google Colab
+          </h3>
+          <p className="text-xs text-slate-300 mt-0.5">
+            Unduh seluruh dialog tanya-jawab pasien dan asisten AI lengkap dengan kategori triase, ICD-10, serta penilaian dokter.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0">
+          <button
+            onClick={() => handleExportColab("csv")}
+            disabled={exportingFormat !== null}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-xs text-white font-semibold shadow transition disabled:opacity-50"
+            title="Unduh seluruh data percakapan format CSV untuk pandas / machine learning tabular"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-sky-200" />
+            <span>{exportingFormat === "csv" ? "Mengunduh CSV..." : "Ekspor CSV (Colab)"}</span>
+          </button>
+
+          <button
+            onClick={() => handleExportColab("jsonl")}
+            disabled={exportingFormat !== null}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs text-white font-semibold shadow transition disabled:opacity-50"
+            title="Unduh percakapan format JSONL ChatML siap fine-tuning Llama/Unsloth di Colab"
+          >
+            <FileCode className="w-4 h-4 text-purple-200" />
+            <span>{exportingFormat === "jsonl" ? "Mengunduh JSONL..." : "Ekspor JSONL (Colab)"}</span>
+          </button>
+        </div>
+      </div>
 
       {/* Metrics Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
