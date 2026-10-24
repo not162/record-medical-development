@@ -1,0 +1,2 @@
+total_rows,total_columns,columns,missing_values,duplicate_texts,class_distribution,is_balanced
+66,4,"['text', 'label', 'text_clean', 'label_encoded']","{'text': 0, 'label': 0, 'text_clean': 0, 'label_encoded': 0}",0,"{'Kardiologi': 11, 'Pulmonologi': 11, 'Trauma/Bedah': 11, 'Endokrinologi': 11, 'Gastroenterologi': 11, 'Psikiatri': 11}",True

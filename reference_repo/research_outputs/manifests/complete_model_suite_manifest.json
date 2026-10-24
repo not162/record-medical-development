@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-10-23T07:21:08.275915+00:00",
+  "pretrained_models": {
+    "indobert_bilstm_checkpoint": {
+      "path": "models/indobert_lstm_clinical.pth",
+      "exists": true,
+      "size_mb": 478.3,
+      "architecture": "IndoBERT (12 layers, 768 hidden) + BiLSTM (128 hidden) + Linear (6 classes)"
+    },
+    "indobert_mlm_clinical": {
+      "path": "models/indobert_mlm_clinical",
+      "exists": true,
+      "files": [
+        "config.json",
+        "model.safetensors",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "vocab_size": 50000,
+      "max_seq_length": 512
+    },
+    "dense_contextual_embeddings": {
+      "train_shape": [
+        14,
+        768
+      ],
+      "test_shape": [
+        5,
+        768
+      ],
+      "feature_dim": 768,
+      "extracted_from": "Pre-trained IndoBERT clinical representations"
+    }
+  },
+  "comparison_benchmark": [
+    {
+      "Category": "Pre-trained Foundation",
+      "Model Name": "IndoBERT-BiLSTM Clinical",
+      "Task": "6-Department Triage & Clinical Text Encoder",
+      "Key Metric": "768-d Dense Features, 50k Vocab",
+      "Status": "Pre-trained (Ready for Transfer / Zero-shot Inference)"
+    },
+    {
+      "Category": "Pre-trained Foundation",
+      "Model Name": "IndoBERT MLM Clinical",
+      "Task": "Contextual Language Modeling & Tokenizer",
+      "Key Metric": "Masked LM Safetensors (497 MB)",
+      "Status": "Pre-trained (Domain Adapted)"
+    },
+    {
+      "Category": "Trained / Fine-Tuned",
+      "Model Name": "Clinical MLP (Deep Learning)",
+      "Task": "Clinical Triage Multi-Class",
+      "Key Metric": "Test Accuracy: 0.3000, F1: 0.3000",
+      "Status": "Trained (PyTorch Checkpoint)"
+    },
+    {
+      "Category": "Trained / Fine-Tuned",
+      "Model Name": "Safety Guardrail (Logistic Regression)",
+      "Task": "Clinical Error & Contraindication Detection",
+      "Key Metric": "Test Accuracy: 1.0000, F1: 1.0000",
+      "Status": "Trained on IndoBERT Embeddings"
+    },
+    {
+      "Category": "Trained / Fine-Tuned",
+      "Model Name": "Safety Guardrail (Custom Bipolar Perceptron)",
+      "Task": "Clinical Reasoning Error Verifier",
+      "Key Metric": "Test Accuracy: 1.0000, F1: 1.0000",
+      "Status": "Trained (Bipolar Hebbian/Perceptron)"
+    },
+    {
+      "Category": "Trained / Fine-Tuned",
+      "Model Name": "Cardiovascular Risk Predictor (RF)",
+      "Task": "Heart Attack Risk Scoring (18 Features)",
+      "Key Metric": "ROC-AUC: 0.8007, Accuracy: 72.83%",
+      "Status": "Trained on 15,000 Patient Records"
+    },
+    {
+      "Category": "Trained Baseline",
+      "Model Name": "Multinomial Logistic Regression",
+      "Task": "TF-IDF Triage Baseline",
+      "Key Metric": "F1-Score: 0.1333",
+      "Status": "Trained Baseline"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+Model,Accuracy,Precision,Recall,F1-Score
+Logistic Regression,0.1,0.2,0.1,0.1333
+Linear SVM,0.1,0.2,0.1,0.1333
+Perceptron,0.2,0.25,0.2,0.2
+Random Forest,0.1,0.2,0.1,0.1333
+Deep Learning (Clinical MLP),0.3,0.35,0.3,0.3

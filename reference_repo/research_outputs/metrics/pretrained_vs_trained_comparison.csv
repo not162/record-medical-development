@@ -1,0 +1,8 @@
+Category,Model Name,Task,Key Metric,Status
+Pre-trained Foundation,IndoBERT-BiLSTM Clinical,6-Department Triage & Clinical Text Encoder,"768-d Dense Features, 50k Vocab",Pre-trained (Ready for Transfer / Zero-shot Inference)
+Pre-trained Foundation,IndoBERT MLM Clinical,Contextual Language Modeling & Tokenizer,Masked LM Safetensors (497 MB),Pre-trained (Domain Adapted)
+Trained / Fine-Tuned,Clinical MLP (Deep Learning),Clinical Triage Multi-Class,"Test Accuracy: 0.3000, F1: 0.3000",Trained (PyTorch Checkpoint)
+Trained / Fine-Tuned,Safety Guardrail (Logistic Regression),Clinical Error & Contraindication Detection,"Test Accuracy: 1.0000, F1: 1.0000",Trained on IndoBERT Embeddings
+Trained / Fine-Tuned,Safety Guardrail (Custom Bipolar Perceptron),Clinical Reasoning Error Verifier,"Test Accuracy: 1.0000, F1: 1.0000",Trained (Bipolar Hebbian/Perceptron)
+Trained / Fine-Tuned,Cardiovascular Risk Predictor (RF),Heart Attack Risk Scoring (18 Features),"ROC-AUC: 0.8007, Accuracy: 72.83%","Trained on 15,000 Patient Records"
+Trained Baseline,Multinomial Logistic Regression,TF-IDF Triage Baseline,F1-Score: 0.1333,Trained Baseline

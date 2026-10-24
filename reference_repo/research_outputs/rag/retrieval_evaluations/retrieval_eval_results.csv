@@ -1,0 +1,5 @@
+query,expected_doc,top_retrieved,hit@3,mrr
+Pasien nyeri dada tembus ke lengan kiri dan riwayat penyakit jantung,KB-CARD-001,KB-CARD-001,1,1.0
+Napas sesak berbunyi mengi dan asma kambuh setelah terpapar debu,KB-PULM-002,KB-PULM-002,1,1.0
+Gula darah sewaktu 450 mg/dl pasien lemas dan haus berlebihan,KB-ENDO-003,KB-ENDO-003,1,1.0
+Luka robek berdarah banyak akibat pecahan beling di kaki,KB-TRAUMA-005,KB-TRAUMA-005,1,1.0

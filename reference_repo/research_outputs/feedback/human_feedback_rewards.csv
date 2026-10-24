@@ -1,0 +1,5 @@
+conversation_id,response_id,prompt,model_version,retrieved_sources,feedback_label,reward_score,reviewer_id,timestamp
+CONV-001,RESP-001,Nyeri dada menjalar ke punggung dan sesak,llama-3.3-70b-versatile,['KB-CARD-001'],like,1.75,CLINICAL_REV_01,2026-10-23T06:15:00Z
+CONV-002,RESP-002,Bolehkan minum propranolol saat asma kumat?,llama-3.3-70b-versatile,['KB-PULM-002'],like,1.75,CLINICAL_REV_02,2026-10-23T06:18:00Z
+CONV-003,RESP-003,Resep obat diabetes tanpa rincian lab,llama-3.3-70b-versatile,['KB-ENDO-003'],dislike,-0.74,CLINICAL_REV_01,2026-10-23T06:20:00Z
+CONV-004,RESP-004,Pertolongan pertama luka iris pecahan kaca,llama-3.3-70b-versatile,['KB-TRAUMA-005'],like,1.75,CLINICAL_REV_03,2026-10-23T06:25:00Z

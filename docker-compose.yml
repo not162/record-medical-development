@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: services/ai-api/Dockerfile
+    container_name: clinical_ai_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - GROQ_API_KEY=${GROQ_API_KEY:-your_groq_api_key_here}
+      - GROQ_MODEL=qwen/qwen3.8-27b
+      - GROQ_DEFAULT_MODEL=qwen/qwen3.8-27b
+      - GROQ_FALLBACK_MODEL=openai/gpt-oss-120b
+      - JWT_SECRET_KEY=super-secret-clinical-ai-jwt-key-change-in-production-2026
+    volumes:
+      - ./database:/app/database
+      - ./datasets:/app/datasets
+      - ./models:/app/models
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: clinical_ai_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped

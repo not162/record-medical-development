@@ -1,0 +1,26 @@
+{
+  "total_rows": 66,
+  "total_columns": 4,
+  "columns": [
+    "text",
+    "label",
+    "text_clean",
+    "label_encoded"
+  ],
+  "missing_values": {
+    "text": 0,
+    "label": 0,
+    "text_clean": 0,
+    "label_encoded": 0
+  },
+  "duplicate_texts": 0,
+  "class_distribution": {
+    "Kardiologi": 11,
+    "Pulmonologi": 11,
+    "Trauma/Bedah": 11,
+    "Endokrinologi": 11,
+    "Gastroenterologi": 11,
+    "Psikiatri": 11
+  },
+  "is_balanced": true
+}

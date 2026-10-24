@@ -1,0 +1,17 @@
+{
+  "python_version": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "win32",
+  "torch_version": "2.11.0+cpu",
+  "cuda_available": false,
+  "device_name": "CPU",
+  "installed_packages": {
+    "pandas": "2.3.3",
+    "numpy": "2.2.6",
+    "sklearn": "1.8.0",
+    "matplotlib": "3.10.7",
+    "seaborn": "0.13.2",
+    "torch": "2.11.0+cpu"
+  },
+  "experiment_id": "EXP-RSUKT-2026-MED01",
+  "timestamp": "2026-10-23T07:04:49.350946+00:00"
+}

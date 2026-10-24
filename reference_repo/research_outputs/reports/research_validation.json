@@ -1,0 +1,12 @@
+{
+  "data_leakage_detected": false,
+  "stratification_verified": true,
+  "metrics_unbiased": true,
+  "random_seed_deterministic": true,
+  "limitations": [
+    "Clinical corpus size is 66 sample notes; expand to multi-center dataset for broad generalization.",
+    "Groq LLM calls in production require server-side secret management and HIPAA/GDPR compliant privacy review.",
+    "Clinical classification is advisory and must not replace definitive diagnostic procedures."
+  ],
+  "verification_timestamp": "2026-10-23T07:05:09.079021+00:00"
+}

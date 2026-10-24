@@ -1,0 +1,3 @@
+id,text,reasoning_error,error_type,correction
+RME-TEST-01,"Pasien asma diberikan propranolol",1,Contraindicated Drug Error,"Kontraindikasi asma"
+RME-TEST-02,"Pasien vertigo diberikan betahistin",0,None,""

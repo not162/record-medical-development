@@ -1,0 +1,14 @@
+id,text,reasoning_error,error_type,correction,source
+RME-001,"Pasien mengeluh nyeri dada kiri menjalar ke lengan kiri sejak 2 jam lalu. TD: 140/90 mmHg, HR: 98x/m. Hasil EKG menunjukkan elevasi segmen ST di lead V1-V4. Diagnosis kerja: GASTROENTERITIS AKUT.",1,Diagnostic Error,Diagnosis kerja seharusnya STEMI Anteroseptal.,medical_records.jsonl
+RME-002,"Pasien dengan riwayat asma bronkial datang dengan sesak napas berbunyi mengi. Diberikan terapi Nebulizer Ventolin (Salbutamol). Setelah terapi, sesak berkurang.",0,None,,medical_records.jsonl
+RME-003,"Pasien wanita, 28 tahun, G1P0A0 hamil 38 minggu datang untuk kontrol rutin. TD: 170/110 mmHg, proteinuria +3. Pasien diberikan terapi Ibuprofen untuk menurunkan tekanan darah.",1,Treatment Selection Error,"Ibuprofen dikontraindikasikan, seharusnya diberikan MgSO4.",medical_records.jsonl
+RME-004,"Anak laki-laki, 5 tahun, demam tinggi selama 4 hari disertai bintik-bintik merah di kulit. Uji torniket positif. Trombosit: 45.000/uL. Diagnosis: Demam Berdarah Dengue (DBD).",0,None,,medical_records.jsonl
+RME-005,Pasien diabetes melitus tipe 2 datang dengan luka gangren di kaki kanan. GDS: 450 mg/dL. Dokter memberikan resep insulin kerja cepat (Novorapid) tanpa disertai pembersihan luka.,1,Management Plan Error,Butuh debridement bedah dan antibiotik sistemik.,medical_records.jsonl
+RME-006,"Pasien mengeluh pusing berputar mendadak saat bangun tidur, disertai mual muntah. Terapi: Betahistin Mesilat 6mg 3x1. Diagnosis: Vertigo Posisi Paroksismal Jinak.",0,None,,medical_records.jsonl
+RME-007,Pasien dengan asma akut berat diberikan terapi beta bloker propranolol dosis tinggi untuk mengobati palpitasi jantungnya.,1,Contraindicated Drug Error,Propranolol kontraindikasi absolut pada asma karena memicu bronkospasme.,medical_records.jsonl
+RME-008,Pasien batuk berdahak kuning kehijauan disertai demam tinggi dan sesak napas. Ronki basah di kedua paru. Diagnosis: Pneumonia Komunitas. Terapi: Eritromisin.,0,None,,medical_records.jsonl
+RME-ERR-001,"Pasien anak demam tinggi 3 hari, dicurigai DBD, diberikan terapi aspirin dosis tinggi.",1,Contraindicated Drug Error,Aspirin kontraindikasi pada DBD,new_error_records.csv
+RME-ERR-002,"Wanita hamil trimester pertama mengeluh migren hebat, dokter meresepkan Ergotamin.",1,Contraindicated Drug Error,Ergotamin kontraindikasi pada kehamilan,new_error_records.csv
+RME-ERR-003,Pasien cedera kepala berat pasca kecelakaan dengan penurunan kesadaran hanya diberikan infus tanpa rujukan CT-Scan.,1,Management Plan Error,Wajib CT-Scan cito pada cedera kepala berat,new_error_records.csv
+RME-NORM-001,Pasien dewasa mengeluh batuk pilek biasa tanpa sesak. Diberikan edukasi istirahat dan parasetamol.,0,None,,new_normal_records.csv
+RME-NORM-002,Pasien diare akut tanpa dehidrasi diberikan oralit dan edukasi diet cairan di rumah.,0,None,,new_normal_records.csv

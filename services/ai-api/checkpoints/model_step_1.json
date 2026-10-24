@@ -1,0 +1,10 @@
+{
+  "step": 1,
+  "model_state": "ACTIVE",
+  "best_eval_loss": 1.7827951914509423,
+  "optimizer": {
+    "lr": 1e-05,
+    "type": "AdamW_CosineDecay"
+  },
+  "learning_paradigm": "On-Policy Distillation + GRPO"
+}

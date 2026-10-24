@@ -1,0 +1,32 @@
+{
+  "indobert_bilstm_checkpoint": {
+    "path": "models/indobert_lstm_clinical.pth",
+    "exists": true,
+    "size_mb": 478.3,
+    "architecture": "IndoBERT (12 layers, 768 hidden) + BiLSTM (128 hidden) + Linear (6 classes)"
+  },
+  "indobert_mlm_clinical": {
+    "path": "models/indobert_mlm_clinical",
+    "exists": true,
+    "files": [
+      "config.json",
+      "model.safetensors",
+      "tokenizer.json",
+      "tokenizer_config.json"
+    ],
+    "vocab_size": 50000,
+    "max_seq_length": 512
+  },
+  "dense_contextual_embeddings": {
+    "train_shape": [
+      14,
+      768
+    ],
+    "test_shape": [
+      5,
+      768
+    ],
+    "feature_dim": 768,
+    "extracted_from": "Pre-trained IndoBERT clinical representations"
+  }
+}

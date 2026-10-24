@@ -1,0 +1,20 @@
+# Large binary model checkpoints (>100MB exceeds GitHub hard limit)
+models/indobert_lstm_clinical.pth
+models/indobert_mlm_clinical/model.safetensors
+*.pth
+*.safetensors
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter & Editor checkpoints
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+
+# Environment & local credentials
+.env
+*.local

@@ -1,0 +1,19 @@
+{
+  "total_unique_records_audited": 13,
+  "error_records_count": 7,
+  "normal_records_count": 6,
+  "error_types_distribution": {
+    "None": 6,
+    "Contraindicated Drug Error": 3,
+    "Management Plan Error": 2,
+    "Diagnostic Error": 1,
+    "Treatment Selection Error": 1
+  },
+  "test_set_consensus_accuracy": 1.0,
+  "exported_files": [
+    "dataset/result_dataset/final_ojas_predictions.csv",
+    "dataset/result_dataset/final_ojas_predictions.jsonl",
+    "dataset/result_dataset/audited_clinical_predictions.csv",
+    "research_outputs/datasets/annotated/audited_clinical_records.csv"
+  ]
+}

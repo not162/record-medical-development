@@ -1,0 +1,11 @@
+{
+  "prompt": "Anda adalah Health Information Assistant di RS RSUKT.\nKonteks Medis:\n[KB-CARD-001] Tatalaksana Nyeri Dada dan Sindrom Koroner Akut (SKA): Nyeri dada retrosternal menjalar ke lengan kiri, leher, atau rahang dengan durasi >20 menit merupakan tanda curiga infark miokard akut (STEMI/NSTEMI). Tindakan segera: Pasang EKG 12 sandapan dalam 10 menit pertama. Berikan O2 bila SpO2 <90%, ISDN sublingual jika tidak hipotensi, serta loading asetosal 160-320 mg dan klopidogrel 300 mg. Rujuk segera ke pusat intervensi perkutan (PCI).\n[KB-PSIK-006] Intervensi Gangguan Panik dan Kecemasan Akut: Serangan panik akut ditandai dengan palpitasi, hiperventilasi, tremor, dan perasaan mendekati ajal tanpa kelainan kardiologis organik. Penanganan awal berfokus pada teknik pernapasan terkontrol (pursed-lip breathing), penenangan suportif verbal, dan rujukan ke psikiater untuk evaluasi terapi SSRI atau psikoterapi CBT.\n\nKeluhan Pengguna: Dada kiri sakit berdebar dan sesak napas tiba-tiba\n\nInstruksi:\n1. Berikan penjelasan kesehatan yang empatik, tenang, dan mudah dipahami dalam Bahasa Indonesia.\n2. Wajib sertakan 'Peringatan Tanda Bahaya (Red Flags)' dan anjuran segera ke IGD jika ada tanda kegawatdaruratan.\n3. Wajib sertakan Disclaimer: 'Informasi ini bersifat edukatif dan bukan merupakan pengganti diagnosis atau resep dokter langsung.'",
+  "response": "Berdasarkan protokol klinis [KB-CARD-001], untuk keluhan 'Dada kiri sakit berdebar dan sesak napas tiba-tiba', tindakan medis yang direkomendasikan adalah evaluasi segera tanda vital dan pemberian terapi lini pertama sesuai panduan. Pasien dianjurkan untuk berkonsultasi langsung dengan dokter spesialis Kardiologi.\n\n\u26a0\ufe0f PERINGATAN: Bila keluhan disertai sesak napas berat, nyeri dada hebat, atau penurunan kesadaran, segera kunjungi IGD rumah sakit terdekat.\n*Disclaimer: Informasi ini bersifat edukatif dan bukan pengganti diagnosis resmi dokter.*",
+  "model": "llama-3.3-70b-versatile",
+  "latency_sec": 0.12,
+  "estimated_tokens": 330,
+  "sources": [
+    "KB-CARD-001",
+    "KB-PSIK-006"
+  ]
+}

@@ -1,0 +1,5 @@
+Model,Accuracy,Precision,Recall,F1-Score
+Bipolar Hebbian,1.0,1.0,1.0,1.0
+Bipolar Perceptron,1.0,1.0,1.0,1.0
+Logistic Regression (IndoBERT),1.0,1.0,1.0,1.0
+Random Forest (IndoBERT),1.0,1.0,1.0,1.0

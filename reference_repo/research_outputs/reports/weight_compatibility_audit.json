@@ -1,0 +1,23 @@
+{
+  "checkpoint_analyzed": "models/indobert_mlm_clinical/model.safetensors",
+  "pretraining_task": "Masked Language Modeling (BertForMaskedLM)",
+  "target_downstream_task": "Clinical Sequence Classification & Safety Guardrail",
+  "weights_diagnosis": {
+    "unexpected_keys": [
+      "cls.predictions.bias",
+      "cls.predictions.transform.LayerNorm.bias",
+      "cls.predictions.transform.dense.bias",
+      "cls.predictions.transform.dense.weight",
+      "cls.predictions.transform.LayerNorm.weight",
+      "cls.predictions.decoder.weight"
+    ],
+    "unexpected_explanation": "Kunci cls.predictions.* adalah lapisan proyeksi kosa kata (MLM Head) yang secara matematis dirancang untuk memprediksi token tertutup saat pra-latih. Lapangan ini sengaja diabaikan (discarded) saat transfer learning menuju tugas klasifikasi klinis karena tidak diperlukan untuk prediksi label kelas.",
+    "missing_keys": [
+      "pooler.dense.weight",
+      "pooler.dense.bias"
+    ],
+    "missing_explanation": "Kunci pooler.dense.* adalah pooling layer standar BERT untuk representasi token [CLS]. Pada model MLM murni, pooling layer belum dilatih sehingga diinisialisasi secara acak (freshly initialized) atau digantikan oleh arsitektur BiLSTM/Linear pooling khusus seperti pada indobert_lstm_clinical.pth.",
+    "clinical_impact": "NORMAL & EXPECTED BEHAVIOR pada seluruh pipeline transfer learning Hugging Face / Transformers. Tidak ada degradasi bobot representasi transformer 12-layer dasar."
+  },
+  "recommended_loading_solution": "Gunakan BertForSequenceClassification.from_pretrained(..., ignore_mismatched_sizes=True) atau BertModel(..., add_pooling_layer=False) untuk bypass peringatan."
+}

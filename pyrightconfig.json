@@ -1,0 +1,20 @@
+{
+  "include": [
+    "services/ai-api",
+    "tests"
+  ],
+  "extraPaths": [
+    "services/ai-api",
+    "services/ai-api/.venv/Lib/site-packages",
+    "C:/Python313/Lib/site-packages",
+    "scripts"
+  ],
+  "reportGeneralTypeIssues": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportArgumentType": "none",
+  "reportAssignmentType": "none",
+  "reportOptionalMemberAccess": "none",
+  "venvPath": "services/ai-api",
+  "venv": ".venv",
+  "typeCheckingMode": "basic"
+}

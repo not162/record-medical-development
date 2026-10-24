@@ -1,0 +1,55 @@
+{
+  "project": "RSUKT Hybrid Human-Agent Medical Chatbot",
+  "version": "v1.2.0",
+  "backend_integration": {
+    "endpoints": [
+      {
+        "path": "/api/chat",
+        "method": "POST",
+        "description": "Hybrid Human-Agent RAG Medical Chatbot endpoint",
+        "request_schema": {
+          "role": "health_info | research",
+          "user_query": "string",
+          "session_id": "string",
+          "top_k": "integer (default 3)"
+        },
+        "response_schema": {
+          "answer": "string",
+          "retrieved_evidence": [
+            {
+              "doc_id": "string",
+              "department": "string",
+              "score": "float",
+              "excerpt": "string"
+            }
+          ],
+          "predicted_specialty": "string",
+          "triage_urgency": "EMERGENCY | URGENT | ROUTINE",
+          "disclaimer": "string",
+          "model_version": "string",
+          "latency_ms": "integer"
+        }
+      },
+      {
+        "path": "/api/feedback",
+        "method": "POST",
+        "description": "Human feedback logging endpoint",
+        "request_schema": {
+          "conversation_id": "string",
+          "response_id": "string",
+          "feedback_label": "like | dislike",
+          "reviewer_id": "string"
+        },
+        "response_schema": {
+          "status": "success",
+          "recorded_reward": "float (+1.75 / -0.74)"
+        }
+      }
+    ],
+    "static_artifacts_to_mount": {
+      "tfidf_vectorizer": "research_outputs/models/baselines/tfidf_vectorizer.joblib",
+      "classifier_model": "research_outputs/models/baselines/logistic_regression.joblib",
+      "rag_knowledge_index": "research_outputs/rag/indexes/kb_chunks.json"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "chunk_id": "KB-CARD-001_c1",
+    "doc_id": "KB-CARD-001",
+    "department": "Kardiologi",
+    "text": "Tatalaksana Nyeri Dada dan Sindrom Koroner Akut (SKA): Nyeri dada retrosternal menjalar ke lengan kiri, leher, atau rahang dengan durasi >20 menit merupakan tanda curiga infark miokard akut (STEMI/NSTEMI). Tindakan segera: Pasang EKG 12 sandapan dalam 10 menit pertama. Berikan O2 bila SpO2 <90%, ISDN sublingual jika tidak hipotensi, serta loading asetosal 160-320 mg dan klopidogrel 300 mg. Rujuk segera ke pusat intervensi perkutan (PCI)."
+  },
+  {
+    "chunk_id": "KB-PULM-002_c1",
+    "doc_id": "KB-PULM-002",
+    "department": "Pulmonologi",
+    "text": "Protokol Asma Bronkial dan PPOK Eksaserbasi Akut: Sesak napas berbunyi mengi (wheezing) merupakan manifestasi bronkospasme pada asma. Terapi lini pertama: Inhalasi bronkodilator kerja cepat (SABA) seperti Nebulizer Salbutamol 2.5-5 mg dikombinasikan dengan Ipratropium Bromida. Jangan memberikan beta-blocker non-selektif (seperti propranolol) karena kontraindikasi fatal yang memicu bronkospasme parah."
+  },
+  {
+    "chunk_id": "KB-ENDO-003_c1",
+    "doc_id": "KB-ENDO-003",
+    "department": "Endokrinologi",
+    "text": "Penanganan Krisis Hiperglikemia dan Ketoasidosis Diabetik (KAD): Pasien diabetes dengan kadar gula darah sewaktu (GDS) >400 mg/dL, dehidrasi, mual muntah, atau napas Kussmaul memerlukan hidrasi NaCl 0.9% secara agresif dan evaluasi keton urine/darah. Terapi insulin reguler intravena diberikan setelah rehidrasi awal dan koreksi kalium (K >3.3 mEq/L)."
+  },
+  {
+    "chunk_id": "KB-GASTRO-004_c1",
+    "doc_id": "KB-GASTRO-004",
+    "department": "Gastroenterologi",
+    "text": "Diagnosis Banding Nyeri Epigastrium dan Dispepsia: Nyeri ulu hati yang diperberat makanan pedas atau asam disertai mual merujuk pada sindrom dispepsia atau gastritis erosif. Terapi awal mencakup antasida, Proton Pump Inhibitor (Omeprazole 20-40 mg), atau antagonis H2. Namun, nyeri ulu hati refrakter pada usia >40 tahun harus dievaluasi dengan EKG untuk menyingkirkan infark miokard dinding inferior."
+  },
+  {
+    "chunk_id": "KB-TRAUMA-005_c1",
+    "doc_id": "KB-TRAUMA-005",
+    "department": "Trauma/Bedah",
+    "text": "Manajemen Perdarahan Akut dan Luka Terbuka: Luka robek dengan perdarahan aktif memerlukan hemostasis langsung dengan penekanan langsung (direct pressure) dan balut tekan. Lakukan pembersihan luka irigasi NaCl fisiologis, debridement aseptik, serta pemberian profilaksis Anti-Tetanus Serum (ATS) atau vaksin tetanus toksoid (TT)."
+  },
+  {
+    "chunk_id": "KB-PSIK-006_c1",
+    "doc_id": "KB-PSIK-006",
+    "department": "Psikiatri",
+    "text": "Intervensi Gangguan Panik dan Kecemasan Akut: Serangan panik akut ditandai dengan palpitasi, hiperventilasi, tremor, dan perasaan mendekati ajal tanpa kelainan kardiologis organik. Penanganan awal berfokus pada teknik pernapasan terkontrol (pursed-lip breathing), penenangan suportif verbal, dan rujukan ke psikiater untuk evaluasi terapi SSRI atau psikoterapi CBT."
+  }
+]

@@ -1,0 +1,67 @@
+text,label,text_clean,label_encoded
+"Pasien mengeluhkan dada berdebar-debar dan nyeri menjalar ke tangan kiri. Ada riwayat ht. NIK: 3171010203040506, Tn. Andi Wijaya.",Kardiologi,pasien mengeluhkan dada berdebar-debar dan nyeri menjalar ke tangan kiri ada riwayat hipertensi nik: [sensitif: nik] tn [sensitif: nama],2
+Batuk berdahak sudah 2 minggu disertai sesak napas berat sejak kemarin malam.,Pulmonologi,batuk berdahak sudah 2 minggu disertai sesak napas berat sejak kemarin malam,4
+"Luka robek pada kaki kanan akibat pecahan kaca, perdarahan aktif di IGD RS.",Trauma/Bedah,luka robek pada kaki kanan akibat pecahan kaca perdarahan aktif di instalasi gawat darurat rs,5
+"Kadar gula darah sewaktu (gds) mencapai 410 mg/dL, pasien lemas dan sering haus.",Endokrinologi,kadar gula darah sewaktu gula darah sewaktu mencapai 410 mgdl pasien lemas dan sering haus,0
+Pasien mengeluhkan perih di ulu hati disertai mual dan muntah pasca makan pedas.,Gastroenterologi,pasien mengeluhkan perih di ulu hati disertai mual dan muntah setelah makan pedas,1
+"Pasien merasa sangat cemas, sulit tidur, dan sering panik tanpa sebab yang jelas.",Psikiatri,pasien merasa sangat cemas sulit tidur dan sering panik tanpa sebab yang jelas,3
+Nyeri dada sebelah kiri terasa sangat menusuk dan menembus ke punggung belikat.,Kardiologi,nyeri dada sebelah kiri terasa sangat menusuk dan menembus ke punggung belikat,2
+Mengeluhkan sesak napas berat saat beraktivitas ringan disertai jantung berdebar kencang.,Kardiologi,mengeluhkan sesak napas berat saat beraktivitas ringan disertai jantung berdebar kencang,2
+Tekanan darah pasien melonjak drastis hingga mencapai 180/110 mmHg di IGD.,Kardiologi,tekanan darah pasien melonjak drastis hingga mencapai 180110 mmhg di instalasi gawat darurat,2
+Riwayat penyakit jantung koroner dengan konsumsi obat pengencer darah rutin.,Kardiologi,riwayat penyakit jantung koroner dengan konsumsi obat pengencer darah rutin,2
+Pasien tiba-tiba pingsan setelah mengeluhkan rasa pusing hebat berputar dan dada sesak.,Kardiologi,pasien tiba-tiba pingsan setelah mengeluhkan rasa pusing hebat berputar dan dada sesak,2
+Hasil rekam jantung EKG menunjukkan adanya tanda-tanda iskemia miokard akut.,Kardiologi,hasil rekam jantung ekg menunjukkan adanya tanda-tanda iskemia miokard akut,2
+Denyut nadi tidak teratur takikardia disertai keringat dingin mengucur deras.,Kardiologi,denyut nadi tidak teratur takikardia disertai keringat dingin mengucur deras,2
+Pasien dengan gagal jantung kongestif mengeluhkan kedua kaki bengkak sejak seminggu.,Kardiologi,pasien dengan gagal jantung kongestif mengeluhkan kedua kaki bengkak sejak seminggu,2
+Nyeri ulu hati yang tidak kunjung membaik dengan obat maag menjalar ke leher kiri.,Kardiologi,nyeri ulu hati yang tidak kunjung membaik dengan obat maag menjalar ke leher kiri,2
+Pemeriksaan fisik menunjukkan bunyi jantung tambahan mur-mur derajat tiga.,Kardiologi,pemeriksaan fisik menunjukkan bunyi jantung tambahan mur-mur derajat tiga,2
+Batuk kering membandel lebih dari tiga minggu disertai penurunan berat badan drastis.,Pulmonologi,batuk kering membandel lebih dari tiga minggu disertai penurunan berat badan drastis,4
+Pasien mengeluhkan mengi berbunyi ngiiik yang sangat keras saat malam hari.,Pulmonologi,pasien mengeluhkan mengi berbunyi ngiiik yang sangat keras saat malam hari,4
+Riwayat asma bronkial kambuh setelah terpapar debu tebal di tempat kerja.,Pulmonologi,riwayat asma bronkial kambuh setelah terpapar debu tebal di tempat kerja,4
+Batuk berdahak kental kehijauan disertai demam menggigil tinggi sejak 4 hari.,Pulmonologi,batuk berdahak kental kehijauan disertai demam menggigil tinggi sejak 4 hari,4
+Pemeriksaan rontgen dada toraks menunjukkan adanya infiltrat luas di paru kanan.,Pulmonologi,pemeriksaan rontgen dada toraks menunjukkan adanya infiltrat luas di paru kanan,4
+Sesak napas akut dengan saturasi oksigen drop hingga 88 persen di udara bebas.,Pulmonologi,sesak napas akut dengan saturasi oksigen drop hingga 88 persen di udara bebas,4
+Pasien dicurigai menderita tuberkulosis paru akibat batuk berdarah segar pagi ini.,Pulmonologi,pasien dicurigai menderita tuberkulosis paru akibat batuk berdarah segar pagi ini,4
+Nyeri dada tajam bertambah parah saat menarik napas dalam atau batuk.,Pulmonologi,nyeri dada tajam bertambah parah saat menarik napas dalam atau batuk,4
+Riwayat merokok berat selama 20 tahun dengan diagnosis penyakit paru obstruktif kronis.,Pulmonologi,riwayat merokok berat selama 20 tahun dengan diagnosis penyakit paru obstruktif kronis,4
+Hasil auskultasi paru terdengar suara ronki basah kasar di kedua basal paru.,Pulmonologi,hasil auskultasi paru terdengar suara ronki basah kasar di kedua basal paru,4
+Luka robek terbuka menganga pada dahi akibat benturan keras di aspal jalanan.,Trauma/Bedah,luka robek terbuka menganga pada dahi akibat benturan keras di aspal jalanan,5
+Patah tulang tertutup pada lengan kiri bawah pasca terjatuh dari tangga rumah.,Trauma/Bedah,patah tulang tertutup pada lengan kiri bawah setelah terjatuh dari tangga rumah,5
+Perdarahan aktif mengalir deras dari luka tusuk di bagian perut kanan bawah.,Trauma/Bedah,perdarahan aktif mengalir deras dari luka tusuk di bagian perut kanan bawah,5
+Pasien kecelakaan lalu lintas dengan cedera kepala ringan sempat pingsan 5 menit.,Trauma/Bedah,pasien kecelakaan lalu lintas dengan cedera kepala ringan sempat pingsan 5 menit,5
+Luka bakar derajat dua pada seluruh telapak tangan akibat terkena air mendidih.,Trauma/Bedah,luka bakar derajat dua pada seluruh telapak tangan akibat terkena air mendidih,5
+Nyeri hebat mendadak pada seluruh perut disertai ketegangan dinding perut akut.,Trauma/Bedah,nyeri hebat mendadak pada seluruh perut disertai ketegangan dinding perut akut,5
+Kaki kanan dicurigai fraktur karena bengkak kebiruan dan tidak bisa digerakkan.,Trauma/Bedah,kaki kanan dicurigai fraktur karena bengkak kebiruan dan tidak bisa digerakkan,5
+Terdapat luka tusuk dalam di area paha dengan serpihan besi masih menancap.,Trauma/Bedah,terdapat luka tusuk dalam di area paha dengan serpihan besi masih menancap,5
+Mengalami pendarahan hebat di instalasi gawat darurat setelah terjepit pintu gerbang.,Trauma/Bedah,mengalami pendarahan hebat di instalasi gawat darurat setelah terjepit pintu gerbang,5
+Luka robek di tumit kaki kiri akibat terkena pecahan kaca tebal di kamar mandi.,Trauma/Bedah,luka robek di tumit kaki kiri akibat terkena pecahan kaca tebal di kamar mandi,5
+Penderita diabetes melitus mengeluhkan luka di ibu jari kaki yang membusuk hitam.,Endokrinologi,penderita diabetes melitus mengeluhkan luka di ibu jari kaki yang membusuk hitam,0
+Hasil cek gula darah sewaktu gds mendadak tinggi sekali melampaui limit alat ukur.,Endokrinologi,hasil cek gula darah sewaktu gula darah sewaktu mendadak tinggi sekali melampaui limit alat ukur,0
+Berat badan menurun drastis dalam sebulan padahal porsi makan meningkat banyak.,Endokrinologi,berat badan menurun drastis dalam sebulan padahal porsi makan meningkat banyak,0
+Pasien sering mengeluhkan haus berlebih sering kencing malam hari dan badan lemas.,Endokrinologi,pasien sering mengeluhkan haus berlebih sering kencing malam hari dan badan lemas,0
+Riwayat diabetes tidak terkontrol dengan konsumsi suntik insulin tidak teratur.,Endokrinologi,riwayat diabetes tidak terkontrol dengan konsumsi suntik insulin tidak teratur,0
+Kadar gula darah puasa gdp menunjukkan angka tinggi 280 mg/dL tadi pagi.,Endokrinologi,kadar gula darah puasa gdp menunjukkan angka tinggi 280 mgdl tadi pagi,0
+Mengalami hipoglikemia gemetar dingin dan lemas setelah telat makan siang.,Endokrinologi,mengalami hipoglikemia gemetar dingin dan lemas setelah telat makan siang,0
+Terdapat benjolan di leher depan ikut bergerak saat menelan dicurigai tiroid.,Endokrinologi,terdapat benjolan di leher depan ikut bergerak saat menelan dicurigai tiroid,0
+Pasien mengeluh sering mengantuk hebat lemas tak bertenaga serta kulit kering bersisik.,Endokrinologi,pasien mengeluh sering mengantuk hebat lemas tak bertenaga serta kulit kering bersisik,0
+Hasil laboratorium HbA1c pasien sangat tinggi mencapai 11.5 persen.,Endokrinologi,hasil laboratorium hba1c pasien sangat tinggi mencapai 115 persen,0
+Nyeri melilit hebat di ulu hati disertai muntah cairan asam lambung berwarna kuning.,Gastroenterologi,nyeri melilit hebat di ulu hati disertai muntah cairan asam lambung berwarna kuning,1
+Mengeluhkan perut kembung begah dan mual parah setiap selesai makan nasi.,Gastroenterologi,mengeluhkan perut kembung begah dan mual parah setiap selesai makan nasi,1
+Buang air besar cair lebih dari lima kali sehari bercampur lendir dan darah.,Gastroenterologi,buang air besar cair lebih dari lima kali sehari bercampur lendir dan darah,1
+Pasien mengeluhkan sulit buang air besar konstipasi sudah satu minggu lamanya.,Gastroenterologi,pasien mengeluhkan sulit buang air besar konstipasi sudah satu minggu lamanya,1
+Rasa panas terbakar di dada setelah makan makanan bersantan dan pedas kemarin.,Gastroenterologi,rasa panas terbakar di dada setelah makan makanan bersantan dan pedas kemarin,1
+Mata dan kulit seluruh tubuh tampak menguning disertai urin berwarna pekat teh tua.,Gastroenterologi,mata dan kulit seluruh tubuh tampak menguning disertai urin berwarna pekat teh tua,1
+Riwayat gastritis kronik kambuh hebat karena stres kerjaan dan telat makan.,Gastroenterologi,riwayat gastritis kronik kambuh hebat karena stres kerjaan dan telat makan,1
+Muntah darah berwarna hitam pekat seperti kopi disertai buang air besar hitam.,Gastroenterologi,muntah darah berwarna hitam pekat seperti kopi disertai buang air besar hitam,1
+Sakit perut kanan bawah menjalar ke selangkangan nyeri tekan sangat hebat.,Gastroenterologi,sakit perut kanan bawah menjalar ke selangkangan nyeri tekan sangat hebat,1
+Nyeri perut kiri bawah disertai diare encer sejak pulang dari luar kota.,Gastroenterologi,nyeri perut kiri bawah disertai diare encer sejak pulang dari luar kota,1
+Pasien mengeluhkan cemas berlebih detak jantung kencang tanpa pemicu luar.,Psikiatri,pasien mengeluhkan cemas berlebih detak jantung kencang tanpa pemicu luar,3
+Kesulitan tidur nyenyak insomnia kronis terbangun tengah malam susah tidur lagi.,Psikiatri,kesulitan tidur nyenyak insomnia kronis terbangun tengah malam susah tidur lagi,3
+Merasa sedih berkepanjangan kehilangan minat hobi dan sering menangis sendiri.,Psikiatri,merasa sedih berkepanjangan kehilangan minat hobi dan sering menangis sendiri,3
+Sering mengalami serangan panik dada terasa terikat kuat seperti mau mati mendadak.,Psikiatri,sering mengalami serangan panik dada terasa terikat kuat seperti mau mati mendadak,3
+Mendengar bisikan-bisikan aneh di telinga padahal tidak ada orang di sekelilingnya.,Psikiatri,mendengar bisikan-bisikan aneh di telinga padahal tidak ada orang di sekelilingnya,3
+Riwayat depresi sedang sedang dalam pengobatan terapi obat penenang dosis rendah.,Psikiatri,riwayat depresi sedang sedang dalam pengobatan terapi obat penenang dosis rendah,3
+Pasien merasa ketakutan berlebihan keluar rumah dan enggan bersosialisasi.,Psikiatri,pasien merasa ketakutan berlebihan keluar rumah dan enggan bersosialisasi,3
+Pikiran kacau sulit konsentrasi bekerja dan sering merasa bersalah berlebihan.,Psikiatri,pikiran kacau sulit konsentrasi bekerja dan sering merasa bersalah berlebihan,3
+Mengeluhkan perubahan suasana hati mood swing ekstrim dari senang ke sedih cepat.,Psikiatri,mengeluhkan perubahan suasana hati mood swing ekstrim dari senang ke sedih cepat,3
+Pasien cemas berlebihan memikirkan masa depan hingga gemetar dan berkeringat dingin.,Psikiatri,pasien cemas berlebihan memikirkan masa depan hingga gemetar dan berkeringat dingin,3

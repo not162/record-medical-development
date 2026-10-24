@@ -1,0 +1,11 @@
+{
+  "user_query": "Pasien dengan riwayat asma akut berat meminta resep obat propranolol untuk meredakan dada berdebar.",
+  "predicted_department": "Kardiologi",
+  "safety_guardrail": {
+    "has_reasoning_error": true,
+    "warning": "KONTRAINDIKASI ABSOLUT: Beta-blocker (propranolol) tidak boleh diberikan pada pasien asma karena memicu bronkospasme fatal."
+  },
+  "cardiovascular_risk_assessment": "63.9% (HIGH RISK (Tinggi))",
+  "urgency_level": "HIGH RISK (Tinggi)",
+  "timestamp": "2026-10-23T07:20:43.802183+00:00"
+}

@@ -1,0 +1,56 @@
+{
+  "audit_name": "RSUKT Clinical AI Periodic Audit",
+  "timestamp": "2026-10-23T19:50:48.742646+00:00",
+  "environment": "production",
+  "checks": {
+    "database_integrity": {
+      "status": "PASS",
+      "details": {
+        "integrity_ok": true,
+        "integrity_raw": [
+          "ok"
+        ],
+        "fk_violations_count": 0,
+        "journal_mode": "WAL",
+        "foreign_keys_enabled": true,
+        "checked_at": "2026-10-23T19:50:48.804409+00:00"
+      }
+    },
+    "clinical_guardrails": {
+      "status": "PASS",
+      "prompt_injection_defense": "PASS",
+      "red_flag_emergency_triage": "PASS",
+      "contraindication_interception": "PASS",
+      "pii_sanitization": "PASS"
+    },
+    "knowledge_index": {
+      "status": "PASS",
+      "total_datasets": 112,
+      "approved_datasets": 112,
+      "quarantined_datasets": 0,
+      "indexed_chunks": 758
+    },
+    "model_registry": {
+      "status": "PASS",
+      "active_model": {
+        "model_name": "clinical_text_classifier",
+        "version": "v1.0.0-test",
+        "algorithm": "Tfidf_LogisticRegression",
+        "artifact_exists": true
+      }
+    },
+    "security_audit_logs": {
+      "status": "PASS",
+      "total_logs": 803,
+      "forbidden_rejections": 0
+    },
+    "backup_snapshot": {
+      "status": "PASS",
+      "backup_file": "clinical_agent_backup_20261024_025049.db",
+      "sha256": "d8bd564508584ec50e59c900474451a61e778dfa51f2b796f6b94247effdb85d"
+    }
+  },
+  "overall_status": "PASS",
+  "critical_findings": [],
+  "duration_seconds": 0.644
+}

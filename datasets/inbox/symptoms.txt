@@ -1,0 +1,42 @@
+# PROTOKOL KLINIS DAN MANAJEMEN GEJALA DARURAT MEDIS RSUKT
+Versi: 2.1.0-KEMKES
+Tanggal Efektif: 2026-01-15
+Klasifikasi Akses: Public Medical Knowledge
+Penerbit: Komite Medis dan Keselamatan Pasien RS RSUKT
+
+1. PROTOKOL KARDIOVASKULAR: SINDROM KORONER AKUT (SKA) DAN NYERI DADA
+Nyeri dada retrosternal menjalar ke lengan kiri, leher, atau rahang dengan durasi >20 menit merupakan tanda curiga infark miokard akut (STEMI/NSTEMI).
+Gejala penyerta meliputi: diaphoresis (keringat dingin deras), dispnea (sesak napas), mual, dan presinkop.
+Tindakan medis segera: Rekam EKG 12 sandapan dalam 10 menit pertama kedatangan pasien di IGD.
+Terapi awal: Berikan Oksigen bila SpO2 <90%, Isosorbid Dinitrat (ISDN) 5 mg sublingual jika tekanan darah sistolik tidak kurang dari 90 mmHg (jangan berikan bila ada riwayat konsumsi sildenafil dalam 24 jam).
+Loading antithrombotik: Asetosal (Aspirin) 160-320 mg dikunyah dan Klopidogrel 300-600 mg per oral.
+Rujuk segera ke pusat intervensi perkutan (Percutaneous Coronary Intervention / PCI) primer dalam <120 menit.
+
+2. PROTOKOL PULMONOLOGI: ASMA BRONKIAL DAN PPOK EKSASERBASI AKUT
+Sesak napas berbunyi mengi (wheezing) ekspiratoir merupakan manifestasi utama spasme bronkus pada pasien asma.
+Tanda keparahan: Ketidakmampuan menyelesaikan satu kalimat dalam satu tarikan napas, retraksi otot interkostal, dan laju pernapasan >30 kali/menit.
+Terapi lini pertama: Inhalasi bronkodilator kerja cepat (SABA) yaitu Nebulizer Salbutamol 2.5-5.0 mg dikombinasikan dengan Ipratropium Bromida 0.5 mg setiap 20 menit selama 1 jam pertama.
+Kortikosteroid sistemik: Metilprednisolon 40-60 mg intravena atau Prednison 40-50 mg oral.
+PERINGATAN KESELAMATAN: DILARANG KERAS memberikan obat golongan Beta-blocker non-selektif (seperti Propranolol, Timolol, atau Nadolol) karena memicu bronkospasme berat yang berpotensi fatal!
+
+3. PROTOKOL ENDOKRINOLOGI: KETOASIDOSIS DIABETIK (KAD) DAN HIPERGLIKEMIA
+Pasien dengan riwayat Diabetes Melitus Tipe 1 atau Tipe 2 yang datang dengan kadar GDS >400 mg/dL, dehidrasi berat, mual muntah, dan pernapasan Kussmaul (cepat dan dalam berbau aseton) harus dicurigai KAD.
+Pemeriksaan penunjang: Analisis Gas Darah (asidosis metabolik dengan anion gap meningkat), keton darah atau urin positif kuat.
+Resusitasi cairan: Rehidrasi agresif menggunakan NaCl 0.9% 1000 mL pada jam pertama, dilanjutkan 500-1000 mL/jam sesuai status hidrasi.
+Insulinoterapi: Berikan Insulin Regular intravena bolus 0.1 IU/kgBB diikuti infus kontinyu 0.1 IU/kgBB/jam HANYA SETELAH kadar Kalium serum terkonfirmasi >3.3 mEq/L.
+
+4. PROTOKOL GASTROENTEROLOGI: NYERI EPIGASTRIUM DAN DISPEPSIA FUNGSIONAL
+Nyeri ulu hati yang diperberat konsumsi makanan asam/pedas disertai rasa begah dan bersendawa seringkali mengarah pada sindrom dispepsia atau gastritis.
+Tatalaksana medikamentosa: Antasida suspensi 3x1 sendok makan, dikombinasikan dengan Proton Pump Inhibitor (PPI) seperti Omeprazole 20-40 mg atau Pantoprazole 40 mg sebelum makan.
+PENTING (RED FLAGS): Pada pasien berusia >40 tahun atau memiliki riwayat penyakit jantung koroner dengan keluhan nyeri ulu hati yang tidak berkurang dengan antasida, WAJIB dilakukan pemeriksaan EKG untuk menyingkirkan infark miokard dinding inferior.
+
+5. PROTOKOL TRAUMA DAN BEDAH: PENANGANAN LUKA ROBEK DAN PERDARAHAN
+Pasien dengan trauma tumpul atau tajam dengan perdarahan terbuka aktif harus segera ditangani dengan teknik balut tekan langsung (direct pressure) di atas luka menggunakan kassa steril.
+Irigasi luka menggunakan larutan NaCl fisiologis 0.9% dalam jumlah cukup untuk dekontaminasi partikel kotoran.
+Lakukan penilaian status imunisasi tetanus. Berikan Vaksin Tetanus Toksoid (TT) 0.5 mL intramuskular dan Serum Anti-Tetanus (ATS) 1500 IU bila luka kotor atau berisiko tinggi.
+
+6. PROTOKOL PSIKIATRI: GANGGUAN PANIK AKUT DAN HIPERVENTILASI
+Serangan panik mendadak ditandai palpitasi jantung berdebar cepat, sensasi tercekik, tremor kedua tangan, parestesia (kesemutan jari), dan perasaan takut mati.
+Pemeriksaan klinis objektif tidak menunjukkan iskemia jantung atau gagal napas organik.
+Tindakan awal: Lakukan pursed-lip breathing atau pernapasan diafragma perlahan (tarik napas 4 detik, hembuskan 6 detik). Berikan reassurance suportif secara verbal di lingkungan tenang tanpa kebisingan.
+Hindari pemberian sedatif agresif sebelum evaluasi kejiwaan dan konsultasi dokter spesialis kedokteran jiwa (psikiater).

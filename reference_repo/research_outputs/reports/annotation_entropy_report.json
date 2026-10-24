@@ -1,0 +1,6 @@
+{
+  "label_shannon_entropy": 2.585,
+  "max_possible_entropy": 2.585,
+  "cohen_kappa_inter_annotator": 0.92,
+  "kappa_interpretation": "Almost Perfect Agreement (>0.80)"
+}

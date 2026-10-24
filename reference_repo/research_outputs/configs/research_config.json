@@ -1,0 +1,52 @@
+{
+  "project_name": "RSUKT-Hybrid-Medical-Chatbot",
+  "experiment_id": "EXP-RSUKT-2026-MED01",
+  "experiment_version": "v1.2.0",
+  "timestamp": "2026-10-23T07:04:49.350946+00:00",
+  "random_seed": 42,
+  "dataset_paths": {
+    "clinical_triage": "df_clinical_combined.csv",
+    "medical_records": "datasets/raw/medical_records.jsonl",
+    "labeled_errors": "dataset/labeled_results/new_error_records.csv",
+    "labeled_normals": "dataset/labeled_results/new_normal_records.csv"
+  },
+  "output_dir": "research_outputs",
+  "language": {
+    "primary": "Indonesian (id)",
+    "secondary": "English (en)"
+  },
+  "text_column": "text",
+  "label_column": "label",
+  "task_type": "multiclass_classification_and_rag",
+  "split_ratios": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "model_config": {
+    "tfidf_max_features": 500,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "dl_hidden_dim": 64,
+    "dl_epochs": 35,
+    "dl_lr": 0.003,
+    "dl_batch_size": 8
+  },
+  "rag_config": {
+    "embedding_dim": 128,
+    "top_k": 3,
+    "rerank_top_n": 2,
+    "similarity_metric": "cosine_hybrid"
+  },
+  "groq_config": {
+    "model_id": "llama-3.3-70b-versatile",
+    "temperature": 0.2,
+    "max_tokens": 1024
+  },
+  "reward_weights": {
+    "like": 1.75,
+    "dislike": -0.74
+  }
+}
