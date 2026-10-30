@@ -1,8 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
-  "buildCommand": "cd apps/web && npm run build",
-  "outputDirectory": "apps/web/.next",
+  "framework": null,
   "functions": {
     "api/**/*.py": {
       "includeFiles": "services/ai-api/**",
@@ -12,6 +10,10 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/(health|docs|openapi.json)",
       "destination": "/api/index.py"
     }
   ],
