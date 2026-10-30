@@ -26,7 +26,10 @@ from sklearn.metrics import (
 from app.config import settings
 
 MODELS_DIR = Path("models/cardio_risk")
-MODELS_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 
 NUMERICAL_FEATURES = [
     "age",

@@ -57,15 +57,52 @@ def resolve_database_path() -> Path:
             pass
         return fallback
 
+def resolve_root_dir() -> Path:
+    current = Path(__file__).resolve()
+    for p in current.parents:
+        if (p / "services" / "ai-api").exists() or (p / "datasets").exists():
+            return p
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        return Path("/var/task")
+    return current.parent.parent.parent.parent
+
+
+def resolve_datasets_dir(root: Path) -> Path:
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        packaged = root / "datasets"
+        if packaged.exists():
+            return packaged
+        tmp_dir = Path("/tmp/datasets")
+        try:
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        return tmp_dir
+    return root / "datasets"
+
+
+def resolve_models_dir(root: Path) -> Path:
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        packaged = root / "models"
+        if packaged.exists():
+            return packaged
+        tmp_dir = Path("/tmp/models")
+        try:
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        return tmp_dir
+    return root / "models"
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "clinical-ai-chatbot-agent"
     API_V1_PREFIX: str = "/api/v1"
     
     # Base paths
-    ROOT_DIR: Path = Path(__file__).resolve().parent.parent.parent.parent
+    ROOT_DIR: Path = resolve_root_dir()
     DATABASE_PATH: Path = resolve_database_path()
-    DATASETS_DIR: Path = ROOT_DIR / "datasets"
-    MODELS_DIR: Path = ROOT_DIR / "models"
+    DATASETS_DIR: Path = resolve_datasets_dir(ROOT_DIR)
+    MODELS_DIR: Path = resolve_models_dir(ROOT_DIR)
     
     # Database URL
     # Default SQLite lokal; set DATABASE_URL (Postgres/Neon) untuk deployment online.

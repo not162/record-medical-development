@@ -15,8 +15,11 @@ class DatasetExportService:
     def __init__(self):
         self.exports_dir = settings.DATASETS_DIR / "exports"
         self.approved_dir = settings.DATASETS_DIR / "approved"
-        self.exports_dir.mkdir(parents=True, exist_ok=True)
-        self.approved_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.exports_dir.mkdir(parents=True, exist_ok=True)
+            self.approved_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
         self.jsonl_export_path = self.exports_dir / "clinical_records_export.jsonl"
         self.approved_jsonl_path = self.approved_dir / "clinical_knowledge_approved.jsonl"
 

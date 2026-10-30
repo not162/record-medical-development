@@ -23,10 +23,13 @@ class IngestionService:
         self.quarantine_dir = quarantine_dir or (settings.DATASETS_DIR / "quarantine")
         self.approved_dir = settings.DATASETS_DIR / "approved"
         
-        # Ensure directories exist
-        os.makedirs(self.inbox_dir, exist_ok=True)
-        os.makedirs(self.quarantine_dir, exist_ok=True)
-        os.makedirs(self.approved_dir, exist_ok=True)
+        # Ensure directories exist (read-only resilient)
+        try:
+            os.makedirs(self.inbox_dir, exist_ok=True)
+            os.makedirs(self.quarantine_dir, exist_ok=True)
+            os.makedirs(self.approved_dir, exist_ok=True)
+        except OSError:
+            pass
 
     def sync_inbox_directory(self, db: Session, user_id: Optional[str] = "SYSTEM_ADMIN", force: bool = False) -> Dict[str, Any]:
         """

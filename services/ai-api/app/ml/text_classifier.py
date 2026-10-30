@@ -24,7 +24,10 @@ from sklearn.metrics import (
 from app.config import settings
 
 MODELS_DIR = Path("models/text_classifier")
-MODELS_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 
 # Indonesian Clinical Stopwords (lightweight domain-preserved)
 CLINICAL_STOPWORDS = {

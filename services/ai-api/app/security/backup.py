@@ -8,7 +8,10 @@ from typing import Dict, Any, Tuple, Optional
 from app.config import settings
 
 BACKUP_DIR = settings.ROOT_DIR / "database" / "backups"
-BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 
 def compute_sha256(filepath: Path) -> str:
     sha = hashlib.sha256()
