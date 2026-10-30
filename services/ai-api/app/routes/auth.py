@@ -9,6 +9,8 @@ from app.schemas import (
     UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse,
     PatientProfileResponse, ProfileUpdateRequest
 )
+import json
+from app.security.owasp_scanner import owasp_scanner
 from app.security.auth import (
     hash_password, verify_password, create_access_token, get_current_user, require_user
 )
@@ -31,6 +33,33 @@ def register_user(req: UserRegisterRequest, request: Request, db: Session = Depe
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Nama pengguna ini dicadangkan khusus untuk administrator sistem dan tidak dapat didaftarkan."
         )
+
+    # 0. Background OWASP Top 10 & Injection Security Scanning
+    client_ip = request.client.host if request.client else "unknown"
+    is_safe, threats, scan_meta = owasp_scanner.scan_registration(
+        username=req.username,
+        email=req.email,
+        full_name=req.full_name or "",
+        password=req.password,
+        ip_address=client_ip
+    )
+    if not is_safe:
+        security_audit = AuditLog(
+            user_id=None,
+            action="SECURITY_ALERT_INJECTION_BLOCKED",
+            resource_type="USER_REGISTRATION",
+            resource_id=req.username[:50],
+            status="BLOCKED",
+            ip_address=client_ip,
+            details=json.dumps(scan_meta, ensure_ascii=False)
+        )
+        db.add(security_audit)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Registrasi Ditolak: Terdeteksi potensi injection ({', '.join(threats)}) sesuai standar keamanan OWASP Top 10 & ISO 27001."
+        )
+
 
     # 1. Cek keunikan username dan email
     existing = db.query(User).filter(
@@ -62,8 +91,7 @@ def register_user(req: UserRegisterRequest, request: Request, db: Session = Depe
     )
     db.add(profile)
     
-    # 4. Catat ke Audit Log
-    client_ip = request.client.host if request.client else "unknown"
+    # 4. Catat ke Audit Log & OWASP Security Clearance
     audit = AuditLog(
         user_id=new_user.id,
         action="USER_REGISTRATION",
@@ -71,9 +99,20 @@ def register_user(req: UserRegisterRequest, request: Request, db: Session = Depe
         resource_id=new_user.id,
         status="SUCCESS",
         ip_address=client_ip,
-        details=f"Pendaftaran akun pengguna baru '{new_user.username}' dengan peran USER."
+        details=f"Pendaftaran akun pengguna baru '{new_user.username}' dengan peran USER. Verifikasi OWASP & ISO 27001: PASSED."
     )
     db.add(audit)
+    
+    sec_audit = AuditLog(
+        user_id=new_user.id,
+        action="SECURITY_SCAN_OWASP_INJECTION",
+        resource_type="SECURITY_SCAN",
+        resource_id=new_user.id,
+        status="PASSED",
+        ip_address=client_ip,
+        details=json.dumps(scan_meta, ensure_ascii=False)
+    )
+    db.add(sec_audit)
     db.commit()
     db.refresh(new_user)
     

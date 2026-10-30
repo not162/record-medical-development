@@ -169,11 +169,12 @@ def get_chat_session(
     if not session:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesi percakapan tidak ditemukan.")
 
-    # Authorization Check: User can only see their own sessions unless admin
-    if session.user_id != current_user.id and current_user.role != "ADMIN":
+    # Strict Privacy Separation (UU PDP No. 27/2022 Pasal 4 & Kerahasiaan Rekam Medis):
+    # Administrator sistem secara tegas TIDAK MEMILIKI hak akses langsung ke percakapan privat pasien.
+    if session.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses ditolak: Anda tidak memiliki wewenang melihat sesi rekam medis pengguna lain."
+            detail="Akses Ditolak (UU PDP No. 27/2022): Administrator dilarang keras mengakses atau melihat sesi konsultasi pribadi pasien."
         )
 
     messages = []
@@ -219,8 +220,11 @@ def delete_chat_session(
     if not session:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesi tidak ditemukan.")
 
-    if session.user_id != current_user.id and current_user.role != "ADMIN":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Akses ditolak.")
+    if session.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akses Ditolak: Anda hanya berhak mengelola sesi rekam medis milik akun Anda sendiri."
+        )
 
     session.is_deleted = True
     db.commit()
