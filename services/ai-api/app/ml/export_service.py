@@ -16,10 +16,16 @@ import datetime
 from typing import Dict, List, Any, Optional
 import numpy as np
 
-# Ensure headless matplotlib backend
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+# Ensure headless matplotlib backend (defensive import for lightweight/serverless runtimes)
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except (ImportError, Exception):
+    matplotlib = None
+    plt = None
+    HAS_MATPLOTLIB = False
 
 class ResearchExportService:
     """
@@ -31,8 +37,11 @@ class ResearchExportService:
 
     @classmethod
     def _ensure_dirs(cls):
-        os.makedirs(cls.EXPORT_DIR, exist_ok=True)
-        os.makedirs(cls.FIGURES_DIR, exist_ok=True)
+        try:
+            os.makedirs(cls.EXPORT_DIR, exist_ok=True)
+            os.makedirs(cls.FIGURES_DIR, exist_ok=True)
+        except OSError:
+            pass
 
     @classmethod
     def export_evaluation_run(
@@ -90,7 +99,7 @@ class ResearchExportService:
             output_paths["calibration_png"] = calib_png_path
 
         # 5. Render PNG: Noise Stress Degradation Bar Chart (if provided)
-        if stress_results and "perturbation_conditions" in stress_results:
+        if HAS_MATPLOTLIB and stress_results and "perturbation_conditions" in stress_results:
             stress_png_path = os.path.join(cls.FIGURES_DIR, f"{prefix}_noise_stress.png")
             cls.render_noise_stress_plot(stress_results, output_path=stress_png_path)
             output_paths["noise_stress_png"] = stress_png_path
@@ -102,6 +111,8 @@ class ResearchExportService:
         """
         Renders a publication-ready annotated Confusion Matrix heatmap.
         """
+        if not HAS_MATPLOTLIB or plt is None:
+            return
         cm_arr = np.array(cm)
         n = len(cm_arr)
         labels = labels or [f"Class {i}" for i in range(n)]
@@ -134,6 +145,8 @@ class ResearchExportService:
         """
         Renders reliability diagram comparing mean predicted probability vs empirical accuracy.
         """
+        if not HAS_MATPLOTLIB or plt is None:
+            return
         preds = [p["mean_predicted_prob"] for p in curve_points]
         accs = [p["empirical_accuracy"] for p in curve_points]
 
