@@ -258,3 +258,4 @@ class SelfConsistencyVoting:
             "vote_distribution": votes,
             "total_candidates": len(candidates),
         }
+

@@ -96,3 +96,4 @@ class PDPComplianceManager:
             "iso27001_checksum": checksum,
             "regulatory_compliance": "UU PDP Pasal 35 & ISO 27001:2022",
         }
+

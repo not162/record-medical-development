@@ -238,3 +238,4 @@ class StructuredClinicalOutputParser:
             recommended_department=dept,
             clinical_summary=raw_text.strip(),
         )
+

@@ -170,3 +170,4 @@ class GRPOTrainer:
             "kl_divergence_stable": bool(np.mean(kl_trajectory) < 0.25),
             "latest_step": self.training_history[-1],
         }
+

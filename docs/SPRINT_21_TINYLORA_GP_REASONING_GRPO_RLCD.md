@@ -111,3 +111,4 @@ $$W' = W + v \cdot \lambda$$
 - **Tombol Kirim:** `"Konsultasikan Keluhan Klinis"`
 - **Tombol Sesi Baru:** `"Anamnesis Klinis Baru"`
 - **Trust Badge:** `"Kerahasiaan Medis Terenkripsi: UU No. 27/2022 (UU PDP) & ISO/IEC 27001:2022 ISMS"`
+

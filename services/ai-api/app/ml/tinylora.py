@@ -139,3 +139,4 @@ class TinyLoRAModel:
             "seed": self.seed,
             "architecture": "TinyLoRA (v · lambda contraction, full weight tying)",
         }
+

@@ -263,3 +263,4 @@ class TestSprint21PDPCompliance:
         audit = PDPComplianceManager.generate_audit_entry("user-123", "PATIENT_QUERY", "msg-456")
         assert "iso27001_checksum" in audit
         assert len(audit["iso27001_checksum"]) == 64
+
