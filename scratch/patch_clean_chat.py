@@ -89,3 +89,4 @@ content = "".join(new_lines)
 with open("apps/web/src/app/chat/page.tsx", "w", encoding="utf-8") as f:
     f.write(content)
 print("Done writing apps/web/src/app/chat/page.tsx")
+

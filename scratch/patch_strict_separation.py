@@ -220,3 +220,4 @@ chat_api_code = chat_api_code.replace(old_stream, new_stream, 1)
 with open(chat_api_path, "w", encoding="utf-8") as f:
     f.write(chat_api_code)
 print("Patched services/ai-api/app/routes/chat.py (strictly blocked admin from patient chat APIs).")
+

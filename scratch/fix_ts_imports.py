@@ -30,3 +30,4 @@ if 'import { useRouter } from "next/navigation";' not in p_code:
 with open(page_path, "w", encoding="utf-8") as f:
     f.write(p_code)
 print("Fixed page.tsx")
+
