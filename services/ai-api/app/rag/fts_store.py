@@ -35,6 +35,11 @@ class FTSStore:
         )
         conn.commit()
 
+    def delete_chunk(self, conn: sqlite3.Connection, chunk_id: str):
+        """Menghapus chunk dari tabel FTS5."""
+        conn.execute("DELETE FROM fts_chunks WHERE chunk_id = ?;", (chunk_id,))
+        conn.commit()
+
     def search(
         self,
         conn: sqlite3.Connection,

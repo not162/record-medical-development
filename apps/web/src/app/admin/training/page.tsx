@@ -6,14 +6,14 @@ import {
   Cpu, Sparkles, FileCode, FileSpreadsheet, Database,
   ShieldCheck, Zap, Sliders, Server
 } from "lucide-react";
-import { API_BASE_URL, getToken } from "@/lib/api";
+import { API_BASE_URL, getToken, api, formatErrorDetail } from "@/lib/api";
 
 interface TrainingJobItem {
   id: string;
   task_type: string;
   model_name: string;
   algorithm: string;
-  status: "PENDING" | "TRAINING" | "COMPLETED" | "FAILED";
+  status: "QUEUED" | "PENDING" | "TRAINING" | "COMPLETED" | "FAILED";
   progress_percent: number;
   model_registry_id?: string | null;
   created_by: string;
@@ -99,6 +99,7 @@ export default function AdminTrainingPage() {
   const [selectedJobLogs, setSelectedJobLogs] = useState<{ id: string; logs: string } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   // Form states
   const [taskType, setTaskType] = useState<string>("CARDIOVASCULAR_RISK");
@@ -118,7 +119,7 @@ export default function AdminTrainingPage() {
       const res = await fetch(`${API_BASE_URL}/admin/models/jobs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Gagal mengambil antrean training jobs.");
+      if (!res.ok) throw new Error(`Gagal mengambil antrean training jobs (HTTP ${res.status}).`);
       const data = await res.json();
       setJobs(data || []);
     } catch (err: unknown) {
@@ -136,7 +137,7 @@ export default function AdminTrainingPage() {
         const res = await fetch(`${API_BASE_URL}/admin/models/jobs`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Gagal mengambil antrean training jobs.");
+        if (!res.ok) throw new Error(`Gagal mengambil antrean training jobs (HTTP ${res.status}).`);
         const data = await res.json();
         if (!ignore) {
           setJobs(data || []);
@@ -182,17 +183,32 @@ export default function AdminTrainingPage() {
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.detail || "Gagal memulai training job.");
+        throw new Error(formatErrorDetail(errJson.detail, res.status) || "Gagal memulai training job.");
       }
 
       const data = await res.json();
-      setMessage(data.message || "Training job berhasil dikirim ke background worker.");
+      setMessage(data.message || "Training job masuk antrean (QUEUED) dan akan diproses worker di latar belakang.");
       setShowLaunchModal(false);
       await fetchJobs();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Gagal memulai job.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleProcessQueue = async () => {
+    setProcessing(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const data = await api.admin.processJobs();
+      setMessage(data.message || (data.job_id ? `Job ${data.job_id} diproses.` : "Antrean diproses."));
+      await fetchJobs();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Gagal memproses antrean.");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -256,6 +272,16 @@ export default function AdminTrainingPage() {
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${loading ? "animate-spin" : ""}`} />
                 <span>Segarkan</span>
+              </button>
+
+              <button
+                onClick={handleProcessQueue}
+                disabled={processing}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-semibold text-xs transition shadow-xs"
+                title="Jalankan satu job QUEUED sekarang"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>{processing ? "Memproses..." : "Proses Antrean Sekarang"}</span>
               </button>
 
               <button
@@ -368,6 +394,8 @@ export default function AdminTrainingPage() {
                               ? "bg-red-50 text-red-700 border border-red-200"
                               : j.status === "TRAINING"
                               ? "bg-sky-50 text-sky-700 border border-sky-200 animate-pulse"
+                              : j.status === "QUEUED"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
                         >

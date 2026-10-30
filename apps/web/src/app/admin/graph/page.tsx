@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { GitFork, Search, RefreshCw, ZoomIn, ZoomOut, Maximize2, Activity, Sparkles, CheckCircle2, X } from "lucide-react";
-import { API_BASE_URL, getToken } from "@/lib/api";
+import { GitFork, Search, RefreshCw, ZoomIn, ZoomOut, Maximize2, Activity, Sparkles, CheckCircle2, X, Plus, Pencil, Trash2, Link2, DatabaseZap } from "lucide-react";
+import { API_BASE_URL, getToken, api, type GraphCategory, type GraphRelation } from "@/lib/api";
 import type { Core as CytoscapeCore } from "cytoscape";
 
 interface GraphNode {
@@ -13,6 +13,7 @@ interface GraphNode {
 }
 
 interface GraphEdge {
+  id?: string | number;
   source: string;
   target: string;
   relation: "CONTRAINDICATES" | "HAS_SYMPTOM" | "RECOMMENDS" | "TREATED_IN" | "GOVERNED_BY";
@@ -40,7 +41,15 @@ interface Optimize15Result {
   timestamp: string;
 }
 
+const CATEGORIES: GraphCategory[] = ["DISEASE", "SYMPTOM", "DRUG", "DEPARTMENT", "GUIDELINE"];
+const RELATIONS: GraphRelation[] = ["CONTRAINDICATES", "HAS_SYMPTOM", "RECOMMENDS", "TREATED_IN", "GOVERNED_BY"];
+
 export default function AdminGraphPage() {
+  const [notice, setNotice] = useState<string | null>(null);
+  const [nodeForm, setNodeForm] = useState<{ mode: "create" | "edit"; id: string; name: string; category: GraphCategory; notes: string } | null>(null);
+  const [edgeForm, setEdgeForm] = useState<{ source: string; target: string; relation: GraphRelation; notes: string } | null>(null);
+  const [formBusy, setFormBusy] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<CytoscapeCore | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +61,124 @@ export default function AdminGraphPage() {
   const [error, setError] = useState<string | null>(null);
   const [optimizeLoading, setOptimizeLoading] = useState(false);
   const [optimizeResult, setOptimizeResult] = useState<Optimize15Result | null>(null);
+
+  const errMsg = (err: unknown, fallback: string) => (err instanceof Error ? err.message : fallback);
+
+  const openNodeCreate = () => {
+    setFormError(null);
+    setNodeForm({ mode: "create", id: "", name: "", category: "DISEASE", notes: "" });
+  };
+
+  const openNodeEdit = (n: GraphNode) => {
+    setFormError(null);
+    setNodeForm({ mode: "edit", id: n.id, name: n.name, category: n.category, notes: String(n.properties?.notes ?? "") });
+  };
+
+  const openEdgeCreate = (sourceId?: string) => {
+    setFormError(null);
+    setEdgeForm({ source: sourceId || graphData.nodes[0]?.id || "", target: "", relation: "HAS_SYMPTOM", notes: "" });
+  };
+
+  const handleSaveNode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nodeForm) return;
+    setFormBusy(true);
+    setFormError(null);
+    try {
+      const properties = nodeForm.notes.trim() ? { notes: nodeForm.notes.trim() } : undefined;
+      if (nodeForm.mode === "create") {
+        await api.admin.createGraphNode({
+          ...(nodeForm.id.trim() ? { id: nodeForm.id.trim() } : {}),
+          name: nodeForm.name.trim(),
+          category: nodeForm.category,
+          properties,
+        });
+        setNotice("Simpul berhasil ditambahkan.");
+      } else {
+        await api.admin.updateGraphNode(nodeForm.id, {
+          name: nodeForm.name.trim(),
+          category: nodeForm.category,
+          properties,
+        });
+        setNotice("Simpul berhasil diperbarui.");
+      }
+      setNodeForm(null);
+      setSelectedNode(null);
+      setConnectedEdges([]);
+      await fetchGraphData();
+    } catch (err: unknown) {
+      setFormError(errMsg(err, "Gagal menyimpan simpul."));
+    } finally {
+      setFormBusy(false);
+    }
+  };
+
+  const handleDeleteNode = async (n: GraphNode) => {
+    if (!window.confirm(`Hapus simpul "${n.name}" beserta relasinya?`)) return;
+    setError(null);
+    try {
+      await api.admin.deleteGraphNode(n.id);
+      setNotice("Simpul dihapus.");
+      setSelectedNode(null);
+      setConnectedEdges([]);
+      await fetchGraphData();
+    } catch (err: unknown) {
+      setError(errMsg(err, "Gagal menghapus simpul."));
+    }
+  };
+
+  const handleSaveEdge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!edgeForm) return;
+    setFormBusy(true);
+    setFormError(null);
+    try {
+      await api.admin.createGraphEdge({
+        source: edgeForm.source,
+        target: edgeForm.target,
+        relation: edgeForm.relation,
+        properties: edgeForm.notes.trim() ? { notes: edgeForm.notes.trim() } : undefined,
+      });
+      setNotice("Relasi berhasil ditambahkan.");
+      setEdgeForm(null);
+      setSelectedNode(null);
+      setConnectedEdges([]);
+      await fetchGraphData();
+    } catch (err: unknown) {
+      setFormError(errMsg(err, "Gagal menyimpan relasi."));
+    } finally {
+      setFormBusy(false);
+    }
+  };
+
+  const handleDeleteEdge = async (edge: GraphEdge) => {
+    if (edge.id === undefined || edge.id === null) {
+      setError("Relasi ini belum memiliki ID (graf statis). Jalankan Seed Graf terlebih dahulu.");
+      return;
+    }
+    if (!window.confirm(`Hapus relasi ${edge.source} -> ${edge.target} (${edge.relation})?`)) return;
+    setError(null);
+    try {
+      await api.admin.deleteGraphEdge(edge.id);
+      setNotice("Relasi dihapus.");
+      setSelectedNode(null);
+      setConnectedEdges([]);
+      await fetchGraphData();
+    } catch (err: unknown) {
+      setError(errMsg(err, "Gagal menghapus relasi."));
+    }
+  };
+
+  const handleSeed = async () => {
+    setError(null);
+    try {
+      await api.admin.seedGraph();
+      setNotice("Graf berhasil di-seed dari data klinis bawaan.");
+      await fetchGraphData();
+    } catch (err: unknown) {
+      setError(errMsg(err, "Gagal melakukan seed graf."));
+    }
+  };
 
   const handleRunOptimize15 = async () => {
     setOptimizeLoading(true);
@@ -85,7 +212,7 @@ export default function AdminGraphPage() {
       const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Gagal mengambil data graf pengetahuan klinis.");
+      if (!res.ok) throw new Error(`Gagal mengambil data graf pengetahuan klinis (HTTP ${res.status}).`);
       const data: GraphData = await res.json();
       setGraphData(data);
       initCytoscape(data);
@@ -297,7 +424,7 @@ export default function AdminGraphPage() {
         const res = await fetch(`${API_BASE_URL}/admin/graph/all`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Gagal mengambil data graf pengetahuan klinis.");
+        if (!res.ok) throw new Error(`Gagal mengambil data graf pengetahuan klinis (HTTP ${res.status}).`);
         const data: GraphData = await res.json();
         if (!ignore) {
           setGraphData(data);
@@ -349,6 +476,29 @@ export default function AdminGraphPage() {
 
         {/* Search & Actions */}
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={openNodeCreate}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Simpul</span>
+          </button>
+          <button
+            onClick={() => openEdgeCreate()}
+            disabled={graphData.nodes.length < 2}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs shadow-sm disabled:opacity-50"
+          >
+            <Link2 className="w-3.5 h-3.5" />
+            <span>Relasi</span>
+          </button>
+          <button
+            onClick={handleSeed}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs shadow-sm"
+            title="Isi graf dari data klinis bawaan"
+          >
+            <DatabaseZap className="w-3.5 h-3.5" />
+            <span>Seed Graf</span>
+          </button>
           <button
             onClick={handleRunOptimize15}
             disabled={optimizeLoading}
@@ -470,6 +620,13 @@ export default function AdminGraphPage() {
         </div>
       </div>
 
+      {notice && (
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
+          <span>{notice}</span>
+          <button onClick={() => setNotice(null)} className="p-0.5 text-emerald-700"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      )}
+
       {error && (
         <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800">
           {error}
@@ -544,6 +701,26 @@ export default function AdminGraphPage() {
                 <div className="text-[10px] text-slate-500 font-mono mt-0.5">
                   ID: {selectedNode.id}
                 </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <button
+                    onClick={() => openNodeEdit(selectedNode)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-semibold text-slate-700"
+                  >
+                    <Pencil className="w-3 h-3" /> Ubah
+                  </button>
+                  <button
+                    onClick={() => openEdgeCreate(selectedNode.id)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-semibold text-slate-700"
+                  >
+                    <Link2 className="w-3 h-3" /> Relasi
+                  </button>
+                  <button
+                    onClick={() => handleDeleteNode(selectedNode)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-[11px] font-semibold text-red-700"
+                  >
+                    <Trash2 className="w-3 h-3" /> Hapus
+                  </button>
+                </div>
               </div>
 
               {selectedNode.properties && (
@@ -586,6 +763,12 @@ export default function AdminGraphPage() {
                         <div className="font-semibold text-slate-900 mt-1">
                           {counterpart}
                         </div>
+                        <button
+                          onClick={() => handleDeleteEdge(edge)}
+                          className="mt-1.5 flex items-center gap-1 text-[10px] text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="w-3 h-3" /> Hapus relasi
+                        </button>
                         {edge.properties?.notes && (
                           <div className="text-[10px] text-slate-500 mt-1 italic">
                             {edge.properties.notes}
@@ -605,6 +788,81 @@ export default function AdminGraphPage() {
           )}
         </div>
       </div>
+
+      {nodeForm && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <form onSubmit={handleSaveNode} className="w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-xl text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">{nodeForm.mode === "create" ? "Tambah Simpul" : "Ubah Simpul"}</h3>
+              <button type="button" onClick={() => setNodeForm(null)} className="text-slate-400 hover:text-slate-600 p-1"><X className="w-4 h-4" /></button>
+            </div>
+            {formError && <div className="p-2 rounded-lg bg-red-50 border border-red-200 text-red-800">{formError}</div>}
+            {nodeForm.mode === "create" && (
+              <label className="block space-y-1">
+                <span className="font-medium text-slate-700">ID (opsional, otomatis jika kosong)</span>
+                <input value={nodeForm.id} onChange={(e) => setNodeForm({ ...nodeForm, id: e.target.value })} className="w-full p-2.5 rounded-xl border border-slate-200 font-mono focus:outline-none focus:border-emerald-500" />
+              </label>
+            )}
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Nama</span>
+              <input required value={nodeForm.name} onChange={(e) => setNodeForm({ ...nodeForm, name: e.target.value })} className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500" />
+            </label>
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Kategori</span>
+              <select value={nodeForm.category} onChange={(e) => setNodeForm({ ...nodeForm, category: e.target.value as GraphCategory })} className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Catatan</span>
+              <textarea rows={3} value={nodeForm.notes} onChange={(e) => setNodeForm({ ...nodeForm, notes: e.target.value })} className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500" />
+            </label>
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button type="button" onClick={() => setNodeForm(null)} className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200">Batal</button>
+              <button type="submit" disabled={formBusy} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold disabled:opacity-50">{formBusy ? "Menyimpan..." : "Simpan"}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {edgeForm && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <form onSubmit={handleSaveEdge} className="w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-xl text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">Tambah Relasi</h3>
+              <button type="button" onClick={() => setEdgeForm(null)} className="text-slate-400 hover:text-slate-600 p-1"><X className="w-4 h-4" /></button>
+            </div>
+            {formError && <div className="p-2 rounded-lg bg-red-50 border border-red-200 text-red-800">{formError}</div>}
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Simpul Asal</span>
+              <select required value={edgeForm.source} onChange={(e) => setEdgeForm({ ...edgeForm, source: e.target.value })} className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                {graphData.nodes.map((n) => <option key={n.id} value={n.id}>{n.name} ({n.category})</option>)}
+              </select>
+            </label>
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Jenis Relasi</span>
+              <select value={edgeForm.relation} onChange={(e) => setEdgeForm({ ...edgeForm, relation: e.target.value as GraphRelation })} className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                {RELATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </label>
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Simpul Tujuan</span>
+              <select required value={edgeForm.target} onChange={(e) => setEdgeForm({ ...edgeForm, target: e.target.value })} className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500">
+                <option value="">Pilih simpul...</option>
+                {graphData.nodes.filter((n) => n.id !== edgeForm.source).map((n) => <option key={n.id} value={n.id}>{n.name} ({n.category})</option>)}
+              </select>
+            </label>
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Catatan</span>
+              <input value={edgeForm.notes} onChange={(e) => setEdgeForm({ ...edgeForm, notes: e.target.value })} className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500" />
+            </label>
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button type="button" onClick={() => setEdgeForm(null)} className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200">Batal</button>
+              <button type="submit" disabled={formBusy} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold disabled:opacity-50">{formBusy ? "Menyimpan..." : "Simpan"}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

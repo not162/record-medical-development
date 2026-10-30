@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-import sqlite3
 
 from app.database import get_db
 from app.models import User, DatasetRecord
@@ -69,24 +68,8 @@ def get_rag_index_status(
     approved_count = db.query(DatasetRecord).filter(DatasetRecord.approval_status == "APPROVED").count()
     pending_count = db.query(DatasetRecord).filter(DatasetRecord.approval_status == "PENDING").count()
 
-    conn = hybrid_rag_engine.get_sqlite_conn()
-    fts_count = 0
-    vec_count = 0
-    try:
-        cursor = conn.cursor()
-        try:
-            cursor.execute("SELECT count(*) FROM fts_chunks;")
-            fts_count = cursor.fetchone()[0]
-        except sqlite3.OperationalError:
-            fts_count = 0
-
-        try:
-            cursor.execute("SELECT count(*) FROM vec_chunks;")
-            vec_count = cursor.fetchone()[0]
-        except sqlite3.OperationalError:
-            vec_count = 0
-    finally:
-        conn.close()
+    fts_count, vec_count = hybrid_rag_engine.index_counts(db)
+    portable = hybrid_rag_engine.is_portable(db)
 
     return {
         "status": "ready",
@@ -95,7 +78,12 @@ def get_rag_index_status(
         "fts5_indexed_chunks": fts_count,
         "sqlite_vec_indexed_chunks": vec_count,
         "embedding_dimensions": 384,
-        "retrieval_method": "Hybrid Sparse (FTS5 BM25) + Dense (sqlite-vec) with Reciprocal Rank Fusion (k=60)"
+        "backend": hybrid_rag_engine.backend_name(db),
+        "retrieval_method": (
+            "Hybrid Sparse (BM25) + Dense (cosine) portabel with Reciprocal Rank Fusion (k=60)"
+            if portable else
+            "Hybrid Sparse (FTS5 BM25) + Dense (sqlite-vec) with Reciprocal Rank Fusion (k=60)"
+        )
     }
 
 @router.post("/admin/rag/evaluate")

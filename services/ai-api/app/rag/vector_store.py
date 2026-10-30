@@ -3,7 +3,11 @@ import struct
 import math
 import hashlib
 from typing import List, Tuple
-import sqlite_vec
+
+try:  # sqlite-vec opsional (tidak tersedia di Vercel/Postgres)
+    import sqlite_vec
+except Exception:  # pragma: no cover
+    sqlite_vec = None
 
 EMBEDDING_DIM = 384
 
@@ -65,6 +69,8 @@ class VectorStore:
 
     def load_extension(self, conn: sqlite3.Connection):
         """Loads sqlite-vec extension into connection."""
+        if sqlite_vec is None:
+            raise RuntimeError("sqlite-vec tidak terpasang; gunakan backend RAG portabel.")
         conn.enable_load_extension(True)
         sqlite_vec.load(conn)
         conn.enable_load_extension(False)
@@ -102,9 +108,28 @@ class VectorStore:
         )
         return cursor.fetchall()
 
-    def count(self) -> int:
-        """Returns total active knowledge chunks indexed in the vector store."""
+    def delete_chunk_vector(self, conn: sqlite3.Connection, chunk_id: str):
+        """Menghapus vektor chunk dari tabel sqlite-vec."""
+        self.load_extension(conn)
+        conn.execute("DELETE FROM vec_chunks WHERE chunk_id = ?;", (chunk_id,))
+        conn.commit()
+
+    def count(self, db=None) -> int:
+        """Total chunk terindeks (sqlite-vec vec0 atau tabel rag_chunks pada backend portabel)."""
         from app.database import engine
+        from app.rag import pg_backend
+        try:
+            if pg_backend.use_portable(db=db):
+                if db is not None:
+                    return pg_backend.count(db)
+                from app.database import SessionLocal
+                s = SessionLocal()
+                try:
+                    return pg_backend.count(s)
+                finally:
+                    s.close()
+        except Exception:
+            return 0
         try:
             with engine.connect() as conn:
                 raw_conn = conn.connection.driver_connection

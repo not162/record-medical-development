@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BookOpen, Search, RefreshCw, BarChart2, ShieldCheck, Database, Layers, CheckCircle2 } from "lucide-react";
-import { API_BASE_URL } from "@/lib/api";
+import { BookOpen, Search, RefreshCw, BarChart2, ShieldCheck, Database, Layers, CheckCircle2, AlertCircle, Plus, Pencil, Trash2, X } from "lucide-react";
+import { API_BASE_URL, api, type KnowledgeDoc, type KnowledgeInput } from "@/lib/api";
 
 interface RAGStatus {
   status: string;
@@ -34,7 +34,23 @@ interface EvalResult {
   benchmark_cases_evaluated: number;
 }
 
+const EMPTY_FORM: KnowledgeInput = {
+  title: "",
+  department: "",
+  content: "",
+  source: "",
+  approval_status: "APPROVED",
+};
+
 export default function AdminKnowledgeBasePage() {
+  const [docs, setDocs] = useState<KnowledgeDoc[]>([]);
+  const [docsLoading, setDocsLoading] = useState(true);
+  const [crudError, setCrudError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<KnowledgeInput>(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [reindexing, setReindexing] = useState(false);
   const [statusData, setStatusData] = useState<RAGStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [indexing, setIndexing] = useState(false);
@@ -85,6 +101,107 @@ export default function AdminKnowledgeBasePage() {
     };
   }, []);
 
+  const loadDocs = async () => {
+    setDocsLoading(true);
+    try {
+      const data = await api.admin.listKnowledge();
+      setDocs(Array.isArray(data) ? data : data.items || []);
+      setCrudError(null);
+    } catch (err: unknown) {
+      setCrudError(err instanceof Error ? err.message : "Gagal memuat dokumen pengetahuan.");
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let ignore = false;
+    api.admin
+      .listKnowledge()
+      .then((data) => {
+        if (!ignore) setDocs(Array.isArray(data) ? data : data.items || []);
+      })
+      .catch((err: unknown) => {
+        if (!ignore) setCrudError(err instanceof Error ? err.message : "Gagal memuat dokumen pengetahuan.");
+      })
+      .finally(() => {
+        if (!ignore) setDocsLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setCrudError(null);
+    setShowForm(true);
+  };
+
+  const openEdit = (d: KnowledgeDoc) => {
+    setEditingId(d.id);
+    setForm({
+      title: d.title,
+      department: d.department,
+      content: d.content,
+      source: d.source || "",
+      approval_status: d.approval_status,
+    });
+    setCrudError(null);
+    setShowForm(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setCrudError(null);
+    try {
+      const payload: KnowledgeInput = { ...form, source: form.source?.trim() || null };
+      if (editingId) {
+        await api.admin.updateKnowledge(editingId, payload);
+        setNotification("Dokumen pengetahuan berhasil diperbarui.");
+      } else {
+        await api.admin.createKnowledge(payload);
+        setNotification("Dokumen pengetahuan berhasil ditambahkan.");
+      }
+      setShowForm(false);
+      await loadDocs();
+      fetchStatus();
+    } catch (err: unknown) {
+      setCrudError(err instanceof Error ? err.message : "Gagal menyimpan dokumen.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (d: KnowledgeDoc) => {
+    if (!window.confirm(`Hapus dokumen "${d.title}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+    setCrudError(null);
+    try {
+      await api.admin.deleteKnowledge(d.id);
+      setNotification("Dokumen pengetahuan dihapus.");
+      await loadDocs();
+      fetchStatus();
+    } catch (err: unknown) {
+      setCrudError(err instanceof Error ? err.message : "Gagal menghapus dokumen.");
+    }
+  };
+
+  const handleReindexDocs = async () => {
+    setReindexing(true);
+    setCrudError(null);
+    try {
+      await api.admin.reindexKnowledge();
+      setNotification("Re-indexing dokumen pengetahuan selesai.");
+      fetchStatus();
+    } catch (err: unknown) {
+      setCrudError(err instanceof Error ? err.message : "Gagal melakukan re-indexing.");
+    } finally {
+      setReindexing(false);
+    }
+  };
+
   const handleTriggerIndex = async () => {
     setIndexing(true);
     setNotification(null);
@@ -96,8 +213,10 @@ export default function AdminKnowledgeBasePage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setNotification(`Berhasil mengindeks ${data.indexed_chunks_count} potongan dokumen ke FTS5 & sqlite-vec!`);
+        setNotification(`Berhasil mengindeks ${data.indexed_chunks_count} potongan dokumen ke indeks RAG!`);
         fetchStatus();
+      } else {
+        setNotification(`Indexing gagal (HTTP ${res.status}).`);
       }
     } catch {
       setNotification("Gagal menghubungi backend indexing.");
@@ -227,6 +346,188 @@ export default function AdminKnowledgeBasePage() {
           <div className="text-[10px] text-slate-500 mt-1">Fusi peringkat Sparse + Dense</div>
         </div>
       </div>
+
+      {crudError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+          <span>{crudError}</span>
+        </div>
+      )}
+
+      {/* Knowledge Documents CRUD */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-emerald-600" />
+              <span>Dokumen Pengetahuan ({docs.length})</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">Tambah, ubah, atau hapus dokumen. Hanya status APPROVED yang diindeks.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleReindexDocs}
+              disabled={reindexing}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span>{reindexing ? "Mengindeks..." : "Reindex Dokumen"}</span>
+            </button>
+            <button
+              onClick={openCreate}
+              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tambah Dokumen</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500">
+                <th className="pb-2 font-semibold">Judul</th>
+                <th className="pb-2 font-semibold">Departemen</th>
+                <th className="pb-2 font-semibold">Sumber</th>
+                <th className="pb-2 font-semibold">Status</th>
+                <th className="pb-2 font-semibold text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {docs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-slate-500">
+                    {docsLoading ? "Memuat dokumen..." : "Belum ada dokumen pengetahuan."}
+                  </td>
+                </tr>
+              ) : (
+                docs.map((d) => (
+                  <tr key={d.id} className="hover:bg-slate-50">
+                    <td className="py-2.5 font-medium text-slate-900 max-w-xs truncate">{d.title}</td>
+                    <td className="py-2.5 text-slate-700">{d.department}</td>
+                    <td className="py-2.5 text-slate-500">{d.source || "-"}</td>
+                    <td className="py-2.5">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                          d.approval_status === "APPROVED"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }`}
+                      >
+                        {d.approval_status}
+                      </span>
+                    </td>
+                    <td className="py-2.5 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => openEdit(d)}
+                        className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100"
+                        title="Ubah"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(d)}
+                        className="p-1.5 rounded-lg text-red-600 hover:bg-red-50"
+                        title="Hapus"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSave}
+            className="w-full max-w-lg rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-xl text-xs max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">
+                {editingId ? "Ubah Dokumen Pengetahuan" : "Tambah Dokumen Pengetahuan"}
+              </h3>
+              <button type="button" onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {crudError && <div className="p-2 rounded-lg bg-red-50 border border-red-200 text-red-800">{crudError}</div>}
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Judul</span>
+              <input
+                required
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500"
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block space-y-1">
+                <span className="font-medium text-slate-700">Departemen</span>
+                <input
+                  required
+                  value={form.department}
+                  onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  placeholder="mis: Pulmonologi"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="font-medium text-slate-700">Status</span>
+                <select
+                  value={form.approval_status}
+                  onChange={(e) => setForm({ ...form, approval_status: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-emerald-500"
+                >
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+              </label>
+            </div>
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Sumber</span>
+              <input
+                value={form.source || ""}
+                onChange={(e) => setForm({ ...form, source: e.target.value })}
+                placeholder="mis: PNPK Kemenkes 2023"
+                className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500"
+              />
+            </label>
+            <label className="block space-y-1">
+              <span className="font-medium text-slate-700">Isi Dokumen</span>
+              <textarea
+                required
+                rows={8}
+                value={form.content}
+                onChange={(e) => setForm({ ...form, content: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500"
+              />
+            </label>
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold disabled:opacity-50"
+              >
+                {saving ? "Menyimpan..." : "Simpan"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Retrieval Evaluation Benchmarking */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">

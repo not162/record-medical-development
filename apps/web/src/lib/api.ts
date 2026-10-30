@@ -87,7 +87,7 @@ export async function apiRequest<T>(
     let errorDetail = "Terjadi kesalahan pada permintaan server.";
     try {
       const errJson = await response.json();
-      errorDetail = errJson.detail || errorDetail;
+      errorDetail = formatErrorDetail(errJson?.detail, response.status) || errorDetail;
     } catch {
       errorDetail = `HTTP ${response.status}: ${response.statusText}`;
     }
@@ -96,6 +96,88 @@ export async function apiRequest<T>(
 
   return response.json();
 }
+
+/** Mengubah `detail` FastAPI (string / array validasi 422) menjadi pesan ramah. */
+export function formatErrorDetail(detail: unknown, status?: number): string {
+  if (typeof detail === "string" && detail) return detail;
+  if (Array.isArray(detail)) {
+    const msgs = detail
+      .map((d) => {
+        if (typeof d === "string") return d;
+        if (d && typeof d === "object") {
+          const item = d as { msg?: string; loc?: unknown[] };
+          const field = Array.isArray(item.loc) ? item.loc.filter((x) => x !== "body").join(".") : "";
+          return item.msg ? (field ? `${field}: ${item.msg}` : item.msg) : "";
+        }
+        return "";
+      })
+      .filter(Boolean);
+    if (msgs.length) return msgs.join("; ");
+  }
+  if (status === 401) return "Sesi berakhir atau tidak berwenang. Silakan masuk kembali.";
+  if (status === 403) return "Anda tidak memiliki izin untuk aksi ini.";
+  if (status === 404) return "Data tidak ditemukan.";
+  if (status && status >= 500) return "Server sedang bermasalah. Coba lagi beberapa saat.";
+  return "";
+}
+
+// ---------- Tipe: Knowledge Base ----------
+export interface KnowledgeDoc {
+  id: string;
+  title: string;
+  department: string;
+  content: string;
+  source?: string | null;
+  approval_status: string;
+}
+
+export interface KnowledgeInput {
+  title: string;
+  department: string;
+  content: string;
+  source?: string | null;
+  approval_status?: string;
+}
+
+// ---------- Tipe: Graph ----------
+export type GraphCategory = "DISEASE" | "SYMPTOM" | "DRUG" | "DEPARTMENT" | "GUIDELINE";
+export type GraphRelation = "CONTRAINDICATES" | "HAS_SYMPTOM" | "RECOMMENDS" | "TREATED_IN" | "GOVERNED_BY";
+
+export interface GraphNodeInput {
+  id?: string;
+  name: string;
+  category: GraphCategory;
+  properties?: Record<string, string | number | boolean | null>;
+}
+
+export interface GraphEdgeInput {
+  source: string;
+  target: string;
+  relation: GraphRelation;
+  properties?: Record<string, string | number | boolean | null>;
+}
+
+// ---------- Tipe: Jobs ----------
+export interface ProcessJobsResult {
+  status?: string;
+  message?: string;
+  job_id?: string | null;
+  processed?: number;
+  [key: string]: unknown;
+}
+
+const jsonBody = (data: unknown) => JSON.stringify(data);
+
+// Terjemahan payload UI graf (name/category/properties) -> kontrak backend (id/label/type/department/reason)
+const graphNodePayload = (d: Partial<GraphNodeInput>) => {
+  const out: Record<string, unknown> = {};
+  if (d.id) out.id = d.id;
+  if (d.name !== undefined) out.label = d.name;
+  if (d.category !== undefined) out.type = d.category;
+  const dept = d.properties?.department;
+  if (typeof dept === "string") out.department = dept;
+  return out;
+};
 
 export const api = {
   auth: {
@@ -122,6 +204,41 @@ export const api = {
       }),
   },
   admin: {
+    // Knowledge base CRUD (DatasetRecord)
+    listKnowledge: () => apiRequest<KnowledgeDoc[] | { items: KnowledgeDoc[] }>("/admin/knowledge"),
+    getKnowledge: (id: string) => apiRequest<KnowledgeDoc>(`/admin/knowledge/${encodeURIComponent(id)}`),
+    createKnowledge: (data: KnowledgeInput) =>
+      apiRequest<KnowledgeDoc>("/admin/knowledge", { method: "POST", body: jsonBody(data) }),
+    updateKnowledge: (id: string, data: Partial<KnowledgeInput>) =>
+      apiRequest<KnowledgeDoc>(`/admin/knowledge/${encodeURIComponent(id)}`, { method: "PUT", body: jsonBody(data) }),
+    deleteKnowledge: (id: string) =>
+      apiRequest<Record<string, unknown>>(`/admin/knowledge/${encodeURIComponent(id)}`, { method: "DELETE" }),
+    reindexKnowledge: () =>
+      apiRequest<Record<string, unknown>>("/admin/knowledge/reindex", { method: "POST" }),
+    // Graph CRUD
+    createGraphNode: (data: GraphNodeInput) =>
+      apiRequest<Record<string, unknown>>("/admin/graph/nodes", { method: "POST", body: jsonBody({ id: data.id || `NODE:${Date.now().toString(36)}`, ...graphNodePayload(data) }) }),
+    updateGraphNode: (id: string, data: Partial<GraphNodeInput>) =>
+      apiRequest<Record<string, unknown>>(`/admin/graph/nodes/${encodeURIComponent(id)}`, { method: "PUT", body: jsonBody(graphNodePayload({ ...data, id: undefined })) }),
+    deleteGraphNode: (id: string) =>
+      apiRequest<Record<string, unknown>>(`/admin/graph/nodes/${encodeURIComponent(id)}`, { method: "DELETE" }),
+    createGraphEdge: (data: GraphEdgeInput) =>
+      apiRequest<Record<string, unknown>>("/admin/graph/edges", {
+        method: "POST",
+        body: jsonBody({
+          source: data.source,
+          target: data.target,
+          relation: data.relation,
+          reason: typeof data.properties?.notes === "string" ? data.properties.notes : "",
+        }),
+      }),
+    deleteGraphEdge: (id: string | number) =>
+      apiRequest<Record<string, unknown>>(`/admin/graph/edges/${encodeURIComponent(String(id))}`, { method: "DELETE" }),
+    seedGraph: () =>
+      apiRequest<Record<string, unknown>>("/admin/graph/seed", { method: "POST" }),
+    // Training queue
+    processJobs: () =>
+      apiRequest<ProcessJobsResult>("/admin/jobs/process", { method: "POST" }),
     getDashboard: () => apiRequest<Record<string, unknown>>("/admin/dashboard"),
     getAuditLogs: (limit = 50, offset = 0) =>
       apiRequest<AuditLog[]>(`/admin/audit-logs?limit=${limit}&offset=${offset}`),

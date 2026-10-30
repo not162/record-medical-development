@@ -410,6 +410,14 @@ def get_knowledge_graph_all(
     data = knowledge_graph.get_all_graph_data()
     return data
 
+@router.get("/graph/subgraph")
+def get_knowledge_subgraph(
+    entity: str,
+    admin: User = Depends(require_admin)
+):
+    """Subgraf di sekitar entitas klinis (mis. ?entity=Asma)."""
+    return knowledge_graph.get_subgraph(entity)
+
 @router.post("/graph/optimize-15pct")
 def optimize_knowledge_graph_15pct(
     admin: User = Depends(require_admin)
@@ -511,13 +519,13 @@ def launch_training_job(
         db=db
     )
     return {
-        "status": "submitted",
+        "status": "submitted",  # kompatibel dengan klien lama; status job sebenarnya di job_status (QUEUED)
         "job_id": job.id,
         "task_type": job.task_type,
         "model_name": job.model_name,
         "algorithm": job.algorithm,
         "job_status": job.status,
-        "message": f"Training job '{job.id}' berhasil dijadwalkan di background worker."
+        "message": f"Training job '{job.id}' masuk antrian dan akan diproses di background worker."
     }
 
 @router.get("/models/jobs")
