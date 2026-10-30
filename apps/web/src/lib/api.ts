@@ -84,12 +84,26 @@ export async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    let errorDetail = "Terjadi kesalahan pada permintaan server.";
+    let errorDetail = "";
     try {
       const errJson = await response.json();
-      errorDetail = formatErrorDetail(errJson?.detail, response.status) || errorDetail;
+      errorDetail = formatErrorDetail(errJson?.detail, response.status);
     } catch {
-      errorDetail = `HTTP ${response.status}: ${response.statusText}`;
+      // Non-JSON response
+    }
+
+    if (!errorDetail) {
+      if (response.status === 404) {
+        errorDetail = "Layanan atau endpoint klinis tidak ditemukan (404 Not Found).";
+      } else if (response.status === 401) {
+        errorDetail = "Kredensial tidak valid atau sesi otentikasi telah berakhir (401 Unauthorized).";
+      } else if (response.status === 403) {
+        errorDetail = "Akses ditolak: Anda tidak memiliki hak otorisasi yang memadai (403 Forbidden).";
+      } else if (response.status >= 500) {
+        errorDetail = "Gangguan pada server gateway klinis (500 Internal Error). Silakan coba beberapa saat lagi.";
+      } else {
+        errorDetail = `HTTP ${response.status}: ${response.statusText || "Permintaan gagal diproses."}`;
+      }
     }
     throw new Error(errorDetail);
   }

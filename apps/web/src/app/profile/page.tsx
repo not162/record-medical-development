@@ -74,10 +74,10 @@ export default function ProfilePage() {
       <div className="pb-4 border-b border-slate-200">
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
           <User className="w-5 h-5 text-cyan-600" />
-          <span>Profil Rekam Medis Pasien</span>
+          <span>Profil Rekam Medis & Anamnesis Pasien</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Informasi rekam medis terlindungi yang digunakan secara personal untuk grounding respons chatbot.
+          Parameter klinis dan riwayat komorbiditas yang digunakan secara personal untuk kalibrasi penalaran AI dan deteksi kontraindikasi farmakologis.
         </p>
       </div>
 
@@ -122,7 +122,7 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div>
-            <label className="block text-slate-700 font-medium mb-1.5">Nama Lengkap</label>
+            <label className="block text-slate-700 font-medium mb-1.5">Nama Lengkap Pasien Sesuai Identitas Resmi</label>
             <input
               type="text"
               value={fullName}
@@ -132,7 +132,7 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-slate-700 font-medium mb-1.5">Usia (Tahun)</label>
+            <label className="block text-slate-700 font-medium mb-1.5">Usia Kronologis (Tahun)</label>
             <input
               type="number"
               value={age}
@@ -143,7 +143,7 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-slate-700 font-medium mb-1.5">Jenis Kelamin</label>
+            <label className="block text-slate-700 font-medium mb-1.5">Fenotipe Jenis Kelamin Biologis</label>
             <select
               value={gender}
               onChange={(e) => setGender(e.target.value)}
@@ -155,7 +155,7 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-slate-700 font-medium mb-1.5">Golongan Darah</label>
+            <label className="block text-slate-700 font-medium mb-1.5">Golongan Darah & Sistem Rhesus (ABO)</label>
             <select
               value={bloodType}
               onChange={(e) => setBloodType(e.target.value)}
@@ -175,13 +175,13 @@ export default function ProfilePage() {
 
         <div>
           <label className="block text-xs text-slate-700 font-medium mb-1.5">
-            Ringkasan Riwayat Alergi, Obat, & Penyakit Kronis
+            Anamnesis Riwayat Penyakit Kronis, Alergi Farmakologis, & Pengobatan Berjalan
           </label>
           <textarea
             rows={4}
             value={medicalHistory}
             onChange={(e) => setMedicalHistory(e.target.value)}
-            placeholder="Contoh: Riwayat asma sejak anak-anak, alergi debu, riwayat hipertensi ringan terkontrol."
+            placeholder="Contoh: Hipertensi Grade 1 terkontrol Amlodipine 5mg; Riwayat alergi obat golongan Penisilin (urtikaria); Riwayat Asma Bronkial intermiten."
             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:bg-white transition"
           />
         </div>
@@ -198,7 +198,7 @@ export default function ProfilePage() {
             className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs shadow-sm hover:shadow transition flex items-center gap-1.5"
           >
             <Save className="w-4 h-4" />
-            <span>{saving ? "Menyimpan..." : "Simpan Profil Medis"}</span>
+            <span>{saving ? "Sinkronisasi..." : "Simpan & Sinkronisasi Rekam Medis"}</span>
           </button>
         </div>
       </form>

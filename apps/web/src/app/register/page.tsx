@@ -69,10 +69,10 @@ export default function RegisterPage() {
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            Pendaftaran Pengguna Baru
+            Registrasi Pasien & Rekam Medis Elektronik
           </h2>
           <p className="text-xs text-slate-500">
-            Daftar untuk berkonsultasi dengan Asisten AI Klinis RSUKT
+            Pendaftaran Pasien untuk Konsultasi Anamnesis Terpandu AI & Rekam Medis Terenkripsi
           </p>
         </div>
 
@@ -93,7 +93,7 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Username <span className="text-red-500">*</span>
+              ID Pengguna Pasien / Rekam Medis <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -104,7 +104,7 @@ export default function RegisterPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="misal: pasien_andi"
+                placeholder="misal: pasien_anamnesis_01"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition"
               />
             </div>
@@ -112,7 +112,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Email Valid <span className="text-red-500">*</span>
+              Alamat Surel Pasien Terdaftar <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -123,7 +123,7 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="andi@gmail.com"
+                placeholder="pasien@rsukt.go.id"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition"
               />
             </div>
@@ -131,20 +131,20 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Nama Lengkap (Opsional)
+              Nama Lengkap Pasien Sesuai Identitas Resmi (KTP/KIA)
             </label>
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Andi Pratama"
+              placeholder="misal: Siti Rahmawati / Budi Santoso"
               className="w-full px-4 py-2.5 bg-slate-50/80 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition"
             />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Kata Sandi (Minimal 8 karakter) <span className="text-red-500">*</span>
+              Kata Sandi Kredensial Medis (Min. 8 karakter) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -164,7 +164,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Konfirmasi Kata Sandi <span className="text-red-500">*</span>
+              Konfirmasi Kata Sandi Kredensial Medis <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -188,10 +188,10 @@ export default function RegisterPage() {
             className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-semibold text-sm shadow-md shadow-cyan-600/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
-              <span>Mendaftarkan Akun...</span>
+              <span>Mendaftarkan Subjek Klinis ke Basis Data...</span>
             ) : (
               <>
-                <span>Daftar Sekarang (Role: USER)</span>
+                <span>Daftarkan Pasien (Peran: Pasien / User Klinis)</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -207,11 +207,11 @@ export default function RegisterPage() {
           </div>
           <div className="text-[11px] text-slate-500 flex items-center justify-center gap-1">
             <Shield className="w-3.5 h-3.5 text-cyan-600" />
-            <span>Pendaftaran publik hanya menetapkan peran Pengguna Standar (USER)</span>
+            <span>Registrasi publik secara otomatis menetapkan hak akses Pasien / Pengguna Klinis (USER)</span>
           </div>
           <div className="text-[10px] text-emerald-700 font-medium flex items-center justify-center gap-1">
             <Shield className="w-3 h-3 text-emerald-600" />
-            <span>Keamanan data terjamin sesuai UU PDP No. 27/2022 & ISO 27001 ISMS</span>
+            <span>Data kesehatan sensitif dilindungi sesuai UU PDP No. 27/2022 (Pasal 4) & ISO/IEC 27001 ISMS</span>
           </div>
         </div>
       </div>
