@@ -7,6 +7,7 @@ from groq import Groq
 
 from app.config import settings
 from app.models import User, ChatMessage, ChatSession
+from app.agents.gp_safety import gp_safety_gate
 from app.agents.safety import evaluate_clinical_safety, evaluate_contraindications, evaluate_prompt_injection, CLINICAL_DISCLAIMER
 from app.agents.tools import TOOL_DEFINITIONS, AgentToolExecutor
 from app.rag.hybrid_search import hybrid_rag_engine
@@ -110,6 +111,11 @@ class ClinicalAgent:
                 "safety_alert": True,
                 "model_used": "safety-contraindication-guardrail"
             }
+
+        # 1c. Gaussian Process Safety Boundary Check (LCB = mu - 2.5 * sigma, threshold: -0.5)
+        gp_eval = gp_safety_gate.verify_query_safety(user_query, triage_urgency="MERAH" if is_emergency else ("KUNING" if is_contra else "HIJAU"))
+        if not gp_eval["is_safe"]:
+            logger.warning(f"Gaussian Process Safety Gate triggered: LCB={gp_eval['lcb']} (gate threshold: {gp_eval['safety_gate_threshold']})")
 
         # 2. Query Analysis
         analysis = analyze_clinical_query(user_query)
