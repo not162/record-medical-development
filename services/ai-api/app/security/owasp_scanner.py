@@ -138,3 +138,4 @@ class OWASPInjectionScanner:
 
 # Singleton instance
 owasp_scanner = OWASPInjectionScanner()
+

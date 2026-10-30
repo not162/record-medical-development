@@ -56,3 +56,4 @@ class TestOWASPSecurityScanner:
         assert len(threats) == 0
         assert meta["status"] == "PASSED"
         assert "payload_sha256" in meta
+

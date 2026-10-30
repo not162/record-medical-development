@@ -121,13 +121,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Footer */}
         <div className="p-3 border-t border-slate-200 space-y-2 bg-slate-50/50">
-          <Link
-            href="/chat"
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-medium text-xs transition shadow-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Lihat Tampilan Pasien</span>
-          </Link>
+          <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-[10px] text-emerald-800 flex items-center gap-2 shadow-2xs">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="leading-tight font-medium">Separasi Akses: Data privat pasien terenkripsi & terisolasi (UU PDP No. 27/2022).</span>
+          </div>
 
           <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 shadow-sm">
             <div className="truncate">

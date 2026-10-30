@@ -115,6 +115,11 @@ def create_chat_session(
     current_user: User = Depends(require_user),
     db: Session = Depends(get_db)
 ):
+    if current_user.role == "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akses Ditolak (UU PDP No. 27/2022): Administrator dilarang keras membuat atau mengoperasikan sesi rekam konsultasi pasien."
+        )
     """Membuat sesi percakapan klinis baru untuk pengguna terautentikasi."""
     new_session = ChatSession(
         user_id=current_user.id,
@@ -237,6 +242,11 @@ def send_chat_message(
     current_user: User = Depends(require_user),
     db: Session = Depends(get_db)
 ):
+    if current_user.role == "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akses Ditolak (UU PDP No. 27/2022): Administrator dilarang keras mengirimkan pesan konsultasi pasien."
+        )
     """
     Mengirim pesan ke Asisten AI Klinis:
     - Verifikasi kepemilikan sesi

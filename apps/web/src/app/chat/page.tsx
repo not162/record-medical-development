@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 
 const emptySubscribe = () => () => {};
 
@@ -114,211 +115,6 @@ interface ApiSessionMessage {
 }
 
 /**
- * Komponen Scanning Deteksi Bahasa: Bahasa Awam ➔ Medis Klinis
- * Mengimplementasikan visualisasi Tiny Classifier (latency ms), Tokenizer BPE,
- * Steering Token (<2med_id>), Triase Klinis, dan Beam Search Top Candidates.
- */
-function ScanningDeteksiBahasaCard({
-  scan,
-  defaultDept,
-  isAdmin = false
-}: {
-  scan?: ScanningDeteksiBahasa | null;
-  defaultDept?: string;
-  isAdmin?: boolean;
-}) {
-  const [showPipelineDetails, setShowPipelineDetails] = useState(false);
-
-  if (!scan || !scan.scanning_result) {
-    return null;
-  }
-
-  const res = scan.scanning_result;
-  const lang = scan.language_detection;
-  const beam = scan.beam_search?.top_candidates || [];
-  const urgency = res.urgensi_triase || "HIJAU";
-
-  const getUrgencyBadge = () => {
-    switch (urgency) {
-      case "MERAH":
-        return "bg-red-50 text-red-700 border-red-300 animate-pulse";
-      case "KUNING":
-        return "bg-amber-50 text-amber-800 border-amber-300";
-      default:
-        return "bg-emerald-50 text-emerald-800 border-emerald-300";
-    }
-  };
-
-  if (!isAdmin) {
-    // Sesuai aturan: Dashboard scanning bahasa dan badge triase TIDAK DITAMPILKAN pada role user/pasien
-    // Seluruh visualisasi scanning & triase hanya aktif pada role Admin / Periset AI
-    return null;
-  }
-
-  return (
-    <div className="mt-3 p-3 sm:p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-      {/* Header Scanning (Mode Admin / Tim Medis) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-700 shadow-2xs">
-            <Languages className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <span className="font-bold text-xs text-slate-900 block leading-tight">
-              Scanning Deteksi Bahasa: Awam ➔ Medis Klinis
-            </span>
-            <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-500">
-              <span>{lang?.source_language_label || "Bahasa Indonesia"} • Latency: <strong className="text-cyan-700 font-mono">{lang?.latency_ms || 1.2} ms</strong></span>
-              <span className="text-[9px] px-1 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                🔒 UU PDP • HIPAA & Permenkes De-Identified
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Target Steering Token */}
-          <span className="px-2 py-0.5 rounded-md bg-cyan-50 border border-cyan-200 text-[10px] font-mono font-semibold text-cyan-800">
-            {scan.target_steering_token || "<2med_id>"}
-          </span>
-
-          {/* Urgensi Triase Badge */}
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${getUrgencyBadge()}`}>
-            Triase: {urgency}
-          </span>
-        </div>
-      </div>
-
-      {/* Dual Box: Bahasa Awam vs Medis Klinis */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-        {/* Kolom 1: Bahasa Awam (Keluhan Pasien) */}
-        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-          <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
-            <span className="flex items-center gap-1">
-              <UserIcon className="w-3 h-3 text-slate-400" />
-              Bahasa Awam (Pasien)
-            </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono text-slate-600">
-              Input
-            </span>
-          </div>
-          <p className="font-semibold text-slate-800 text-xs leading-snug">
-            {res.bahasa_awam || "Keluhan klinis pasien"}
-          </p>
-        </div>
-
-        {/* Kolom 2: Terjemahan Medis Klinis (Standar Medis) */}
-        <div className="p-2.5 rounded-xl bg-cyan-50/70 border border-cyan-200 space-y-1">
-          <div className="flex items-center justify-between text-[10px] text-cyan-800 font-medium">
-            <span className="flex items-center gap-1 font-semibold">
-              <Stethoscope className="w-3 h-3 text-cyan-700" />
-              Terjemahan Medis Klinis
-            </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-800 font-mono font-semibold">
-              ICD-10: {res.icd10_code || "Z00.0"}
-            </span>
-          </div>
-          <p className="font-bold text-cyan-950 text-xs leading-snug">
-            {res.bahasa_medis_klinis || "Standar Terminologi Klinis"}
-          </p>
-          <div className="text-[10px] text-cyan-800 pt-0.5">
-            Departemen: <span className="font-semibold">{res.departemen_rekomendasi || defaultDept || "Umum"}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Khusus Administrator: Detail Neural Pipeline (BPE Tokens & Beam Search) */}
-      {isAdmin && (
-        <div className="pt-1">
-          <button
-            type="button"
-            onClick={() => setShowPipelineDetails(!showPipelineDetails)}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] text-slate-600 transition"
-          >
-            <span className="flex items-center gap-1.5 font-medium text-slate-700">
-              <Cpu className="w-3.5 h-3.5 text-cyan-600" />
-              <span>Detail Neural Pipeline (BPE Tokens & Beam Search) [Admin Workspace]</span>
-            </span>
-            {showPipelineDetails ? (
-              <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            )}
-          </button>
-
-          {showPipelineDetails && (
-            <div className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-[11px]">
-              {/* BPE Tokens */}
-              <div>
-                <div className="text-[10px] font-semibold text-slate-600 flex items-center gap-1 mb-1">
-                  <Layers className="w-3 h-3 text-slate-500" />
-                  <span>BPE Subword Tokenization ({scan.bpe_tokens?.length || 0} tokens):</span>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  <span className="px-1.5 py-0.5 rounded bg-cyan-100 border border-cyan-200 font-mono text-[10px] font-bold text-cyan-800">
-                    {scan.target_steering_token || "<2med_id>"}
-                  </span>
-                  {scan.bpe_tokens?.map((tok, idx) => (
-                    <span
-                      key={idx}
-                      className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono text-[10px] text-slate-700 shadow-2xs"
-                    >
-                      {tok}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Beam Search Candidates */}
-              {beam.length > 0 && (
-                <div className="pt-1 border-t border-slate-200">
-                  <div className="text-[10px] font-semibold text-slate-600 flex items-center gap-1 mb-1.5">
-                    <Sparkles className="w-3 h-3 text-cyan-600" />
-                    <span>Beam Search Top Candidates (Beam Width: {scan.beam_search?.beam_width || 3}):</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {beam.map((c, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-1.5 rounded-lg bg-white border border-slate-200 text-[10px]"
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-[9px] shrink-0">
-                            {idx + 1}
-                          </span>
-                          <span className="font-medium text-slate-800 truncate">{c.candidate}</span>
-                          {c.icd10 && (
-                            <span className="px-1 py-0.2 rounded bg-slate-100 text-slate-600 font-mono text-[9px] shrink-0">
-                              {c.icd10}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0 pl-2">
-                          <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-cyan-600 rounded-full"
-                              style={{ width: `${Math.round(c.probability * 100)}%` }}
-                            />
-                          </div>
-                          <span className="font-mono text-cyan-700 font-semibold text-[10px]">
-                            {(c.probability * 100).toFixed(1)}%
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-/**
  * Komponen pemformatan teks klinis untuk pasien:
  * Menghilangkan simbol teknis (*, '', ##, ###) dan merender judul, list, dan penekanan secara bersih.
  */
@@ -385,6 +181,19 @@ function renderFormattedInline(text: string): React.ReactNode {
 }
 
 export default function ChatPage() {
+  const { role: userRole } = useAuth();
+  const pageRouter = useRouter();
+
+  // Strict separation: Administrator dilarang keras masuk ke ruang konsultasi pasien (UU PDP No. 27/2022)
+  useEffect(() => {
+    if (userRole === "ADMIN") {
+      pageRouter.replace("/admin/dashboard");
+    }
+  }, [userRole, pageRouter]);
+
+  if (userRole === "ADMIN") {
+    return null;
+  }
   const mounted = useMounted();
   const { role } = useAuth();
   const isAdmin = role === "ADMIN";
@@ -1043,67 +852,53 @@ export default function ChatPage() {
               <History className="w-3.5 h-3.5 text-cyan-600" />
             </button>
 
-            {/* Tampilan Header: Pasien Awam (Hospital Native) vs Admin Workspace */}
-            {!isEffectiveAdmin ? (
+            {/* Mode Selector Pasien: Hanya Thinking Mode dan Fast Mode (Bebas dari jargon ML/DL) */}
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-50/70 border border-cyan-200 text-cyan-900 text-xs font-semibold shadow-2xs">
                 <Stethoscope className="w-4 h-4 text-cyan-700 shrink-0" />
-                <span>Asisten AI Medis RSUKT</span>
+                <span className="hidden sm:inline">Asisten AI Medis</span>
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Triase Klinis CDSS
-                </span>
-                <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-cyan-100/70 text-cyan-800 text-[9px] font-mono">
-                  🔒 UU PDP & ISO 27001
+                  Terpandu
                 </span>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 font-medium shadow-2xs">
-                  <Activity className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
-                  <span>Llama {modelSize === "70b" ? "3.3 70B" : "3.1 8B"}</span>
-                </div>
 
-                {/* Reasoning Mode Toggle (Khusus Administrator Workspace) */}
-                <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setReasoningMode("thinking");
-                      setModelSize("70b");
-                    }}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
-                      reasoningMode === "thinking"
-                        ? "bg-white text-indigo-700 shadow-2xs border border-indigo-200"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                    title="Thinking Mode"
-                  >
-                    <Brain className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Thinking Mode</span>
-                  </button>
+              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReasoningMode("thinking");
+                    setModelSize("70b");
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
+                    reasoningMode === "thinking"
+                      ? "bg-white text-indigo-700 shadow-2xs border border-indigo-200"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                  title="Thinking Mode"
+                >
+                  <Brain className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Thinking Mode</span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setReasoningMode("fast");
-                      setModelSize("8b");
-                    }}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
-                      reasoningMode === "fast"
-                        ? "bg-white text-amber-700 shadow-2xs border border-amber-200"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                    title="Fast Mode"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Fast Mode</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReasoningMode("fast");
+                    setModelSize("8b");
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
+                    reasoningMode === "fast"
+                      ? "bg-white text-amber-700 shadow-2xs border border-amber-200"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                  title="Fast Mode"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Fast Mode</span>
+                </button>
               </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
+            </div>
             {/* Daily Quota Counter Badge (Max 7 / 24 Hours) */}
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border bg-slate-50 border-slate-200 text-[11px] shadow-2xs">
               <Clock className="w-3.5 h-3.5 text-cyan-600" />
@@ -1150,7 +945,7 @@ export default function ChatPage() {
                   Asisten Kecerdasan Artifisial Medis Klinis RSUKT
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-md">
-                  Pemeriksaan anamnesis terstruktur, penapisan tanda bahaya (*Red Flags*), dan triase rujukan poliklinik spesialis berbasis bukti protokol medis terverifikasi.
+                  Pemeriksaan anamnesis terstruktur, penapisan tanda bahaya (*Red Flags*), dan panduan rujukan poliklinik spesialis berbasis bukti protokol medis terverifikasi.
                 </p>
               </div>
 
@@ -1262,14 +1057,7 @@ export default function ChatPage() {
                     </div>
                   )}
 
-                  {/* Scanning Deteksi Bahasa: HANYA untuk Admin Periset AI */}
-                  {isEffectiveAdmin && msg.sender === "assistant" && Boolean(msg.scanningDeteksiBahasa?.scanning_result) && (
-                    <ScanningDeteksiBahasaCard
-                      scan={msg.scanningDeteksiBahasa}
-                      defaultDept={msg.department}
-                      isAdmin={isEffectiveAdmin}
-                    />
-                  )}
+                  {/* Scanning Deteksi Bahasa & Triase dihapus dari chat pasien */}
                 </div>
 
                 {/* Message Footer Info & Feedback Controls */}
@@ -1343,7 +1131,7 @@ export default function ChatPage() {
                 <div className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce delay-100"></div>
                 <div className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce delay-200"></div>
                 <span className="ml-1 text-slate-700 font-medium text-xs">
-                  AI Real-Time memproses scanning bahasa & bukti klinis...
+                  AI sedang merumuskan penjelasan edukasi medis terverifikasi...
                 </span>
                 <span className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold hidden sm:inline">
                   LIVE STREAM

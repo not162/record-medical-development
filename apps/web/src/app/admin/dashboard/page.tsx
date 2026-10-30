@@ -165,10 +165,10 @@ export default function AdminDashboardPage() {
             <span className="text-xs text-slate-300">Format ChatML & Tabular CSV</span>
           </div>
           <h3 className="text-base font-bold text-white mt-1">
-            Ekspor Dataset Percakapan Klinis untuk Pelatihan di Google Colab
+            Ekspor Benchmark Pengetahuan Klinis Terverifikasi (De-Identified)
           </h3>
           <p className="text-xs text-slate-300 mt-0.5">
-            Unduh seluruh dialog tanya-jawab pasien dan asisten AI lengkap dengan kategori triase, ICD-10, serta penilaian dokter.
+            Unduh korpus data protokol kesehatan & benchmark medis yang telah disetujui (Approved) bebas dari data pribadi pasien sesuai UU PDP Pasal 4.
           </p>
         </div>
 

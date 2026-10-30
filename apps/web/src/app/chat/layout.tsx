@@ -11,16 +11,20 @@ import {
 } from "lucide-react";
 
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, role, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/login");
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.push("/login");
+      } else if (role === "ADMIN") {
+        router.replace("/admin/dashboard");
+      }
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, role, router]);
 
   const navItems = [
     { href: "/chat", label: "Chatbot Klinis", icon: Bot },
@@ -28,6 +32,25 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     { href: "/profile", label: "Rekam Medis Saya", icon: User },
     { href: "/settings", label: "Pengaturan Akun", icon: Settings },
   ];
+
+  if (!isLoading && role === "ADMIN") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-red-200 text-center space-y-4 shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center mx-auto shadow-sm">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h3 className="font-bold text-lg text-slate-900">Akses Ditolak (UU PDP No. 27/2022)</h3>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Sesuai regulasi kerahasiaan medis & UU Perlindungan Data Pribadi Pasal 4, akun Administrator dilarang keras mengakses ruang konsultasi dan rekam medis privat pasien.
+          </p>
+          <Link href="/admin/dashboard" className="inline-block py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md">
+            Buka Dashboard Administrator
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 relative flex-col lg:flex-row">
