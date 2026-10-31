@@ -92,6 +92,13 @@ class SpeculativeMTPDistiller:
         """PyTorch exact autograd execution of the one-line gradient recovery."""
         h_ntp_initial = h_ntp.clone()
 
+        # Ensure head dimension matches input tensor features
+        in_dim = h_ntp.shape[-1]
+        if self.head_ntp.in_features != in_dim:
+            self.hidden_dim = in_dim
+            self.head_ntp = nn.Linear(in_dim, self.vocab_size, bias=False)
+            self.head_mtp = nn.Linear(in_dim, self.vocab_size, bias=False)
+
         # Ensure h_ntp is non-leaf so in-place autograd operation is valid
         if hasattr(h_ntp, "is_leaf") and h_ntp.is_leaf:
             h_ntp = h_ntp * 1.0
@@ -144,9 +151,17 @@ class SpeculativeMTPDistiller:
         zero_diff = h_mtp_detached - h_mtp_arr
         h_ntp_arr += zero_diff  # exact one-line trick
 
+        # Dynamically adapt weight matrix dimension to input vector
+        in_dim = h_ntp_arr.shape[-1]
+        if not hasattr(self, 'w_ntp') or self.w_ntp.shape[1] != in_dim:
+            self.hidden_dim = in_dim
+            scale = 1.0 / math.sqrt(max(in_dim, 1))
+            self.w_ntp = (self.rng.standard_normal((self.vocab_size, in_dim)) * scale).astype(np.float32)
+            self.w_mtp = (self.rng.standard_normal((self.vocab_size, in_dim)) * scale).astype(np.float32)
+
         # Logits
-        logits_ntp = h_ntp_arr @ self.w_ntp.T if hasattr(self, 'w_ntp') else np.ones(self.vocab_size)
-        logits_mtp = h_mtp_arr @ self.w_mtp.T if hasattr(self, 'w_mtp') else np.ones(self.vocab_size)
+        logits_ntp = h_ntp_arr @ self.w_ntp.T
+        logits_mtp = h_mtp_arr @ self.w_mtp.T
 
         def softmax(x, temp):
             scaled = x / max(temp, 1e-4)
