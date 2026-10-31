@@ -23,3 +23,4 @@ with open("services/ai-api/app/ml/execution_modes.py", "w", encoding="utf-8") as
     f.write(text)
 
 print("execution_modes.py updated with gp_safety_gate!")
+

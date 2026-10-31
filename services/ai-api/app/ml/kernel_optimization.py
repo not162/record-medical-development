@@ -363,3 +363,4 @@ class AutoKernelTuner:
 # Singleton Engine Instances
 tensor_arena = TensorMemoryArena(size_bytes=32 * 1024 * 1024)
 kernel_tuner = AutoKernelTuner()
+

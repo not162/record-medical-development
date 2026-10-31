@@ -72,3 +72,4 @@ with open("services/ai-api/app/agents/clinical_agent.py", "w", encoding="utf-8")
     f.write(text)
 
 print("clinical_agent.py patched successfully with Document Navigator & Kernel Engine!")
+
