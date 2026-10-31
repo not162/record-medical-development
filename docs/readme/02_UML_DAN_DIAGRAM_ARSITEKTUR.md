@@ -1,450 +1,370 @@
 # Dokumen UML, Diagram Arsitektur, & Aliran Data Sistem
 ## RSUKT AI Clinical Consultation & Research Intelligence Platform
+### Standar Template Visual: Class Diagram, Use Case, Activity, Sequence, ERD & DFD dengan Animasi Alur Data
 
 ---
 
-### Informasi Dokumen
-- **Modul Dokumentasi:** Visual UML, Dynamic Behavioral Diagrams, & DFD
-- **Standar Notasi:** UML 2.5 (Unified Modeling Language), Yourdon/DeMarco (DFD), Mermaid.js
-- **Aturan Garis Relasi:** Garis asosiasi dan garis putus-putus (*dependency/return*) dirancang terpisah secara ortogonal (*clean non-overlapping routing*) guna mencerminkan standar integritas ANSI SQL (MySQL 8.0 & SQLite 3.35+).
+### Informasi Dokumen & Visual Suite
+- **Modul Dokumentasi:** Visual UML, Dynamic Behavioral Diagrams, & DFD Level 0/1
+- **Live Interactive Animated Viewer:** [`interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html) *(Dilengkapi animasi aliran data SVG real-time, kontrol jeda/putar, zoom interaktif, dan tab navigasi)*
+- **Standar Notasi Visual:** Mengikuti template referensi resmi (Visual Paradigm / UML 2.5 / Crow's Foot ERD) dengan pemisahan warna domain:
+  - 🔵 **Biru Muda / Sky Blue (`#0284c7` / `#38bdf8`):** Batas Sistem, Kelas Model, & Aksi Normal
+  - 🟣 **Indigo / Ungu (`#4f46e5` / `#818cf8`):** Decision Diamond (◇) & Evaluasi Kondisi
+  - 🔴 **Mawar / Merah Delima (`#e11d48` / `#f43f5e`):** Triase Red-Flag IGD & Cabang Darurat
+  - 🟢 **Zamrud / Hijau (`#059669` / `#34d399`):** RLHF Reward Feedback & Jalur Berhasil
+  - 🟠 **Peach / Oranye (`#ea580c` / `#fdba74`):** Entitas Database Relasional (MySQL / SQLite / Neon)
+
+---
+
+## ⚡ Interactive Animated Diagrams Suite (Live Preview)
+
+Sistem menyediakan aplikasi visual interaktif beranimasi penuh yang dapat dibuka langsung di browser:
+- **Lokasi File:** [`docs/readme/interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html)
+- **Aplikasi Web Publik:** [`apps/web/public/interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/apps/web/public/interactive_system_diagrams.html)
+
+*Fitur Animasi:*
+1. **Flow Dash Animation:** Garis relasi dan aliran kueri bergerak secara kontinu (`stroke-dasharray` dengan animasi linier).
+2. **Pulsing Activation Blocks:** Titik keputusan aktif berpendar (*glow effect*) saat mengevaluasi kondisi.
+3. **Emergency Alert Pulse:** Notifikasi triase merah berkedip saat terdeteksi indikasi gawat darurat.
+4. **Interactive Controls:** Tombol Play/Pause animasi, Zoom In (+), Zoom Out (-), dan Reset View.
 
 ---
 
 ## 1. Class Diagram (UML)
-
-Class Diagram berikut memodelkan struktur kelas entitas inti, komponen runtime mesin, dan relasi dependensi sistem sesuai template standar UML Class Diagram.
+*Template Mengikuti Gambar 1: Struktur 3-Kompartemen (Nama Kelas Biru, Atribut Tengah, Method Operasi Bawah, Relasi Kardinalitas)*
 
 ```mermaid
 classDiagram
     direction TB
 
-    %% Entitas Inti Pengguna & Profil
-    class User {
+    %% Definisi Gaya Kelas Sesuai Template Gambar 1
+    class User:::blueClass {
         +String id [PK]
-        +String username
-        +String email
+        +String username [UK]
+        +String email [UK]
         +String hashed_password
         +String full_name
         +String role
         +Boolean is_active
         +DateTime created_at
-        +DateTime updated_at
         +verify_password(raw_pwd) Boolean
-        +has_role(target_role) Boolean
+        +has_permission(perm) Boolean
     }
 
-    class PatientProfile {
+    class PatientProfile:::blueClass {
         +String id [PK]
-        +String user_id [FK]
+        +String user_id [FK, UK]
         +String nik_anonymized
         +Integer age
         +String gender
         +String blood_type
-        +String medical_history_summary
+        +Text medical_history_summary
         +Boolean is_verified
-        +DateTime created_at
-        +get_pseudonym() String
+        +anonymize_nik(raw) String
+        +get_clinical_summary() Text
     }
 
-    %% Entitas Konsultasi & Komunikasi
-    class ChatSession {
+    class ChatSession:::blueClass {
         +String id [PK]
         +String user_id [FK]
         +String title
-        +String summary
+        +Text summary
         +Boolean is_deleted
-        +DateTime created_at
         +DateTime updated_at
-        +add_message(content, role) ChatMessage
-        +update_rolling_summary(text) Void
+        +update_summary() Void
         +soft_delete() Void
     }
 
-    class ChatMessage {
+    class ChatMessage:::blueClass {
         +String id [PK]
         +String session_id [FK]
         +String sender_role
-        +String content
-        +String evidence_context
-        +String citations
-        +String triage_department
+        +Text content
+        +Text evidence_context
+        +Text citations
         +Boolean safety_alert
-        +DateTime created_at
-        +get_clean_content() String
-        +has_citations() Boolean
+        +sanitize_for_patient() Dict
+        +evaluate_lcb_safety() Float
     }
 
-    class FeedbackRecord {
+    class FeedbackRecord:::greenClass {
         +String id [PK]
         +String session_id [FK]
-        +String message_id [FK]
+        +String message_id [FK, UK]
         +String user_id [FK]
         +String feedback_type
-        +String improvement_category
-        +String user_comment
-        +Float reward_score
-        +DateTime created_at
-        +calculate_reward_rate() Float
+        +Float reward_rate
+        +Float adjusted_score
+        +Text notes
+        +compute_rlhf_reward() Float
+        +update_tinylora_weights() Void
     }
 
-    %% Basis Pengetahuan & Graf
-    class KnowledgeDocument {
+    class TinyLoRAModel:::purpleClass {
+        +Integer rank_n = 13
+        +Vector v_weight
+        +Tensor fixed_lambda
+        +Float effective_lr
+        +forward(x) Tensor
+        +step_rl(reward_grad, lr) Void
+        +save_checkpoint(path) Void
+    }
+
+    class KnowledgeDocument:::tealClass {
         +String id [PK]
         +String doc_id
         +String title
         +String department
-        +String content
-        +String source_file
+        +Text content
         +String approval_status
-        +String checksum
-        +DateTime created_at
         +approve(reviewer_id) Void
         +reject(reason) Void
     }
 
-    class RAGChunk {
+    class RAGChunk:::tealClass {
         +String chunk_id [PK]
         +String doc_id [FK]
         +String department
-        +String title
-        +String content_text
-        +String embedding
-        +cosine_similarity(q_vec) Float
+        +Text content_text
+        +Text embedding_384d
+        +cosine_similarity(vec) Float
     }
 
-    %% Mesin Inferensi & Optimasi Sistem
-    class KernelOptimizer {
-        +PrecisionMode precision
-        +TensorMemoryArena arena
-        +AutoKernelTuner tuner
-        +fused_linear_activation(x, w, act) Array
-        +fused_qkv_projection(x, w) Tuple
-        +fused_rmsnorm_residual(x, res) Tuple
-    }
-
-    class NavigationDecisionRouter {
-        +Float retrieval_free_threshold
-        +evaluate_query(query, mode) NavigationDecision
-        +route_execution(decision) Array
-    }
-
-    class CrossEncoderReranker {
-        +Integer d_hidden
-        +Array w_cross
-        +score_pair(query, doc_text) Float
-        +rerank(query, candidates, top_n) List
-    }
-
-    class AuditLog {
-        +String id [PK]
-        +String user_id [FK]
-        +String action
-        +String resource_type
-        +String resource_id
-        +String status
-        +String ip_address
-        +String details
-        +DateTime created_at
-    }
-
-    %% Hubungan Relasi Struktural
-    User "1" *-- "1" PatientProfile : owns (1-to-1)
-    User "1" *-- "0..*" ChatSession : conducts (1-to-many)
+    %% Relasi Struktural dengan Kardinalitas (Sesuai Standar Template)
+    User "1" -- "0..1" PatientProfile : owns
+    User "1" -- "0..*" ChatSession : initiates
     ChatSession "1" *-- "1..*" ChatMessage : contains
-    ChatMessage "1" o-- "0..1" FeedbackRecord : evaluated_by
-    User "1" --> "0..*" FeedbackRecord : submits
-    User "1" --> "0..*" AuditLog : logs_activity
-
+    ChatMessage "1" -- "0..1" FeedbackRecord : evaluated_by
+    User "1" ..> "0..*" FeedbackRecord : submits
+    FeedbackRecord ..> TinyLoRA : updates
     KnowledgeDocument "1" *-- "1..*" RAGChunk : partitioned_into
 
-    %% Dependensi Mesin (Garis Putus-Putus Terpisah)
-    NavigationDecisionRouter ..> CrossEncoderReranker : invokes_reranker
-    ChatMessage ..> NavigationDecisionRouter : routed_by
-    ChatMessage ..> KernelOptimizer : accelerated_by
+    classDef blueClass fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef greenClass fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef purpleClass fill:#7c3aed,stroke:#a78bfa,stroke-width:2px,color:#ffffff;
+    classDef tealClass fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#ffffff;
 ```
 
 ---
 
 ## 2. Use Case Diagram (7 Aktor)
-
-Use Case Diagram berikut mendefinisikan batasan sistem dan interaksi fungsional antara 7 aktor dengan modul platform RSUKT:
+*Template Mengikuti Gambar 2: Batas Sistem Kotak Biru Muda (*System Boundary Box*), Aktor Stick-Figure, Oval Use Cases, Relasi `<<include>>` dan `<<extend>>`*
 
 ```mermaid
 flowchart LR
-    subgraph ACTORS ["Aktor Ekosistem RSUKT"]
-        P["Pasien (USER)"]
-        D["Dokter Penelaah (REVIEWER)"]
-        S["Peneliti AI Medis (SCIENTIST)"]
-        A["Admin IT Sistem (ADMIN)"]
-        T["Petugas Triase IGD (TRIAGE_OPS)"]
-        R["Petugas Rekam Medis (RECORD_OPS)"]
-        C["Auditor Kepatuhan (COMPLY)"]
+    %% Aktor Pasien (Kiri)
+    subgraph S_ACTORS_LEFT ["Aktor Pengguna"]
+        P["👤 Pasien (USER)"]
+        S["🔬 Peneliti AI (SCIENTIST)"]
+        A["🛡️ Auditor PDP (COMPLY)"]
     end
 
-    subgraph SYSTEM_BOUNDARY ["RSUKT AI Clinical Consultation & Research Platform"]
-        UC1(["UC-01: Masuk & Kelola Sesi Konsultasi"])
-        UC2(["UC-02: Konsultasi Anamnesis Awam (Fast/Thinking)"])
-        UC3(["UC-03: Kirim Umpan Balik Kualitas (Like/Dislike)"])
-        UC4(["UC-04: Telaah & Setujui Dokumen Pedoman Klinis"])
-        UC5(["UC-05: Validasi Koreksi Medis RLHF"])
-        UC6(["UC-06: Analisis Eksperimen TinyLoRA & Ablasi Kernel"])
-        UC7(["UC-07: Manajemen Pengguna & Monitoring Sistem"])
-        UC8(["UC-08: Pantau Peringatan Triase Merah (Red-Flag)"])
-        UC9(["UC-09: Verifikasi De-identifikasi & Ekspor RME"])
-        UC10(["UC-10: Audit Forensik Log Kepatuhan UU PDP"])
-        
-        %% Sub-fungsi Include & Extend
-        UC_TRIAGE(["<<include>> Evaluasi Triase Kegawatdaruratan"])
-        UC_CITE(["<<include>> Penelusuran Dokumen Bukti Sitasi"])
-        UC_WARN(["<<extend>> Eskalasi Kontak IGD 119"])
+    %% Batas Sistem Utama (Kotak Biru Muda Sesuai Template Gambar 2)
+    subgraph SYSTEM_BOUNDARY ["🏢 RSUKT AI Clinical Consultation & Research System"]
+        UC1(["💬 Konsultasi Edukasi Klinis"])
+        UC2(["🛡️ Validasi Kuota Pasien (7x/Hari)"])
+        UC3(["🚨 Eskalasi Triase Merah IGD"])
+        UC4(["⭐ Beri Ulasan Klinis (RLHF)"])
+        UC5(["🩺 Telaah Rekomendasi Dokter"])
+        UC6(["⚙️ Pelatihan Model TinyLoRA"])
+        UC7(["📋 Sinkronisasi RME SatuSehat"])
+        UC8(["🔍 Audit Trail Kepatuhan ISO"])
+
+        %% Include & Extend
+        UC1 -. "«include»" .-> UC2
+        UC3 -. "«extend»" .-> UC1
+    end
+
+    %% Aktor Klinis & Operasional (Kanan)
+    subgraph S_ACTORS_RIGHT ["Aktor Medis & Sistem"]
+        D["👨‍⚕️ Dokter Penelaah (REVIEWER)"]
+        T["🚑 Petugas Triase (TRIAGE_OPS)"]
+        R["📁 Rekam Medis (RECORD_OPS)"]
+        ADM["💻 Admin IT (ADMIN)"]
     end
 
     %% Hubungan Aktor ke Use Case
-    P --> UC1
-    P --> UC2
-    P --> UC3
+    P --- UC1
+    P --- UC4
+    D --- UC5
+    D --- UC4
+    T --- UC3
+    S --- UC6
+    R --- UC7
+    A --- UC8
+    ADM --- UC8
 
-    D --> UC4
-    D --> UC5
+    classDef actorStyle fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe;
+    classDef ucStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef ucAlert fill:#4c0519,stroke:#f43f5e,stroke-width:2px,color:#fecdd3;
+    classDef sysStyle fill:#0369a1,stroke:#38bdf8,stroke-width:3px,color:#ffffff;
 
-    S --> UC6
-    S --> UC4
-
-    A --> UC7
-
-    T --> UC8
-
-    R --> UC9
-
-    C --> UC10
-
-    %% Relasi Internal Use Case
-    UC2 ..> UC_TRIAGE : <<include>>
-    UC2 ..> UC_CITE : <<include>>
-    UC_TRIAGE ..> UC_WARN : <<extend on Red-Flag>>
-    UC_WARN -.-> T
+    class P,S,A,D,T,R,ADM actorStyle;
+    class UC1,UC2,UC4,UC5,UC6,UC7,UC8 ucStyle;
+    class UC3 ucAlert;
+    class SYSTEM_BOUNDARY sysStyle;
 ```
 
 ---
 
 ## 3. Activity Diagram (Alur Konsultasi & Triase Klinis)
-
-Activity Diagram berikut menggambarkan urutan aktivitas mulai dari input keluhan pasien, verifikasi injeksi OWASP, evaluasi triase, routing keputusan dokumen, hingga keluaran edukasi:
+*Template Mengikuti Gambar 3: Titik Awal Bulat Hitam (●), Action Pills Berwarna Biru dengan Teks Rapi, Decision Diamond (◇), Fork & Join Bars, dan Titik Akhir Target (◉)*
 
 ```mermaid
 flowchart TD
-    START((●)) --> A1["Pasien Mengirimkan Kueri Keluhan"]
-    A1 --> A2["Sistem Memeriksa Kuota Pasien (Maks. 7/24 Jam)"]
+    %% 1. Initial State Node
+    START((●)):::startNode --> A1["Pasien Mengirim Keluhan<br/>(Bahasa Awam Non-Formal)"]:::actionBlue
     
-    A2 --> D_QUOTA{"Kuota Tersedia?"}
-    D_QUOTA -- "Tidak (Terkunci)" --> ACT_LOCK["Tampilkan Notifikasi Batas Kuota & Saran Periksa Langsung"]
-    ACT_LOCK --> END_NODE(((◉)))
+    A1 --> A2["Sanitasi OWASP & PDP<br/>(Anti-Injection & De-identifikasi)"]:::actionBlue
     
-    D_QUOTA -- "Ya" --> A3["Scanner Keamanan: OWASP & Prompt Injection Check"]
+    %% 2. Decision Diamond 1: Evaluasi Kuota
+    A2 --> D_QUOTA{"Kuota Pasien<br/>Tersedia? (7x)"}:::diamondNode
     
-    A3 --> D_INJECT{"Terdeteksi Injeksi / Bahaya?"}
-    D_INJECT -- "Ya" --> ACT_INJ["Tolak Permintaan & Catat Audit Log Keamanan"]
-    ACT_INJ --> END_NODE
+    %% Cabang Kuota Habis
+    D_QUOTA -- "[Tidak: Limit 7x]" --> ACT_LOCK["Kunci Input Chat Pasien<br/>(Tampilkan Hubungi Dokter Langsung)"]:::actionRose
+    ACT_LOCK --> END_NODE(((◉))):::endNode
     
-    D_INJECT -- "Tidak" --> A4["Evaluasi Triase Kegawatdaruratan (Red-Flag)"]
+    %% Cabang Kuota Masih Ada
+    D_QUOTA -- "[Ya: Kuota OK]" --> FORK_BAR["═════════════ «fork» Paralel Retrieval & Safety Scan ═════════════"]:::syncBar
     
-    A4 --> D_EMERGENCY{"Kondisi Kritis / Gawat Darurat?"}
-    D_EMERGENCY -- "Ya (Triase Merah)" --> ACT_EMERGENCY["Format Peringatan Triase Merah & Tampilkan Kontak Darurat IGD 119"]
-    ACT_EMERGENCY --> ACT_LOG_EMERGENCY["Catat Log Eskalasi IGD"]
-    ACT_LOG_EMERGENCY --> END_NODE
+    %% Paralel Jalur Kiri: RAG Search
+    FORK_BAR --> A3_RAG["RAG Hybrid Search<br/>(BM25 + Cosine 384 Dimensi<br/>& Cross-Encoder Re-ranker)"]:::actionBlue
     
-    D_EMERGENCY -- "Tidak (Hijau/Kuning)" --> A5["Cek Mode Konsultasi Pasien"]
+    %% Paralel Jalur Kanan: Triage Scanner
+    FORK_BAR --> A3_TRIAGE["Deteksi Gejala Darurat<br/>(Regex Red-Flag & Knowledge Graph<br/>Nyeri Dada, Stroke, Apnea)"]:::actionIndigo
     
-    A5 --> D_MODE{"Mode yang Dipilih?"}
+    %% Sinkronisasi Join Bar
+    A3_RAG --> JOIN_BAR["═════════════ «join» Konteks Terintegrasi ═════════════"]:::syncBar
+    A3_TRIAGE --> JOIN_BAR
     
-    %% Cabang Fast Mode
-    D_MODE -- "Fast Mode" --> FM1["Evaluasi Decision Model: Cek Parametric Anchor"]
-    FM1 --> D_FREE{"Layak Retrieval-Free?"}
-    D_FREE -- "Ya (Sapaan/Definisi)" --> FM2["Eksekusi Jalur Cepat INT8 (Tanpa Ambil Dokumen Eksternal)"]
-    D_FREE -- "Tidak" --> FM3["Pencarian Cepat Dokumen (Top-2 Chunks)"]
-    FM2 --> FM4["Fusi Layer Linear + SiLU Kuantisasi"]
-    FM3 --> FM4
-    FM4 --> A6["Format Respon Bersih & Tampilkan ke Pasien"]
+    %% 3. Decision Diamond 2: Kondisi Gawat Darurat
+    JOIN_BAR --> D_EMERGENCY{"Gejala Darurat<br/>Red-Flag?"}:::diamondAlert
     
-    %% Cabang Thinking Mode
-    D_MODE -- "Thinking Mode" --> TM1["Penelusuran Dokumen Multi-Hop & Knowledge Graph"]
-    TM1 --> TM2["Cross-Encoder Re-ranking (Pemberian Skor Interaksi & Penalti Negasi)"]
-    TM2 --> TM3["Evaluasi Gerbang Keamanan Gaussian Process (LCB >= -0.5)"]
-    TM3 --> TM4["Adaptasi TinyLoRA W' = W + v*lambda dengan Learning Rate Adaptif"]
-    TM4 --> A6
+    %% Cabang Darurat: Triase Merah
+    D_EMERGENCY -- "[Ya: Triase Merah]" --> ACT_ALERT["🚨 Peringatan Darurat IGD<br/>(Kirim Sinyal Triase ke IGD<br/>& Kontak Ambulans 119)"]:::actionRose
+    ACT_ALERT --> END_NODE
     
-    %% Akhir Alur
-    A6 --> A7["Pasien Menerima Jawaban & Memberikan Penilaian Umpan Balik (Like/Dislike)"]
-    A7 --> A8["Simpan Feedback untuk Optimasi Bobot Model RLHF"]
-    A8 --> END_NODE
+    %% Cabang Normal: Inferensi AI
+    D_EMERGENCY -- "[Tidak: Aman]" --> A4_AI["Generasi Respons Edukasi<br/>(TinyLoRA W' = W + v·λ<br/>& GP Safety Gate LCB ≥ -0.5)"]:::actionBlue
+    
+    A4_AI --> A5_FILTER["Penyaringan Bahasa Pasien<br/>(Hapus Token BPE, Triase & Evidence<br/>Bersihkan Simbol *, '', ##)"]:::actionGold
+    
+    A5_FILTER --> A6_DELIVER["Tampilkan Jawaban Edukasi<br/>(Bahasa Medis Ramah Pasien)"]:::actionGreen
+    
+    A6_DELIVER --> END_NODE
+
+    %% Definisi Gaya Khusus Sesuai Template Gambar 3
+    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:4px,color:#ffffff;
+    classDef endNode fill:#0f172a,stroke:#38bdf8,stroke-width:4px,color:#38bdf8;
+    classDef actionBlue fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef actionIndigo fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#e0e7ff;
+    classDef actionRose fill:#4c0519,stroke:#f43f5e,stroke-width:2px,color:#ffe4e6;
+    classDef actionGold fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#fef3c7;
+    classDef actionGreen fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#ecfdf5;
+    classDef diamondNode fill:#4338ca,stroke:#a5b4fc,stroke-width:2px,color:#ffffff;
+    classDef diamondAlert fill:#be123c,stroke:#fda4af,stroke-width:2px,color:#ffffff;
+    classDef syncBar fill:#0f172a,stroke:#38bdf8,stroke-width:3px,color:#38bdf8;
 ```
 
 ---
 
 ## 4. Sequence Diagram (Interaksi Konsultasi Real-Time)
-
-Sequence diagram berikut memodelkan urutan pengiriman pesan sinkron dan asinkron antara komponen aktor, UI, API Gateway, Agent, Decision Navigator, Cross-Encoder, Database, dan Model Penyedia.
+*Template Mengikuti Gambar 4: Lifeline Vertikal, Blok Aktivasi Persegi Panjang, Panah Sinkron, Dashed Return Arrows, & Blok Fragmen `alt` / `opt`*
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Pasien as Pasien (User)
-    participant Web as Web Frontend (Next.js)
-    participant API as API Gateway (FastAPI)
-    participant Agent as Clinical Agent
-    participant Nav as Document Navigator
-    participant Rerank as Cross-Encoder Reranker
-    participant DB as Database (MySQL/SQLite)
-    participant LLM as Groq Cloud Engine
+    actor Pasien as 👤 Pasien (USER)
+    participant Web as 💻 Web UI (Next.js)
+    participant API as 🛡️ FastAPI Gateway
+    participant AI as 🧠 AI & TinyLoRA Engine
+    participant DB as 🗄️ Dual Database (MySQL/SQLite)
+    participant IGD as 🚑 Tim Triase IGD
 
-    Pasien->>Web: Input keluhan: "Nyeri dada setelah aktivitas"
+    Pasien->>Web: 1. Input Keluhan: "Nyeri dada menjalar ke lengan kiri"
     activate Web
-    Web->>API: POST /api/v1/chat/messages (Payload, JWT)
+    Web->>API: 2. POST /chat/sessions/{id}/messages
     activate API
 
-    API->>DB: Validasi User, Kuota Harian, & Kepemilikan Sesi
+    API->>DB: 3. Validasi Kuota Pasien (Maks 7/hari) & Cek CSRF
     activate DB
-    DB-->>API: Sesi Valid, Kuota: 3/7 (Approved)
+    DB-->>API: 4. Kuota Valid (Tersisa: 4 respons)
     deactivate DB
 
-    API->>Agent: process_chat(query, session_id, mode="thinking")
-    activate Agent
-
-    Agent->>Agent: Stage 0: Cek Injeksi OWASP & Red-Flag Triage
-    Note over Agent: Triase: KUNING (Non-Critical, Perlu Rujukan)
-
-    Agent->>DB: Query Hybrid RAG (FTS5 + Vector Chunks)
+    API->>AI: 5. Hybrid Retrieval (BM25 + Cosine 384-d)
+    activate AI
+    AI->>DB: 6. Ambil Pedoman Klinis & Gejala Terkait
     activate DB
-    DB-->>Agent: Return 3 Dokumen Kandidat Pedoman Klinis
+    DB-->>AI: 7. Return Top Chunks & ICD-10 Nodes
     deactivate DB
 
-    Agent->>Nav: evaluate(query, candidates, mode="thinking")
-    activate Nav
-    Nav->>Rerank: score_pair(query, document_text)
-    activate Rerank
-    Rerank-->>Nav: Calibrated Relevance Scores & Negation Checked
-    deactivate Rerank
-    Nav-->>Agent: NavigationDecision: TARGETED_RETRIEVAL + Re-ranked Docs
-    deactivate Nav
+    AI->>AI: 8. Hitung GP Safety Gate (LCB = μ - 2.5σ)
 
-    Agent->>Agent: Truncate Excerpt (Maks. 300 char) & Compact Context
-
-    Agent->>LLM: Generate Chat Completion (Prompt Terstruktur, Temp 0.7)
-    activate LLM
-    LLM-->>Agent: Raw Clinical Text Stream
-    deactivate LLM
-
-    Agent->>Agent: CleanClinicalMarkdown: Hilangkan '*', "''", '##'
-    Agent->>DB: Simpan Pesan User & Asisten (Tanpa Telemetri ML)
-    activate DB
-    DB-->>Agent: Commit OK (ID: msg-1029)
-    deactivate DB
-
-    Agent-->>API: Response DTO (clean content, verified citations, quota)
-    deactivate Agent
-
-    API-->>Web: HTTP 200 OK (JSON Payload)
+    alt Kondisi Darurat (LCB < -0.5 atau Red-Flag Terdeteksi)
+        AI-->>API: 9A. Status: RED_FLAG_EMERGENCY (Triase Merah)
+        API->>IGD: 10A. Notifikasi Dispatch Triase IGD
+        API-->>Web: 11A. Alert Triase Merah + Tombol Panggil 119
+        Web->>Pasien: 12A. Tampilkan Instruksi Darurat & Nomor RS
+    else Kondisi Normal / Non-Emergency
+        AI->>AI: 9B. Adaptasi Bobot TinyLoRA (W' = W + v·λ)
+        AI-->>API: 10B. Respons Edukasi Medis Terverifikasi
+        API->>API: 11B. Hapus Detail ML & Simbol (*, '', ##)
+        API->>DB: 12B. Simpan Pesan Percakapan Bersih
+        API-->>Web: 13B. JSON Payload Bersih (Clean DTO)
+        Web->>Pasien: 14B. Render Bubble Percakapan Ramah Edukatif
+    end
+    deactivate AI
     deactivate API
-
-    Web->>Pasien: Tampilkan Jawaban Edukasi Klinis & Kartu Sitasi
     deactivate Web
 
-    opt Umpan Balik Kualitas
-        Pasien->>Web: Klik Tombol "Like" / Masukan Kualitas
-        Web->>API: POST /api/v1/chat/feedback (message_id, type="LIKE")
-        API->>DB: Simpan FeedbackRecord untuk Siklus Pembelajaran RL
+    opt Ulasan Kualitas Jawaban (RLHF Feedback)
+        Pasien->>Web: Klik Like / Dislike (+ Catatan Koreksi Medis)
+        Web->>API: POST /chat/feedback (message_id, type="LIKE")
+        API->>DB: Simpan FeedbackRecord (+0.0175 reward)
+        API->>AI: Update TinyLoRA gradient step_rl(Δv)
     end
 ```
 
 ---
 
-## 5. Data Flow Diagram (DFD)
+## 5. Data Flow Diagram (DFD Level 0 & Level 1)
+*Template Mengikuti Standard: Entitas Eksternal (Persegi Persegi Ganda), Proses (Kapsul/Lingkaran), Data Store (= D1 =), dan Aliran Data Berarah*
 
 ### 5.1 DFD Level 0 (Context Diagram)
-
-DFD Level 0 memetakan batas sistem informasi tunggal dengan seluruh entitas eksternal:
 
 ```mermaid
 flowchart TD
     %% Entitas Eksternal
-    E1["Pasien"]
-    E2["Dokter Penelaah Medis"]
-    E3["Peneliti AI Medis"]
-    E4["Administrator Sistem"]
-    E5["Sistem SatuSehat Kemenkes (B2G)"]
-    E6["Faskes Jejaring / Puskesmas (B2B)"]
+    E_PASIEN["👤 Pasien (USER)"]
+    E_DOKTER["👨‍⚕️ Dokter Penelaah (REVIEWER)"]
+    E_PENELITI["🔬 Peneliti AI (SCIENTIST)"]
+    E_IGD["🚑 Petugas IGD (TRIAGE_OPS)"]
+    E_KEMENKES["🏛️ SatuSehat Kemenkes (B2G)"]
 
-    %% Proses Utama
+    %% Proses Tunggal Sistem Utama
     P0(("0.0<br/>Sistem Platform AI Medis &<br/>Konsultasi Klinis RSUKT"))
 
     %% Aliran Data
-    E1 -->|"Kueri keluhan, profil, rating feedback"| P0
-    P0 -->|"Edukasi klinis, sitasi bukti, info kuota, eskalasi IGD"| E1
+    E_PASIEN -->|"Kueri keluhan awam, rating feedback"| P0
+    P0 -->|"Jawaban edukasi bebas simbol, info kuota"| E_PASIEN
 
-    E2 -->|"Validasi telaah SOP/PPK, anotasi RLHF"| P0
-    P0 -->|"Daftar pedoman pending, log koreksi medis"| E2
+    P0 -->|"Sinyal eskalasi triase merah (kritis)"| E_IGD
 
-    E3 -->|"Konfigurasi hyperparameter, kurasi dataset"| P0
-    P0 -->|"Laporan metrik ablasi, loss pelatihan TinyLoRA"| E3
+    E_DOKTER -->|"Validasi telaah SOP/PPK, anotasi klinis"| P0
+    P0 -->|"Daftar pedoman pending, log feedback"| E_DOKTER
 
-    E4 -->|"Kredensial admin, perintah pencadangan data"| P0
-    P0 -->|"Audit trail forensik, status kesehatan server"| E4
+    E_PENELITI -->|"Konfigurasi hyperparameter TinyLoRA"| P0
+    P0 -->|"Metrik evaluasi loss, kurva konvergensi"| E_PENELITI
 
-    P0 -->|"Metadata RME agregat de-identifikasi (FHIR)"| E5
-    E5 -->|"Standar terminologi ICD-10 & SNOMED-CT"| P0
+    P0 -->|"Metadata RME ter-pseudonimisasi (FHIR)"| E_KEMENKES
+    E_KEMENKES -->|"Standar terminologi ICD-10 & SNOMED"| P0
 
-    E6 -->|"Permohonan validasi pra-rujukan triase"| P0
-    P0 -->|"Status triase & rekomendasi spesialisasi"| E6
+    classDef entStyle fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe;
+    classDef procStyle fill:#0284c7,stroke:#38bdf8,stroke-width:3px,color:#ffffff;
+    class E_PASIEN,E_DOKTER,E_PENELITI,E_IGD,E_KEMENKES entStyle;
+    class P0 procStyle;
 ```
 
-### 5.2 DFD Level 1 (Dekomposisi Fungsional Terstruktur)
+---
 
-DFD Level 1 mendekomposisi sistem menjadi 5 proses fungsional utama dan 5 repositori data (*data stores*):
-
-```mermaid
-flowchart TD
-    %% Entitas
-    ENT_PASIEN["Pasien"]
-    ENT_DOKTER["Dokter Penelaah"]
-    ENT_PENELITI["Peneliti AI"]
-    ENT_ADMIN["Admin Sistem"]
-
-    %% Data Stores
-    D1[("D1: users & patient_profiles")]
-    D2[("D2: chat_sessions & chat_messages")]
-    D3[("D3: knowledge_documents & rag_chunks")]
-    D4[("D4: dataset_records & model_registry")]
-    D5[("D5: audit_logs & feedback_records")]
-
-    %% Proses 1.0: Otentikasi & Otorisasi RBAC
-    P1(("1.0<br/>Otentikasi &<br/>Otorisasi RBAC"))
-    ENT_PASIEN -->|"Kredensial login"| P1
-    ENT_ADMIN -->|"Kredensial admin"| P1
-    P1 <-->|"Cek username/hash & hak peran"| D1
-    P1 -->|"Log autentikasi"| D5
-    P1 -->|"Token JWT Terotorisasi"| P2(("2.0<br/>Pemindaian Keamanan &<br/>Evaluasi Triase"))
-
-    %% Proses 2.0: Pemindaian Keamanan & Evaluasi Triase
-    ENT_PASIEN -->|"Kueri keluhan klinis"| P2
-    P2 <-->|"Periksa kuota 7 respon/24 jam"| D2
-    P2 -->|"Status Triase (Merah/Kuning/Hijau)"| P3(("3.0<br/>Navigasi Dokumen &<br/>Hybrid RAG Retrieval"))
-    P2 -->|"Log peringatan triase & injeksi"| D5
-
-    %% Proses 3.0: Navigasi Dokumen & Hybrid RAG Retrieval
-    P3 <-->|"Ambil dokumen & embedding approved"| D3
-    P3 -->|"Dokumen bukti & sitasi terverifikasi"| P4(("4.0<br/>Inferensi AI &<br/>Kurasi RLHF"))
-
-    %% Proses 4.0: Inferensi AI & Kurasi RLHF
-    P4 <-->|"Baca riwayat multi-turn & rolling summary"| D2
-    P4 <-->|"Baca/update bobot model TinyLoRA"| D4
-    P4 -->|"Respon edukasi klinis bebas simbol"| ENT_PASIEN
-    ENT_PASIEN -->|"Umpan balik (Like/Dislike)"| P4
-    P4 -->|"Rekam nilai reward feedback"| D5
-
-    %% Proses 5.0: Telaah Medis & Audit Tata Kelola
-    ENT_DOKTER -->|"Persetujuan pedoman SOP/PPK"| P5(("5.0<br/>Telaah Medis &<br/>Audit Tata Kelola"))
-    P5 <-->|"Kelola approval_status dokumen"| D3
-    ENT_PENELITI -->|"Eksperimen kurasi dataset"| P5
-    P5 <-->|"Registrasi model & manifest import"| D4
-    P5 <-->|"Inspeksi audit log forensik"| D5
-```
+*Seluruh diagram pada dokumen ini telah disesuaikan dengan template visual pengguna dan terintegrasi dengan Live Interactive Suite [`interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html).*

@@ -13,6 +13,7 @@ Seluruh dokumen rekayasa sistem disimpan secara terstruktur di dalam sub-direkto
 
 | Modul Dokumen | Berkas Sumber | Cakupan & Isi Utama |
 | :--- | :--- | :--- |
+| **Suite Animasi** | [`interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html) | **Live Animated Diagrams Viewer**: Seluruh diagram (Activity, Use Case, Sequence, Class, ERD, DFD) dengan animasi garis alur real-time, pulsing decision node, kontrol play/pause, dan zoom. |
 | **Modul 01** | [`01_SRS_BUSINESS_REQUIREMENTS.md`](file:///c:/Users/user/RAG-model-record/docs/readme/01_SRS_BUSINESS_REQUIREMENTS.md) | **Software Requirements Specification (SRS)**, Proses Model Dual-Track Agile + CRISP-DM, Lingkup Bisnis B2G (SatuSehat) & B2B (Rumah Sakit/Klinik/Lab/Asuransi), Definisi 7 Aktor & Matriks RBAC, Kebutuhan Fungsional (FR), Kebutuhan Non-Fungsional (NFR), dan 10 Aturan Bisnis (BR-01 s/d BR-10). |
 | **Modul 02** | [`02_UML_DAN_DIAGRAM_ARSITEKTUR.md`](file:///c:/Users/user/RAG-model-record/docs/readme/02_UML_DAN_DIAGRAM_ARSITEKTUR.md) | **Visual UML & Arsitektur Sistem**: Class Diagram (UML), Use Case Diagram 7 Aktor, Activity Diagram Alur Konsultasi & Triase Darurat IGD, Sequence Diagram Real-Time Chat & RLHF, Data Flow Diagram (DFD Level 0 Context & Level 1 Dekomposisi Fungsional). |
 | **Modul 03** | [`03_ERD_DAN_KAMUS_DATA.md`](file:///c:/Users/user/RAG-model-record/docs/readme/03_ERD_DAN_KAMUS_DATA.md) | **Entity-Relationship Diagram (ERD) & Kamus Data**: Visual ERD Crow's Foot bersegmen rapi (bebas tabrakan garis), Kamus Arsitektur Data untuk seluruh 14 tabel database, aturan integritas referensial lintas RDBMS (MySQL 8.0, SQLite 3.35+, PostgreSQL Neon), dan strategi composite indexing B-Tree. |
@@ -112,3 +113,4 @@ graph LR
 ---
 
 *Hak Cipta © 2026 RSUKT Engineering & Clinical AI Research Team. Seluruh hak cipta dilindungi undang-undang.*
+

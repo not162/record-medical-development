@@ -523,3 +523,4 @@ Tabel ringkasan ini memastikan migrasi skema tanpa hambatan antar engine databas
 ---
 
 *Dokumen ERD dan Kamus Data ini merupakan acuan resmi rekayasa database RSUKT dan selaras dengan regulasi Rekam Medis Elektronik Permenkes No. 24 Tahun 2022 serta UU PDP No. 27 Tahun 2022.*
+

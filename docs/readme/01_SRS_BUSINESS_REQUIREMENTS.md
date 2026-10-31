@@ -213,3 +213,4 @@ Sistem mendefinisikan secara tegas 7 aktor dengan batas wewenang berbasis *Role-
 8. **BR-08 (Dual-Engine Database Independence):** Seluruh kueri SQL, skema relasional, dan migrasi wajib kompatibel terhadap dialek standar ANSI SQL yang didukung oleh MySQL 8.0, SQLite 3.35+, serta Neon PostgreSQL.
 9. **BR-09 (Audit Forensik Tidak Terbantahkan):** Seluruh peristiwa penting (login, gagal otentikasi, eskalasi darurat, modifikasi dokumen, dan penghapusan sesi) wajib ditulis secara permanen ke `audit_logs` tanpa opsi pembaruan (*append-only*).
 10. **BR-10 (Batas Inferensi Dosis Keras):** Sistem dilarang meresepkan antibiotik spektrum luas, obat psikotropika, atau narkotika secara spesifik kepada pengguna awam, melainkan hanya memberikan informasi indikasi umum dan peringatan efek samping.
+
