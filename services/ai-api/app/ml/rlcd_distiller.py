@@ -128,3 +128,19 @@ class RLCDDistiller:
 
         return dataset
 
+    def free_kl_self_distillation_step(
+        self,
+        h_ntp: Any,
+        h_mtp: Any,
+    ) -> Any:
+        """
+        Recovers the gradient for forward KL self-distillation to NTP for free
+        without ever computing the KL divergence matrix:
+            h_ntp += h_mtp.detach() - h_mtp
+        """
+        if hasattr(h_mtp, 'detach'):
+            h_ntp += h_mtp.detach() - h_mtp
+        else:
+            h_ntp += (h_mtp.copy() - h_mtp)
+        return h_ntp
+

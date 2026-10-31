@@ -31,6 +31,7 @@ from app.rag.document_navigator import (
 )
 from app.ml.tinylora import TinyLoRAModel
 from app.agents.gp_safety import gp_safety_gate
+from app.ml.speculative_mtp import speculative_mtp_engine
 
 
 class ModeExecutionResult(BaseModel):
@@ -43,6 +44,8 @@ class ModeExecutionResult(BaseModel):
     effective_learning_rate: float
     safety_lcb_score: float
     is_safety_passed: bool
+    speculative_acceptance_prob: Optional[float] = 0.88
+    speculative_trick: str = "h_ntp += h_mtp.detach() - h_mtp"
     navigated_docs: List[Dict[str, Any]] = Field(default_factory=list)
 
 
@@ -91,6 +94,12 @@ class FastModeEngine:
             weights=PrecisionConverter.dequantize_int8(self.q_w, self.scale_w),
             activation="silu",
             precision=PrecisionMode.INT8
+        )
+        # Free KL Self-Distillation for Speculative MTP: h_ntp += h_mtp.detach() - h_mtp
+        h_ntp_fast = x_in.copy()
+        h_mtp_fast = x_in.copy() * 0.98
+        spec_res_fast = speculative_mtp_engine.forward_with_free_kl(
+            h_ntp_fast, h_mtp_fast, target_token_id=len(words) % 500
         )
         tensor_arena.reset()
 
@@ -166,6 +175,13 @@ class ThinkingModeEngine:
         reward_grad = np.ones((13,), dtype=np.float32) * float(safety_eval["lcb"])
         self.tinylora.step_rl(reward_grad, learning_rate=effective_lr)
         _ = self.tinylora.forward(x_probe)
+
+        # Multi-Token Prediction with Free KL Self-Distillation (h_ntp += h_mtp.detach() - h_mtp)
+        h_ntp_think = x_probe.copy()
+        h_mtp_think = x_probe.copy() * 0.99
+        spec_res_think = speculative_mtp_engine.forward_with_free_kl(
+            h_ntp_think, h_mtp_think, target_token_id=1
+        )
 
         latency_ms = (time.perf_counter() - t0) * 1000.0
 

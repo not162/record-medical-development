@@ -174,8 +174,8 @@ export default function HomePage() {
                   Live
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 hidden sm:block">
-                All-in-One Health AI & Rekam Medis Terpadu
+              <p className="text-[10px] text-slate-500 hidden sm:block font-medium">
+                healthy with clinic and hospital
               </p>
             </div>
           </div>
@@ -852,7 +852,7 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800 text-[11px]">
             <div>
-              © 2026 Rumah Sakit Umum & Klinik Terpadu (RSUKT). Hak Cipta Dilindungi Undang-Undang.
+              © 2026 Rumah Sakit Umum & Klinik Terpadu (RSUKT) — <span className="text-cyan-400 font-medium">healthy with clinic and hospital</span>. Hak Cipta Dilindungi Undang-Undang.
             </div>
             <div className="flex items-center gap-4 text-slate-400">
               <Link href="/login" className="hover:text-white transition">Masuk Akun</Link>

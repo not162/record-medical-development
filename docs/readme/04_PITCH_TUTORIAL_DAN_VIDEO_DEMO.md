@@ -81,7 +81,7 @@ Video demo ini disimulasikan secara langsung pada Landing Page RSUKT (`https://h
 #### Adegan 5: Penutup & Jaminan Privasi (01:45 - 02:00)
 - **Visual:** Tampilan sertifikasi ISO/IEC 27001 dan UU PDP No. 27/2022. Tombol Call-to-Action menuju pendaftaran pasien dan konsultasi gratis 24/7.
 - **Voiceover (VO):**
-  > *"Seluruh percakapan dienkripsi penuh sesuai Undang-Undang Perlindungan Data Pribadi. RSUKT: All-in-One Health, Better Living. Coba sekarang di halo-skut.vercel.app."*
+  > *"Seluruh percakapan dienkripsi penuh sesuai Undang-Undang Perlindungan Data Pribadi. RSUKT: healthy with clinic and hospital. Coba sekarang di halo-skut.vercel.app."*
 
 ---
 
@@ -142,3 +142,4 @@ Seluruh materi di atas telah diintegrasikan langsung pada **Landing Page Utama**
 ---
 
 *Dokumen ini merupakan panduan resmi komunikasi publik dan etika operasional RSUKT Clinical AI.*
+

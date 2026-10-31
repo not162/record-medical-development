@@ -1,5 +1,6 @@
 # RSUKT AI Clinical Platform — Master Engineering Documentation
 ## Dokumentasi Resmi Spesifikasi, UML, Arsitektur, ERD, & Kamus Data
+### Slogan: *"healthy with clinic and hospital"*
 
 Selamat datang di repositori dokumentasi rekayasa perangkat lunak sistem **RSUKT (Rumah Sakit Umum Khusus Terpadu) AI Clinical Consultation & Research Intelligence Platform**.
 

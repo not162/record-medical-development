@@ -11,7 +11,7 @@ def test_landing():
     res = urllib.request.urlopen(req)
     html = res.read().decode("utf-8", errors="ignore")
     print(f"Landing Status: {res.status}")
-    print("Contains 'All-in-One Health, Better Living':", "All-in-One Health, Better Living" in html)
+    print("Contains 'healthy with clinic and hospital':", "healthy with clinic and hospital" in html)
     print("Contains 'Konsultasi Medis':", "Konsultasi Medis" in html)
 
 def test_admin_login():

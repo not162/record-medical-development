@@ -26,10 +26,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://klinik.rsukt.go.id"),
   title: {
-    default: "Web Klinik RSUKT | Asisten AI Klinis Real-Time & Rekam Medis",
+    default: "Web Klinik RSUKT | healthy with clinic and hospital",
     template: "%s | Web Klinik RSUKT",
   },
-  description: "Web Klinik RSUKT: Sistem Asisten AI Medis Pasien Real-Time, Scanning Bahasa Klinis, dan Rekam Medis Elektronik Terpadu",
+  description: "Web Klinik RSUKT — healthy with clinic and hospital: Sistem Asisten AI Medis Pasien Real-Time, Scanning Bahasa Klinis, dan Rekam Medis Elektronik Terpadu",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
