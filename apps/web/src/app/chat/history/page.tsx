@@ -32,7 +32,9 @@ export default function ChatHistoryPage() {
   }, []);
 
   useEffect(() => {
-    fetchInitialSessions();
+    void Promise.resolve().then(() => {
+      fetchInitialSessions();
+    });
   }, [fetchInitialSessions]);
 
   const handleLoadMore = async () => {

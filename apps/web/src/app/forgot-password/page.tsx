@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Stethoscope, Lock, Mail, ArrowRight, AlertCircle, CheckCircle2, Shield, KeyRound, ArrowLeft } from "lucide-react";
+import { Lock, Mail, ArrowRight, AlertCircle, CheckCircle2, Shield, KeyRound, ArrowLeft } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 
 export default function ForgotPasswordPage() {

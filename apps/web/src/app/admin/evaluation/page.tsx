@@ -145,7 +145,9 @@ export default function AdminEvaluationPage() {
   };
 
   useEffect(() => {
-    fetchEvaluationData();
+    void Promise.resolve().then(() => {
+      fetchEvaluationData();
+    });
   }, []);
 
   const handleRunStressTest = async () => {

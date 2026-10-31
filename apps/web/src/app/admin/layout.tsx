@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { 
   LayoutDashboard, Database, FileText, CheckSquare, 
   Cpu, Activity, BarChart3, BookOpen, GitFork, 
-  ThumbsUp, ShieldAlert, Settings, LogOut, ArrowLeft,
+  ThumbsUp, ShieldAlert, Settings, LogOut,
   ShieldCheck, AlertTriangle
 } from "lucide-react";
 

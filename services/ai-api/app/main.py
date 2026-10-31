@@ -146,6 +146,10 @@ def health_check():
     finally:
         db.close()
 
+    from app.cache import cache_manager
+    from app.ml.continuous_batching import continuous_batcher
+    from app.ai_gateway import get_gateway_api_key
+
     return {
         "status": "healthy",
         "service": settings.PROJECT_NAME,
@@ -156,6 +160,13 @@ def health_check():
             "foreign_keys": "ON",
             "total_datasets": total_datasets,
             "total_feedbacks": total_feedbacks
+        },
+        "caching": cache_manager.get_stats(),
+        "continuous_batching": continuous_batcher.get_metrics(),
+        "ai_gateway": {
+            "configured": bool(get_gateway_api_key()),
+            "default_model": "openai/gpt-6-astra",
+            "status": "READY"
         },
         "rag_engine": {
             "vector_store": "sqlite-vec / in-memory cosine fallback" if dialect == "sqlite" else "rag_chunks (numpy cosine)",

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   Users, MessageSquare, CheckCircle2, 
   ThumbsUp, Activity, ShieldAlert, Cpu, ArrowUpRight,
-  RefreshCw, FileSpreadsheet, FileCode, Download
+  RefreshCw, FileSpreadsheet, FileCode
 } from "lucide-react";
 import { api, AuditLog, API_BASE_URL } from "@/lib/api";
 
