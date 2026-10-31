@@ -1,8 +1,8 @@
 // Service Worker for RSUKT AI Clinical Suite (PWA & MWA)
-const CACHE_NAME = 'rsukt-ai-v1';
+// Versi 2: Kepatuhan UU PDP No. 27/2022 & ISO 27001 - Nol Cache untuk Data Klinis/Chat Pasien
+const CACHE_NAME = 'rsukt-ai-v2';
 const STATIC_ASSETS = [
   '/',
-  '/chat',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
@@ -27,33 +27,47 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
+  // Hanya proses GET
   if (event.request.method !== 'GET') return;
 
-  // Bypass Service Worker completely for SSE streams and real-time streaming
+  const url = event.request.url;
   const acceptHeader = event.request.headers.get('accept') || '';
-  if (
-    acceptHeader.includes('text/event-stream') ||
-    event.request.url.includes('/stream') ||
-    event.request.url.includes('/chat/stream') ||
-    event.request.url.includes('/realtime')
-  ) {
-    return; // Pass through to native browser network stack for real-time zero-buffering
-  }
 
-  // Let other API requests pass through with network-first
-  if (event.request.url.includes('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
+  // 1. Bypass Service Worker secara mutlak untuk SSE streams, chat endpoints, auth, dan data klinis pasien
+  // Kebijakan UU PDP: Data rekam medis dan dialog konsultasi dilarang disimpan di local HTTP cache storage
+  const isChatOrPrivateData =
+    url.includes('/api/v1/chat') ||
+    url.includes('/chat/sessions') ||
+    url.includes('/chat/messages') ||
+    url.includes('/chat/quota') ||
+    url.includes('/chat/feedback') ||
+    url.includes('/api/v1/auth') ||
+    url.includes('/stream') ||
+    url.includes('/realtime') ||
+    acceptHeader.includes('text/event-stream');
+
+  if (isChatOrPrivateData) {
+    // Selalu teruskan langsung ke network tanpa cache intercept
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  // Stale-while-revalidate for static UI assets
+  // 2. API lainnya: Network-only tanpa menyimpan ke Cache Storage
+  if (url.includes('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // 3. Stale-while-revalidate khusus static app shell dan ikon (non-data)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          networkResponse.type === 'basic' &&
+          !url.includes('/chat')
+        ) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);

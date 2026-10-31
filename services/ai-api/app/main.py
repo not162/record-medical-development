@@ -68,6 +68,21 @@ async def lifespan(app: FastAPI):
     try:
         Base.metadata.create_all(bind=engine)
         print(f"[*] Database initialized ({engine.dialect.name})")
+        try:
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                if engine.dialect.name == "sqlite":
+                    cols = [row[1] for row in conn.execute(text("PRAGMA table_info(chat_sessions)"))]
+                    if "summary" not in cols:
+                        conn.execute(text("ALTER TABLE chat_sessions ADD COLUMN summary TEXT"))
+                        conn.commit()
+                elif engine.dialect.name == "postgresql":
+                    conn.execute(text("ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS summary TEXT"))
+                    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_chat_sessions_user_updated ON chat_sessions(user_id, updated_at)"))
+                    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_chat_sessions_user_deleted_updated ON chat_sessions(user_id, is_deleted, updated_at)"))
+                    conn.commit()
+        except Exception as _col_e:
+            print(f"[!] Info: Column check chat_sessions.summary: {_col_e}")
         ensure_default_admin()
     except Exception as e:
         print(f"[!] Warning: Database initialization exception (handled for serverless): {e}")

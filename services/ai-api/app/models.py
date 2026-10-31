@@ -47,10 +47,15 @@ class PatientProfile(Base):
 
 class ChatSession(Base):
     __tablename__ = "chat_sessions"
+    __table_args__ = (
+        Index("ix_chat_sessions_user_updated", "user_id", "updated_at"),
+        Index("ix_chat_sessions_user_deleted_updated", "user_id", "is_deleted", "updated_at"),
+    )
     
     id: Any = Column(String(36), primary_key=True, default=generate_uuid)
     user_id: Any = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     title: Any = Column(String(200), nullable=False, default="Percakapan Klinis Baru")
+    summary: Any = Column(Text, nullable=True)
     created_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)
     updated_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)
     is_deleted: Any = Column(Boolean, default=False, nullable=False)

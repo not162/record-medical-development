@@ -19,7 +19,7 @@ import {
   Languages, ChevronDown, ChevronUp, Sparkles, Layers,
   Cpu, History, ShieldCheck, Stethoscope,
   Trash2, Shield, Lock, FileCheck,
-  Clock, PhoneCall, Calendar, Download, RefreshCw, Zap, Brain
+  Clock, PhoneCall, Calendar, Download, RefreshCw, Zap, Brain, Loader2
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { API_BASE_URL } from "@/lib/api";
@@ -213,6 +213,10 @@ export default function ChatPage() {
     },
   ]);
   const [inputQuery, setInputQuery] = useState("");
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [nextMessageCursor, setNextMessageCursor] = useState<string | null>(null);
+  const [totalSessionMessages, setTotalSessionMessages] = useState<number>(0);
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [modelSize, setModelSize] = useState("70b");
   const [reasoningMode, setReasoningMode] = useState<"thinking" | "fast">("thinking");
@@ -366,12 +370,16 @@ export default function ChatPage() {
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/chat/sessions/${sessId}`, {
+      const res = await fetch(`${API_BASE_URL}/chat/sessions/${sessId}?limit=20`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
         setCurrentSessionId(data.id);
+        setHasMoreMessages(Boolean(data.has_more));
+        setNextMessageCursor(data.next_cursor || null);
+        setTotalSessionMessages(Number(data.total_messages || (data.messages ? data.messages.length : 0)));
+
         if (data.messages && data.messages.length > 0) {
           const formatted: Message[] = data.messages.map((m: ApiSessionMessage) => ({
             id: m.id,
@@ -381,7 +389,7 @@ export default function ChatPage() {
             safetyAlert: m.safety_alert,
             citations: m.citations || [],
             timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            scanningDeteksiBahasa: m.scanning_deteksi_bahasa || null,
+            scanningDeteksiBahasa: null,
           }));
           setMessages(formatted);
         } else {
@@ -393,19 +401,57 @@ export default function ChatPage() {
     }
   }, []);
 
+  const loadOlderMessages = async () => {
+    if (!currentSessionId || !nextMessageCursor || loadingOlderMessages) return;
+    const token = localStorage.getItem("clinical_token");
+    if (!token) return;
+
+    setLoadingOlderMessages(true);
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/chat/sessions/${currentSessionId}?limit=20&before=${encodeURIComponent(nextMessageCursor)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setHasMoreMessages(Boolean(data.has_more));
+        setNextMessageCursor(data.next_cursor || null);
+
+        if (data.messages && data.messages.length > 0) {
+          const formatted: Message[] = data.messages.map((m: ApiSessionMessage) => ({
+            id: m.id,
+            sender: m.sender_role,
+            content: m.content,
+            department: m.triage_department || "Umum",
+            safetyAlert: m.safety_alert,
+            citations: m.citations || [],
+            timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            scanningDeteksiBahasa: null,
+          }));
+          setMessages((prev) => [...formatted, ...prev]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load older messages:", err);
+    } finally {
+      setLoadingOlderMessages(false);
+    }
+  };
+
   // Load user sessions on mount
   const fetchSessions = useCallback(async () => {
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/chat/sessions`, {
+      const res = await fetch(`${API_BASE_URL}/chat/sessions?limit=20`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        setSessions(data);
-        if (data.length > 0 && !currentSessionId) {
-          loadSession(data[0].id);
+        const items = Array.isArray(data) ? data : (data.items || []);
+        setSessions(items);
+        if (items.length > 0 && !currentSessionId) {
+          loadSession(items[0].id);
         }
       }
     } catch {
@@ -424,9 +470,10 @@ export default function ChatPage() {
         });
         if (res.ok && !ignore) {
           const data = await res.json();
-          setSessions(data);
-          if (data.length > 0) {
-            loadSession(data[0].id);
+          const items = Array.isArray(data) ? data : (data.items || []);
+          setSessions(items);
+          if (items.length > 0) {
+            loadSession(items[0].id);
           }
         }
       } catch {
@@ -1003,6 +1050,32 @@ export default function ChatPage() {
               </div>
             </div>
           )}
+          {/* Pagination: Muat pesan riwayat sebelumnya */}
+          {hasMoreMessages && (
+            <div className="flex justify-center my-2">
+              <button
+                type="button"
+                onClick={loadOlderMessages}
+                disabled={loadingOlderMessages}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-semibold transition shadow-2xs disabled:opacity-50"
+              >
+                {loadingOlderMessages ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-600" />
+                    <span>Memuat riwayat sebelumnya...</span>
+                  </>
+                ) : (
+                  <>
+                    <History className="w-3.5 h-3.5 text-cyan-700" />
+                    <span>
+                      Muat pesan sebelumnya ({Math.max(0, totalSessionMessages - messages.length)} pesan lagi)
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
           {messages.map((msg) => (
             <div
               key={msg.id}

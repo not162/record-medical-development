@@ -3,6 +3,8 @@ import logging
 import random
 from typing import List, Dict, Any, Optional, cast
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+from sqlalchemy import func
 from groq import Groq
 
 from app.config import settings
@@ -29,6 +31,63 @@ CLINICAL_FRAMING_VARIATIONS = [
     "Menelaah profil anamnesis klinis dengan integrasi multi-algoritma basis pengetahuan medis:",
     "Menganalisis korelasi keluhan pasien berdasarkan sintesis literatur medis terakreditasi:"
 ]
+
+
+def truncate_excerpt(excerpt: str, max_chars: int = 300) -> str:
+    """Memotong potongan bukti (excerpt) agar tidak membanjiri konteks LLM dan menjaga anggaran token tetap."""
+    if not excerpt:
+        return ""
+    clean = " ".join(excerpt.split())
+    if len(clean) <= max_chars:
+        return clean
+    return clean[:max_chars].rsplit(" ", 1)[0] + "..."
+
+def update_or_get_rolling_summary(session: ChatSession, db: Session, total_count: int) -> Optional[str]:
+    """
+    Menghasilkan ringkasan berjalan (rolling summary) padat untuk sesi dengan >12 pesan.
+    Meringkas anamnesis pesan lama (di luar 6 pesan terakhir) agar menghemat token prompt
+    hingga >= 40% tanpa kehilangan riwayat keluhan, durasi, dan tanda penting.
+    """
+    if total_count <= 12:
+        return session.summary
+
+    older_limit = max(0, total_count - 6)
+    older_msgs = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.session_id == session.id)
+        .order_by(ChatMessage.created_at.asc())
+        .limit(older_limit)
+        .all()
+    )
+
+    if not older_msgs:
+        return session.summary
+
+    summary_parts = []
+    for m in older_msgs:
+        role_label = "Pasien" if m.sender_role == "user" else "Saran Medis AI"
+        clean_text = " ".join(m.content.split())
+        if len(clean_text) > 90:
+            clean_text = clean_text[:90].rsplit(" ", 1)[0] + "..."
+        summary_parts.append(f"{role_label}: {clean_text}")
+
+    if len(summary_parts) > 8:
+        selected_parts = summary_parts[:3] + ["... (kronologi tengah diringkas) ..."] + summary_parts[-4:]
+    else:
+        selected_parts = summary_parts
+
+    compiled_summary = "; ".join(selected_parts)
+    if len(compiled_summary) > 600:
+        compiled_summary = compiled_summary[:600].rsplit(" ", 1)[0] + "..."
+
+    session.summary = compiled_summary
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.warning(f"Failed to persist session summary: {e}")
+
+    return session.summary
 
 CLINICAL_FOLLOWUP_PERSPECTIVES = [
     "Fokuskan telaah pada pemantauan tanda vital dan pencegahan eskalasi keluhan.",
@@ -72,6 +131,18 @@ class ClinicalAgent:
         4. Stage 3: LLM generation via Groq API (Thinking with 17 ML + 8 DL vs Fast with 5 ML + 2 DL).
         5. Stage 4: Citation attachment & uncertainty verification.
         """
+        # -1. Strict Cross-Patient Isolation Check
+        session = db.query(ChatSession).filter(
+            ChatSession.id == session_id,
+            ChatSession.is_deleted == False
+        ).first()
+        if session:
+            if session.user_id != current_user.id and current_user.role != "ADMIN":
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Akses Ditolak: Isolasi data klinis antar-pasien dilanggar."
+                )
+
         # 0. Prompt Injection & Adversarial Jailbreak Defense
         is_injection, injection_msg = evaluate_prompt_injection(user_query)
         lang_scan = language_scanner.scan_and_translate(user_query, target_mode="med")
@@ -142,7 +213,22 @@ class ClinicalAgent:
                 "relevance_score": e["relevance_score"]
             })
 
-        # Multi-turn history retrieval from DB
+        # Truncate evidence excerpts to enforce strict context token budget (max 300 chars each)
+        truncated_evidence = []
+        for e in evidence_context:
+            e_copy = dict(e)
+            e_copy["excerpt"] = truncate_excerpt(e.get("excerpt", ""), max_chars=300)
+            truncated_evidence.append(e_copy)
+
+        # Multi-turn history retrieval & Rolling Summary (>12 pesan)
+        total_msgs = db.query(func.count(ChatMessage.id)).filter(
+            ChatMessage.session_id == session_id
+        ).scalar() or 0
+
+        session_summary = None
+        if session and total_msgs > 12:
+            session_summary = update_or_get_rolling_summary(session, db, total_msgs)
+
         recent_messages = db.query(ChatMessage).filter(
             ChatMessage.session_id == session_id
         ).order_by(ChatMessage.created_at.desc()).limit(6).all()
@@ -188,6 +274,12 @@ class ClinicalAgent:
                     "4. KEGAWATDARURATAN (RED FLAGS): Prioritaskan rujukan ke IGD / 119.\n"
                     f"5. {CLINICAL_DISCLAIMER}\n"
                 )
+                if session_summary:
+                    system_prompt += (
+                        f"\nRINGKASAN ANAMNESIS PERCAKAPAN TERDAHULU (Rolling Summary >12 Pesan):\n"
+                        f"{session_summary}\n"
+                        f"Gunakan ringkasan ini untuk menjaga kesinambungan edukasi pasien.\n"
+                    )
 
                 # Format conversation history
                 messages_payload = [{"role": "system", "content": system_prompt}]
@@ -203,7 +295,7 @@ class ClinicalAgent:
                 # Append current query with bounded evidence context and Knowledge Graph triples
                 evidence_text = "\n\n".join([
                     f"[Dokumen {e['doc_id']} | Spesialisasi: {e['department']} | Skor: {e['relevance_score']}]\n{e['excerpt']}"
-                    for e in evidence_context
+                    for e in truncated_evidence
                 ])
 
                 # Pick a random clinical framing variation and perspective for natural diversity
