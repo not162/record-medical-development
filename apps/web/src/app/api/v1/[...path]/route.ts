@@ -6,8 +6,8 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
   const searchParams = request.nextUrl.searchParams.toString();
   const queryString = searchParams ? `?${searchParams}` : "";
 
-  // Priority: BACKEND_API_URL -> NEXT_PUBLIC_API_URL -> fallback http://127.0.0.1:8000
-  const rawBackend = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  // Priority: BACKEND_API_URL -> NEXT_PUBLIC_API_URL -> fallback production ai-api
+  const rawBackend = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://ai-api-dusky-eight.vercel.app";
   const backendBase = rawBackend.replace(/\/api\/v1\/?$/, "").replace(/\/+$/, "");
   const targetUrl = `${backendBase}/api/v1/${pathStr}${queryString}`;
 
