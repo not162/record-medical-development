@@ -106,3 +106,4 @@ def test_execution_mode_engines_integration():
     )
     assert think_res.mode == "thinking"
     assert think_res.speculative_trick == "h_ntp += h_mtp.detach() - h_mtp"
+

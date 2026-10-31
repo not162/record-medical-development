@@ -125,7 +125,7 @@ class SpeculativeMTPDistiller:
             loss_ce = F.cross_entropy(logits_ntp, target)
             loss_val = float(loss_ce.item())
 
-        forward_identity_verified = bool(torch.allclose(h_ntp, h_ntp_initial, atol=1e-7))
+        forward_identity_verified = torch.allclose(h_ntp, h_ntp_initial, atol=1e-7)
 
         return {
             "engine": "PyTorch",

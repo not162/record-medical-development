@@ -16,8 +16,7 @@ import {
   Send, Bot, User as UserIcon,
   ThumbsUp, ThumbsDown, FileText,
   Activity, Plus, MessageSquare, ExternalLink, X,
-  Languages, ChevronDown, ChevronUp, Sparkles, Layers,
-  Cpu, History, ShieldCheck, Stethoscope,
+  History, ShieldCheck, Stethoscope,
   Trash2, Shield, Lock, FileCheck,
   Clock, PhoneCall, Calendar, Download, RefreshCw, Zap, Brain, Loader2
 } from "lucide-react";
@@ -118,7 +117,7 @@ interface ApiSessionMessage {
  * Komponen pemformatan teks klinis untuk pasien:
  * Menghilangkan simbol teknis (*, '', ##, ###) dan merender judul, list, dan penekanan secara bersih.
  */
-function CleanClinicalMarkdown({ content, isAdmin = false }: { content: string; isAdmin?: boolean }) {
+function CleanClinicalMarkdown({ content }: { content: string; isAdmin?: boolean }) {
   if (!content) return null;
 
   const lines = content.split("\n");
@@ -191,9 +190,6 @@ export default function ChatPage() {
     }
   }, [userRole, pageRouter]);
 
-  if (userRole === "ADMIN") {
-    return null;
-  }
   const mounted = useMounted();
   const { role } = useAuth();
   const isAdmin = role === "ADMIN";
@@ -587,7 +583,8 @@ export default function ChatPage() {
           body: JSON.stringify({
             session_id: activeSessId,
             content: query,
-            reasoning_mode: reasoningMode
+            reasoning_mode: reasoningMode,
+            model_size: modelSize
           })
         });
 
@@ -811,6 +808,10 @@ export default function ChatPage() {
       // ignore
     }
   };
+
+  if (userRole === "ADMIN") {
+    return null;
+  }
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-slate-50 relative">

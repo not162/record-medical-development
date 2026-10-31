@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { 
   Stethoscope, Bot, ShieldCheck, ArrowRight, Activity, 
-  Sparkles, Lock, HeartPulse, Clock, FileCheck, CheckCircle2,
-  CalendarCheck, UserCheck, AlertTriangle, ChevronRight, Phone,
-  Play, Pause, RotateCcw, XCircle, AlertOctagon, HelpCircle,
-  ThumbsUp, ThumbsDown, Bookmark, ExternalLink, BadgeCheck,
-  Send, Layers, ShieldAlert, Cpu
+  Sparkles, Lock, HeartPulse, FileCheck, CheckCircle2,
+  CalendarCheck, AlertTriangle, ChevronRight, Phone,
+  Play, Pause, RotateCcw, XCircle, AlertOctagon,
+  ThumbsUp, ThumbsDown, Bookmark, BadgeCheck,
+  Layers, ShieldAlert, Cpu
 } from "lucide-react";
 
 // Skenario Demo Interaktif yang meniru tampilan Chatbot Pasien (sesuai screenshot)
@@ -117,39 +117,46 @@ export default function HomePage() {
   // Efek simulasi video interaktif saat berganti skenario atau play/pause
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (isPlaying) {
+    const fullQuery = activeScenario.query;
+
+    if (!isPlaying) {
+      const stopTimer = setTimeout(() => {
+        setDisplayedText(fullQuery);
+        setShowResponse(true);
+        setPlaybackProgress(100);
+      }, 0);
+      return () => clearTimeout(stopTimer);
+    }
+
+    // Inisialisasi asynchronously untuk menghindari synchronous cascading renders
+    let charIdx = 0;
+    const startTimer = setTimeout(() => {
       setDisplayedText("");
       setShowResponse(false);
       setPlaybackProgress(10);
+    }, 0);
 
-      // Tahap 1: Mengetik kueri pasien
-      let charIdx = 0;
-      const fullQuery = activeScenario.query;
-      const typingInterval = setInterval(() => {
-        if (charIdx <= fullQuery.length) {
-          setDisplayedText(fullQuery.substring(0, charIdx));
-          setPlaybackProgress(Math.min(50, 10 + Math.floor((charIdx / fullQuery.length) * 40)));
-          charIdx += 3;
-        } else {
-          clearInterval(typingInterval);
-          // Tahap 2: Menampilkan respon AI
-          timer = setTimeout(() => {
-            setShowResponse(true);
-            setPlaybackProgress(100);
-          }, 400);
-        }
-      }, 30);
-
-      return () => {
+    const typingInterval = setInterval(() => {
+      if (charIdx <= fullQuery.length) {
+        setDisplayedText(fullQuery.substring(0, charIdx));
+        setPlaybackProgress(Math.min(50, 10 + Math.floor((charIdx / fullQuery.length) * 40)));
+        charIdx += 3;
+      } else {
         clearInterval(typingInterval);
-        clearTimeout(timer);
-      };
-    } else {
-      setDisplayedText(activeScenario.query);
-      setShowResponse(true);
-      setPlaybackProgress(100);
-    }
-  }, [selectedScenarioId, isPlaying]);
+        // Tahap 2: Menampilkan respon AI
+        timer = setTimeout(() => {
+          setShowResponse(true);
+          setPlaybackProgress(100);
+        }, 400);
+      }
+    }, 30);
+
+    return () => {
+      clearTimeout(startTimer);
+      clearInterval(typingInterval);
+      clearTimeout(timer);
+    };
+  }, [isPlaying, activeScenario.query]);
 
   const handleRestartDemo = () => {
     setIsPlaying(false);

@@ -10,3 +10,4 @@ if parent_dir not in sys.path:
 os.environ.setdefault("VERCEL", "1")
 
 from app.main import app  # noqa: E402,F401
+
