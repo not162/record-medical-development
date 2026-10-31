@@ -65,13 +65,15 @@ graph LR
     B -->|Pengawasan| P6[6. AUDITOR KEPATUHAN: COMPLY]
     B -->|Infrastruktur| P7[7. ADMIN SISTEM: ADMIN]
 
-    style P1 fill:#d1fae5,stroke:#059669,stroke-width:2px;
-    style P2 fill:#dbeafe,stroke:#2563eb,stroke-width:2px;
-    style P3 fill:#fee2e2,stroke:#dc2626,stroke-width:2px;
-    style P4 fill:#fef3c7,stroke:#d97706,stroke-width:2px;
-    style P5 fill:#ede9fe,stroke:#7c3aed,stroke-width:2px;
-    style P6 fill:#f3e8ff,stroke:#9333ea,stroke-width:2px;
-    style P7 fill:#f1f5f9,stroke:#475569,stroke-width:2px;
+    style A fill:#ffffff,stroke:#000000,stroke-width:2px;
+    style B fill:#ffffff,stroke:#000000,stroke-width:2px;
+    style P1 fill:#ffffff,stroke:#000000,stroke-width:2px;
+    style P2 fill:#ffffff,stroke:#000000,stroke-width:2px;
+    style P3 fill:#ffffff,stroke:#000000,stroke-width:2px;
+    style P4 fill:#ffffff,stroke:#000000,stroke-width:2px;
+    style P5 fill:#ffffff,stroke:#000000,stroke-width:2px;
+    style P6 fill:#ffffff,stroke:#000000,stroke-width:2px;
+    style P7 fill:#ffffff,stroke:#000000,stroke-width:2px;
 ```
 
 1. **Pasien / Masyarakat (USER):** Mengakses dialog konsultasi edukatif kesehatan, riwayat percakapan sendiri, dan memberikan rating/feedback klinis. *Catatan Keamanan: Tidak dapat melihat skor reward, prompt sistem, token BPE, atau detail teknis AI.*

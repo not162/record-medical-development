@@ -1,44 +1,39 @@
 # Dokumen UML, Diagram Arsitektur, & Aliran Data Sistem
 ## RSUKT AI Clinical Consultation & Research Intelligence Platform
-### Standar Template Visual: Class Diagram, Use Case, Activity, Sequence, ERD & DFD dengan Animasi Alur Data
+### Standar Template Formal Hitam Putih (Monochrome Engineering Specification)
 
 ---
 
 ### Informasi Dokumen & Visual Suite
 - **Modul Dokumentasi:** Visual UML, Dynamic Behavioral Diagrams, & DFD Level 0/1
-- **Live Interactive Animated Viewer:** [`interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html) *(Dilengkapi animasi aliran data SVG real-time, kontrol jeda/putar, zoom interaktif, dan tab navigasi)*
-- **Standar Notasi Visual:** Mengikuti template referensi resmi (Visual Paradigm / UML 2.5 / Crow's Foot ERD) dengan pemisahan warna domain:
-  - 🔵 **Biru Muda / Sky Blue (`#0284c7` / `#38bdf8`):** Batas Sistem, Kelas Model, & Aksi Normal
-  - 🟣 **Indigo / Ungu (`#4f46e5` / `#818cf8`):** Decision Diamond (◇) & Evaluasi Kondisi
-  - 🔴 **Mawar / Merah Delima (`#e11d48` / `#f43f5e`):** Triase Red-Flag IGD & Cabang Darurat
-  - 🟢 **Zamrud / Hijau (`#059669` / `#34d399`):** RLHF Reward Feedback & Jalur Berhasil
-  - 🟠 **Peach / Oranye (`#ea580c` / `#fdba74`):** Entitas Database Relasional (MySQL / SQLite / Neon)
+- **Tema Visual:** **Hitam Putih Murni (Monochrome / Grayscale)** sesuai standar dokumentasi teknik formal, bebas warna berlebih untuk keterbacaan tinggi (*high-contrast engineering specification*).
+- **Live Interactive Animated Viewer:** [`interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html) *(Dilengkapi animasi garis alur hitam putih, kontrol jeda/putar, zoom interaktif, dan tab navigasi)*
+- **Standar Garis Relasi:** Mengikuti template referensi resmi (Visual Paradigm / UML 2.5 / Crow's Foot ERD) dengan pemisahan ortogonal rapi (*clean non-overlapping routing*) guna mencerminkan standar integritas ANSI SQL (MySQL 8.0 & SQLite 3.35+).
 
 ---
 
 ## ⚡ Interactive Animated Diagrams Suite (Live Preview)
 
-Sistem menyediakan aplikasi visual interaktif beranimasi penuh yang dapat dibuka langsung di browser:
-- **Lokasi File:** [`docs/readme/interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html)
+Sistem menyediakan aplikasi visual interaktif beranimasi penuh bertema Hitam Putih (Monochrome) yang dapat dibuka langsung di browser:
+- **Lokasi File Dokumen:** [`docs/readme/interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html)
 - **Aplikasi Web Publik:** [`apps/web/public/interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/apps/web/public/interactive_system_diagrams.html)
 
 *Fitur Animasi:*
-1. **Flow Dash Animation:** Garis relasi dan aliran kueri bergerak secara kontinu (`stroke-dasharray` dengan animasi linier).
-2. **Pulsing Activation Blocks:** Titik keputusan aktif berpendar (*glow effect*) saat mengevaluasi kondisi.
-3. **Emergency Alert Pulse:** Notifikasi triase merah berkedip saat terdeteksi indikasi gawat darurat.
-4. **Interactive Controls:** Tombol Play/Pause animasi, Zoom In (+), Zoom Out (-), dan Reset View.
+1. **Flow Dash Animation:** Garis relasi dan kueri bergaris putus-putus hitam bergerak kontinu (`stroke-dasharray` dengan animasi linier).
+2. **Pulsing Activation Blocks:** Blok keputusan berkedip secara halus saat mengevaluasi kondisi.
+3. **Interactive Controls:** Tombol Play/Pause animasi, Zoom In (+), Zoom Out (-), dan Reset View.
 
 ---
 
 ## 1. Class Diagram (UML)
-*Template Mengikuti Gambar 1: Struktur 3-Kompartemen (Nama Kelas Biru, Atribut Tengah, Method Operasi Bawah, Relasi Kardinalitas)*
+*Template Mengikuti Gambar 1: Struktur 3-Kompartemen Hitam Putih (Header Kelas, Atribut Tengah, Method Operasi Bawah, Relasi Kardinalitas)*
 
 ```mermaid
 classDiagram
     direction TB
 
-    %% Definisi Gaya Kelas Sesuai Template Gambar 1
-    class User:::blueClass {
+    %% Definisi Gaya Kelas Hitam Putih Standar Gambar 1
+    class User:::monoClass {
         +String id [PK]
         +String username [UK]
         +String email [UK]
@@ -51,7 +46,7 @@ classDiagram
         +has_permission(perm) Boolean
     }
 
-    class PatientProfile:::blueClass {
+    class PatientProfile:::monoClass {
         +String id [PK]
         +String user_id [FK, UK]
         +String nik_anonymized
@@ -64,7 +59,7 @@ classDiagram
         +get_clinical_summary() Text
     }
 
-    class ChatSession:::blueClass {
+    class ChatSession:::monoClass {
         +String id [PK]
         +String user_id [FK]
         +String title
@@ -75,7 +70,7 @@ classDiagram
         +soft_delete() Void
     }
 
-    class ChatMessage:::blueClass {
+    class ChatMessage:::monoClass {
         +String id [PK]
         +String session_id [FK]
         +String sender_role
@@ -87,7 +82,7 @@ classDiagram
         +evaluate_lcb_safety() Float
     }
 
-    class FeedbackRecord:::greenClass {
+    class FeedbackRecord:::monoClass {
         +String id [PK]
         +String session_id [FK]
         +String message_id [FK, UK]
@@ -100,7 +95,7 @@ classDiagram
         +update_tinylora_weights() Void
     }
 
-    class TinyLoRAModel:::purpleClass {
+    class TinyLoRAModel:::monoClass {
         +Integer rank_n = 13
         +Vector v_weight
         +Tensor fixed_lambda
@@ -110,7 +105,7 @@ classDiagram
         +save_checkpoint(path) Void
     }
 
-    class KnowledgeDocument:::tealClass {
+    class KnowledgeDocument:::monoClass {
         +String id [PK]
         +String doc_id
         +String title
@@ -121,7 +116,7 @@ classDiagram
         +reject(reason) Void
     }
 
-    class RAGChunk:::tealClass {
+    class RAGChunk:::monoClass {
         +String chunk_id [PK]
         +String doc_id [FK]
         +String department
@@ -130,7 +125,7 @@ classDiagram
         +cosine_similarity(vec) Float
     }
 
-    %% Relasi Struktural dengan Kardinalitas (Sesuai Standar Template)
+    %% Relasi Struktural dengan Kardinalitas Hitam Putih
     User "1" -- "0..1" PatientProfile : owns
     User "1" -- "0..*" ChatSession : initiates
     ChatSession "1" *-- "1..*" ChatMessage : contains
@@ -139,16 +134,13 @@ classDiagram
     FeedbackRecord ..> TinyLoRA : updates
     KnowledgeDocument "1" *-- "1..*" RAGChunk : partitioned_into
 
-    classDef blueClass fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
-    classDef greenClass fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
-    classDef purpleClass fill:#7c3aed,stroke:#a78bfa,stroke-width:2px,color:#ffffff;
-    classDef tealClass fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#ffffff;
+    classDef monoClass fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000;
 ```
 
 ---
 
 ## 2. Use Case Diagram (7 Aktor)
-*Template Mengikuti Gambar 2: Batas Sistem Kotak Biru Muda (*System Boundary Box*), Aktor Stick-Figure, Oval Use Cases, Relasi `<<include>>` dan `<<extend>>`*
+*Template Mengikuti Gambar 2: Batas Sistem Persegi Panjang Hitam Putih (*System Boundary Box*), Aktor Stick-Figure, Oval Use Cases, Relasi `<<include>>` dan `<<extend>>`*
 
 ```mermaid
 flowchart LR
@@ -159,7 +151,7 @@ flowchart LR
         A["🛡️ Auditor PDP (COMPLY)"]
     end
 
-    %% Batas Sistem Utama (Kotak Biru Muda Sesuai Template Gambar 2)
+    %% Batas Sistem Utama (Kotak Hitam Putih Sesuai Template Gambar 2)
     subgraph SYSTEM_BOUNDARY ["🏢 RSUKT AI Clinical Consultation & Research System"]
         UC1(["💬 Konsultasi Edukasi Klinis"])
         UC2(["🛡️ Validasi Kuota Pasien (7x/Hari)"])
@@ -194,92 +186,85 @@ flowchart LR
     A --- UC8
     ADM --- UC8
 
-    classDef actorStyle fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe;
-    classDef ucStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
-    classDef ucAlert fill:#4c0519,stroke:#f43f5e,stroke-width:2px,color:#fecdd3;
-    classDef sysStyle fill:#0369a1,stroke:#38bdf8,stroke-width:3px,color:#ffffff;
+    classDef monoActor fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000;
+    classDef monoUC fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000;
+    classDef monoSys fill:#ffffff,stroke:#000000,stroke-width:2.5px,color:#000000;
 
-    class P,S,A,D,T,R,ADM actorStyle;
-    class UC1,UC2,UC4,UC5,UC6,UC7,UC8 ucStyle;
-    class UC3 ucAlert;
-    class SYSTEM_BOUNDARY sysStyle;
+    class P,S,A,D,T,R,ADM monoActor;
+    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8 monoUC;
+    class SYSTEM_BOUNDARY monoSys;
 ```
 
 ---
 
 ## 3. Activity Diagram (Alur Konsultasi & Triase Klinis)
-*Template Mengikuti Gambar 3: Titik Awal Bulat Hitam (●), Action Pills Berwarna Biru dengan Teks Rapi, Decision Diamond (◇), Fork & Join Bars, dan Titik Akhir Target (◉)*
+*Template Mengikuti Gambar 3: Titik Awal Bulat Hitam (●), Action Rectangles Bersih Tanpa Terpotong, Decision Diamond (◇), Fork & Join Bars Hitam, dan Titik Akhir Target (◉)*
 
 ```mermaid
 flowchart TD
     %% 1. Initial State Node
-    START((●)):::startNode --> A1["Pasien Mengirim Keluhan<br/>(Bahasa Awam Non-Formal)"]:::actionBlue
+    START((●)):::startNode --> A1["Pasien Mengirim Keluhan<br/>(Bahasa Awam Non-Formal)"]:::actionMono
     
-    A1 --> A2["Sanitasi OWASP & PDP<br/>(Anti-Injection & De-identifikasi)"]:::actionBlue
+    A1 --> A2["Sanitasi OWASP & PDP<br/>(Anti-Injection & De-identifikasi)"]:::actionMono
     
     %% 2. Decision Diamond 1: Evaluasi Kuota
     A2 --> D_QUOTA{"Kuota Pasien<br/>Tersedia? (7x)"}:::diamondNode
     
     %% Cabang Kuota Habis
-    D_QUOTA -- "[Tidak: Limit 7x]" --> ACT_LOCK["Kunci Input Chat Pasien<br/>(Tampilkan Hubungi Dokter Langsung)"]:::actionRose
+    D_QUOTA -- "[Tidak: Limit 7x]" --> ACT_LOCK["Kunci Input Chat Pasien<br/>(Tampilkan Hubungi Dokter Langsung)"]:::actionMono
     ACT_LOCK --> END_NODE(((◉))):::endNode
     
     %% Cabang Kuota Masih Ada
     D_QUOTA -- "[Ya: Kuota OK]" --> FORK_BAR["═════════════ «fork» Paralel Retrieval & Safety Scan ═════════════"]:::syncBar
     
     %% Paralel Jalur Kiri: RAG Search
-    FORK_BAR --> A3_RAG["RAG Hybrid Search<br/>(BM25 + Cosine 384 Dimensi<br/>& Cross-Encoder Re-ranker)"]:::actionBlue
+    FORK_BAR --> A3_RAG["RAG Hybrid Search<br/>(BM25 + Cosine 384 Dimensi<br/>& Cross-Encoder Re-ranker)"]:::actionMono
     
     %% Paralel Jalur Kanan: Triage Scanner
-    FORK_BAR --> A3_TRIAGE["Deteksi Gejala Darurat<br/>(Regex Red-Flag & Knowledge Graph<br/>Nyeri Dada, Stroke, Apnea)"]:::actionIndigo
+    FORK_BAR --> A3_TRIAGE["Deteksi Gejala Darurat<br/>(Regex Red-Flag & Knowledge Graph<br/>Nyeri Dada, Stroke, Apnea)"]:::actionMono
     
     %% Sinkronisasi Join Bar
     A3_RAG --> JOIN_BAR["═════════════ «join» Konteks Terintegrasi ═════════════"]:::syncBar
     A3_TRIAGE --> JOIN_BAR
     
     %% 3. Decision Diamond 2: Kondisi Gawat Darurat
-    JOIN_BAR --> D_EMERGENCY{"Gejala Darurat<br/>Red-Flag?"}:::diamondAlert
+    JOIN_BAR --> D_EMERGENCY{"Gejala Darurat<br/>Red-Flag?"}:::diamondNode
     
     %% Cabang Darurat: Triase Merah
-    D_EMERGENCY -- "[Ya: Triase Merah]" --> ACT_ALERT["🚨 Peringatan Darurat IGD<br/>(Kirim Sinyal Triase ke IGD<br/>& Kontak Ambulans 119)"]:::actionRose
+    D_EMERGENCY -- "[Ya: Triase Merah]" --> ACT_ALERT["Peringatan Darurat IGD<br/>(Kirim Sinyal Triase ke IGD<br/>& Kontak Ambulans 119)"]:::actionMono
     ACT_ALERT --> END_NODE
     
     %% Cabang Normal: Inferensi AI
-    D_EMERGENCY -- "[Tidak: Aman]" --> A4_AI["Generasi Respons Edukasi<br/>(TinyLoRA W' = W + v·λ<br/>& GP Safety Gate LCB ≥ -0.5)"]:::actionBlue
+    D_EMERGENCY -- "[Tidak: Aman]" --> A4_AI["Generasi Respons Edukasi<br/>(TinyLoRA W' = W + v·λ<br/>& GP Safety Gate LCB ≥ -0.5)"]:::actionMono
     
-    A4_AI --> A5_FILTER["Penyaringan Bahasa Pasien<br/>(Hapus Token BPE, Triase & Evidence<br/>Bersihkan Simbol *, '', ##)"]:::actionGold
+    A4_AI --> A5_FILTER["Penyaringan Bahasa Pasien<br/>(Hapus Token BPE, Triase & Evidence<br/>Bersihkan Simbol *, '', ##)"]:::actionMono
     
-    A5_FILTER --> A6_DELIVER["Tampilkan Jawaban Edukasi<br/>(Bahasa Medis Ramah Pasien)"]:::actionGreen
+    A5_FILTER --> A6_DELIVER["Tampilkan Jawaban Edukasi<br/>(Bahasa Medis Ramah Pasien)"]:::actionMono
     
     A6_DELIVER --> END_NODE
 
-    %% Definisi Gaya Khusus Sesuai Template Gambar 3
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:4px,color:#ffffff;
-    classDef endNode fill:#0f172a,stroke:#38bdf8,stroke-width:4px,color:#38bdf8;
-    classDef actionBlue fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
-    classDef actionIndigo fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#e0e7ff;
-    classDef actionRose fill:#4c0519,stroke:#f43f5e,stroke-width:2px,color:#ffe4e6;
-    classDef actionGold fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#fef3c7;
-    classDef actionGreen fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#ecfdf5;
-    classDef diamondNode fill:#4338ca,stroke:#a5b4fc,stroke-width:2px,color:#ffffff;
-    classDef diamondAlert fill:#be123c,stroke:#fda4af,stroke-width:2px,color:#ffffff;
-    classDef syncBar fill:#0f172a,stroke:#38bdf8,stroke-width:3px,color:#38bdf8;
+    %% Definisi Gaya Hitam Putih Murni Sesuai Template Gambar 3
+    classDef startNode fill:#000000,stroke:#000000,stroke-width:2px,color:#ffffff;
+    classDef endNode fill:#ffffff,stroke:#000000,stroke-width:2.5px,color:#000000;
+    classDef actionMono fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000;
+    classDef diamondNode fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000;
+    classDef syncBar fill:#000000,stroke:#000000,stroke-width:2px,color:#ffffff;
 ```
 
 ---
 
 ## 4. Sequence Diagram (Interaksi Konsultasi Real-Time)
-*Template Mengikuti Gambar 4: Lifeline Vertikal, Blok Aktivasi Persegi Panjang, Panah Sinkron, Dashed Return Arrows, & Blok Fragmen `alt` / `opt`*
+*Template Mengikuti Gambar 4: Lifeline Vertikal Putus-Putus, Blok Aktivasi Persegi Panjang Hitam Putih, Panah Sinkron, Dashed Return Arrows, & Blok Fragmen `alt` / `opt`*
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Pasien as 👤 Pasien (USER)
-    participant Web as 💻 Web UI (Next.js)
-    participant API as 🛡️ FastAPI Gateway
-    participant AI as 🧠 AI & TinyLoRA Engine
-    participant DB as 🗄️ Dual Database (MySQL/SQLite)
-    participant IGD as 🚑 Tim Triase IGD
+    actor Pasien as Pasien (USER)
+    participant Web as Web UI (Next.js)
+    participant API as FastAPI Gateway
+    participant AI as AI & TinyLoRA Engine
+    participant DB as Dual Database (MySQL/SQLite)
+    participant IGD as Tim Triase IGD
 
     Pasien->>Web: 1. Input Keluhan: "Nyeri dada menjalar ke lengan kiri"
     activate Web
@@ -328,18 +313,18 @@ sequenceDiagram
 ---
 
 ## 5. Data Flow Diagram (DFD Level 0 & Level 1)
-*Template Mengikuti Standard: Entitas Eksternal (Persegi Persegi Ganda), Proses (Kapsul/Lingkaran), Data Store (= D1 =), dan Aliran Data Berarah*
+*Template Mengikuti Standard: Entitas Eksternal (Persegi Garis Ganda), Proses (Lingkaran Hitam Putih), Data Store (= D1 =), dan Aliran Data Berarah*
 
 ### 5.1 DFD Level 0 (Context Diagram)
 
 ```mermaid
 flowchart TD
-    %% Entitas Eksternal
-    E_PASIEN["👤 Pasien (USER)"]
-    E_DOKTER["👨‍⚕️ Dokter Penelaah (REVIEWER)"]
-    E_PENELITI["🔬 Peneliti AI (SCIENTIST)"]
-    E_IGD["🚑 Petugas IGD (TRIAGE_OPS)"]
-    E_KEMENKES["🏛️ SatuSehat Kemenkes (B2G)"]
+    %% Entitas Eksternal Hitam Putih
+    E_PASIEN["Pasien (USER)"]
+    E_DOKTER["Dokter Penelaah (REVIEWER)"]
+    E_PENELITI["Peneliti AI (SCIENTIST)"]
+    E_IGD["Petugas IGD (TRIAGE_OPS)"]
+    E_KEMENKES["SatuSehat Kemenkes (B2G)"]
 
     %% Proses Tunggal Sistem Utama
     P0(("0.0<br/>Sistem Platform AI Medis &<br/>Konsultasi Klinis RSUKT"))
@@ -359,12 +344,12 @@ flowchart TD
     P0 -->|"Metadata RME ter-pseudonimisasi (FHIR)"| E_KEMENKES
     E_KEMENKES -->|"Standar terminologi ICD-10 & SNOMED"| P0
 
-    classDef entStyle fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe;
-    classDef procStyle fill:#0284c7,stroke:#38bdf8,stroke-width:3px,color:#ffffff;
-    class E_PASIEN,E_DOKTER,E_PENELITI,E_IGD,E_KEMENKES entStyle;
-    class P0 procStyle;
+    classDef monoEnt fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000;
+    classDef monoProc fill:#ffffff,stroke:#000000,stroke-width:2px,color:#000000;
+    class E_PASIEN,E_DOKTER,E_PENELITI,E_IGD,E_KEMENKES monoEnt;
+    class P0 monoProc;
 ```
 
 ---
 
-*Seluruh diagram pada dokumen ini telah disesuaikan dengan template visual pengguna dan terintegrasi dengan Live Interactive Suite [`interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html).*
+*Seluruh diagram pada dokumen ini menggunakan standar Hitam Putih (Monochrome) dan terintegrasi dengan Live Interactive Suite [`interactive_system_diagrams.html`](file:///c:/Users/user/RAG-model-record/docs/readme/interactive_system_diagrams.html).*
