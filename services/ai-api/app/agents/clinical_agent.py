@@ -17,6 +17,7 @@ from app.rag.query_analysis import analyze_clinical_query
 
 from app.rag.knowledge_graph import knowledge_graph
 from app.rag.language_scanning import language_scanner
+from app.ml.execution_modes import execution_mode_router
 
 logger = logging.getLogger("clinical_agent")
 
@@ -202,23 +203,45 @@ class ClinicalAgent:
         )
         evidence_context = rag_result["evidence_context"]
 
-        # Build verified citations from retrieved evidence
-        citations = []
-        for e in evidence_context:
-            citations.append({
-                "chunk_id": e["chunk_id"],
-                "doc_id": e["doc_id"],
-                "department": e["department"],
-                "title": e.get("title", ""),
-                "relevance_score": e["relevance_score"]
-            })
+        # 3b. Graph & Kernel Optimization + Document Navigation Decision Model (System-Level Runtime)
+        exec_result = execution_mode_router.process(
+            query=user_query,
+            candidate_docs=evidence_context,
+            mode=reasoning_mode
+        )
 
-        # Truncate evidence excerpts to enforce strict context token budget (max 300 chars each)
+        citations = []
         truncated_evidence = []
-        for e in evidence_context:
-            e_copy = dict(e)
-            e_copy["excerpt"] = truncate_excerpt(e.get("excerpt", ""), max_chars=300)
-            truncated_evidence.append(e_copy)
+
+        if exec_result.retrieval_action != "RETRIEVAL_FREE":
+            if exec_result.navigated_docs:
+                for d in exec_result.navigated_docs:
+                    citations.append({
+                        "chunk_id": d["chunk_id"],
+                        "doc_id": d["doc_id"],
+                        "department": d["department"],
+                        "title": "",
+                        "relevance_score": round(float(d.get("cross_encoder_score", 0.88)), 2)
+                    })
+                    truncated_evidence.append({
+                        "chunk_id": d["chunk_id"],
+                        "doc_id": d["doc_id"],
+                        "department": d["department"],
+                        "excerpt": truncate_excerpt(d.get("content", ""), max_chars=300),
+                        "relevance_score": round(float(d.get("cross_encoder_score", 0.88)), 2)
+                    })
+            else:
+                for e in evidence_context:
+                    citations.append({
+                        "chunk_id": e["chunk_id"],
+                        "doc_id": e["doc_id"],
+                        "department": e["department"],
+                        "title": e.get("title", ""),
+                        "relevance_score": e["relevance_score"]
+                    })
+                    e_copy = dict(e)
+                    e_copy["excerpt"] = truncate_excerpt(e.get("excerpt", ""), max_chars=300)
+                    truncated_evidence.append(e_copy)
 
         # Multi-turn history retrieval & Rolling Summary (>12 pesan)
         total_msgs = db.query(func.count(ChatMessage.id)).filter(
