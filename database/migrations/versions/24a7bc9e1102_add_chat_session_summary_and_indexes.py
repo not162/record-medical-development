@@ -28,3 +28,4 @@ def downgrade() -> None:
         batch_op.drop_index('ix_chat_sessions_user_deleted_updated')
         batch_op.drop_index('ix_chat_sessions_user_updated')
         batch_op.drop_column('summary')
+
