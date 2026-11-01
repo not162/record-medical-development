@@ -129,6 +129,27 @@ def login_user(req: UserLoginRequest, request: Request, db: Session = Depends(ge
     user = db.query(User).filter(
         (User.username == req.username_or_email) | (User.email == req.username_or_email)
     ).first()
+
+    # 0.3 Temporary Diagnostic Logging (Masked & Security Compliant)
+    raw_target = (req.username_or_email or '').strip()
+    if '@' in raw_target:
+        parts = raw_target.split('@')
+        masked_target = f'{parts[0][:2]}***@{parts[1]}'
+    else:
+        masked_target = f'{raw_target[:2]}***' if len(raw_target) >= 2 else '***'
+        
+    user_found = user is not None
+    hash_prefix = user.hashed_password[:7] if (user and user.hashed_password) else 'NONE'
+    pwd_valid = verify_password(req.password, user.hashed_password) if user else False
+    user_status = 'ACTIVE' if (user and user.is_active) else ('INACTIVE' if user else 'NOT_FOUND')
+    user_role = user.role if user else 'UNKNOWN'
+
+    print(
+        f'[DIAGNOSTIC_AUTH_LOG] target=\'{masked_target}\' found={user_found} '
+        f'hash_prefix=\'{hash_prefix}\' pwd_valid={pwd_valid} status=\'{user_status}\' '
+        f'role=\'{user_role}\' provider=\'custom_jwt_bcrypt\'',
+        flush=True
+    )
     
     if not user or not verify_password(req.password, user.hashed_password):
         audit = AuditLog(
