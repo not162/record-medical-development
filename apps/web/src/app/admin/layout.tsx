@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || role !== "ADMIN")) {
+    if (!isLoading && (!isAuthenticated || (role !== "ADMIN" && role !== "RESEARCHER"))) {
       // Don't auto redirect immediately if showing error banner
     }
   }, [isLoading, isAuthenticated, role]);
@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   // Server-side / Client-side RBAC Guard
-  if (!isAuthenticated || role !== "ADMIN") {
+  if (!isAuthenticated || (role !== "ADMIN" && role !== "RESEARCHER")) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
         <div className="max-w-md w-full bg-white p-8 rounded-2xl text-center space-y-5 border border-red-200 shadow-xl">
@@ -65,19 +65,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  const adminNavItems = [
-    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/datasets", label: "Dataset Management", icon: Database },
+  const operationalNavItems = [
+    { href: "/admin/dashboard", label: "Dashboard Operasional", icon: LayoutDashboard },
+    { href: "/admin/feedback", label: "Feedback Pasien", icon: ThumbsUp },
+    { href: "/admin/audit-logs", label: "Log Audit Sistem", icon: ShieldAlert },
+    { href: "/admin/settings", label: "Pengaturan Sistem", icon: Settings },
+  ];
+
+  const researchNavItems = [
+    { href: "/admin/training", label: "Model Training & Simulasi", icon: Activity },
+    { href: "/admin/models", label: "Model Registry", icon: Cpu },
+    { href: "/admin/evaluation", label: "Evaluasi & Benchmark", icon: BarChart3 },
+    { href: "/admin/datasets", label: "Manajemen Dataset", icon: Database },
     { href: "/admin/datasets/imports", label: "Import Manifests", icon: FileText },
     { href: "/admin/annotations", label: "Annotation Studio", icon: CheckSquare },
-    { href: "/admin/models", label: "Model Registry", icon: Cpu },
-    { href: "/admin/training", label: "Model Training", icon: Activity },
-    { href: "/admin/evaluation", label: "Evaluation & Metrics", icon: BarChart3 },
-    { href: "/admin/knowledge-base", label: "Knowledge Index", icon: BookOpen },
+    { href: "/admin/knowledge-base", label: "Knowledge Index (RAG)", icon: BookOpen },
     { href: "/admin/graph", label: "GraphRAG Visualizer", icon: GitFork },
-    { href: "/admin/feedback", label: "Feedback Review", icon: ThumbsUp },
-    { href: "/admin/audit-logs", label: "Audit Logs", icon: ShieldAlert },
-    { href: "/admin/settings", label: "System Settings", icon: Settings },
   ];
 
   return (
@@ -96,26 +99,67 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
 
-          {/* Nav Items */}
-          <nav className="p-3 space-y-1">
-            {adminNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
-                    isActive
-                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-sm font-semibold"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-emerald-700" : "text-slate-400"}`} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          {/* Nav Items Grouped by Role Category */}
+          <nav className="p-3 space-y-4">
+            {/* Kategori 1: Operasional Klinik */}
+            <div>
+              <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>Operasional Klinik</span>
+                {role === "ADMIN" && (
+                  <span className="text-[9px] px-1.5 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">Aktif</span>
+                )}
+              </div>
+              <div className="space-y-0.5">
+                {operationalNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
+                        isActive
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs font-semibold"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${isActive ? "text-emerald-700" : "text-slate-400"}`} />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Kategori 2: Workspace Riset & AI Engineering */}
+            <div>
+              <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>Workspace Riset AI</span>
+                {role === "RESEARCHER" && (
+                  <span className="text-[9px] px-1.5 py-0.2 bg-sky-50 text-sky-700 rounded border border-sky-200">Periset Aktif</span>
+                )}
+              </div>
+              <div className="space-y-0.5">
+                {researchNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
+                        isActive
+                          ? "bg-sky-50 text-sky-800 border border-sky-200 shadow-xs font-semibold"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${isActive ? "text-sky-700" : "text-slate-400"}`} />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </nav>
         </div>
 
@@ -128,8 +172,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 shadow-sm">
             <div className="truncate">
-              <p className="text-xs font-semibold text-emerald-700 truncate">{user?.username}</p>
-              <p className="text-[10px] text-slate-500 truncate">ROLE: ADMIN</p>
+              <p className={`text-xs font-semibold truncate ${role === "RESEARCHER" ? "text-sky-700" : "text-emerald-700"}`}>
+                {user?.username}
+              </p>
+              <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
+                role === "RESEARCHER"
+                  ? "bg-sky-50 text-sky-700 border-sky-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              }`}>
+                {role === "RESEARCHER" ? "ADMIN PERISET" : "ADMIN OPERASIONAL"}
+              </span>
             </div>
             <button
               onClick={logout}

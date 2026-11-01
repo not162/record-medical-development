@@ -88,11 +88,20 @@ def require_clinician(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
-    """Enforces server-side ADMIN role authorization."""
-    if current_user.role != "ADMIN":
+    """Enforces server-side ADMIN or RESEARCHER role authorization."""
+    if current_user.role not in ["ADMIN", "RESEARCHER", "ADMIN_PERISET"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses ditolak: Operasi ini membutuhkan hak akses ADMINISTRATOR.",
+            detail="Akses ditolak: Operasi ini membutuhkan hak akses ADMINISTRATOR atau PENELITI MEDIS (RESEARCHER).",
+        )
+    return current_user
+
+def require_researcher(current_user: User = Depends(get_current_user)) -> User:
+    """Enforces server-side RESEARCHER or ADMIN role authorization for AI training, models, and evaluation."""
+    if current_user.role not in ["ADMIN", "RESEARCHER", "ADMIN_PERISET"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akses ditolak: Fitur ini khusus untuk peran PENELITI MEDIS (RESEARCHER) / Data Scientist AI.",
         )
     return current_user
 

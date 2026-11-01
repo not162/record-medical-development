@@ -1,12 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { User, api, getToken, setToken, removeToken } from "./api";
+import { User, UserRole, api, getToken, setToken, removeToken } from "./api";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   user: User | null;
-  role: "USER" | "ADMIN" | null;
+  role: UserRole | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: { username_or_email: string; password: string }) => Promise<User>;

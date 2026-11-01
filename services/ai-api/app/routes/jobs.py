@@ -43,10 +43,10 @@ def require_cron_or_admin(
 
     payload = decode_access_token(token)
     user = db.query(User).filter(User.id == payload.get("sub")).first()
-    if not user or not user.is_active or user.role != "ADMIN":
+    if not user or not user.is_active or user.role not in ["ADMIN", "RESEARCHER", "ADMIN_PERISET"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses ditolak: membutuhkan ADMIN atau CRON_SECRET.",
+            detail="Akses ditolak: membutuhkan ADMIN, RESEARCHER, atau CRON_SECRET.",
         )
     return f"admin:{user.id}"
 

@@ -3,11 +3,13 @@ export const API_BASE_URL = rawApiUrl
   ? (rawApiUrl.endsWith("/api/v1") ? rawApiUrl : `${rawApiUrl.replace(/\/+$/, "")}/api/v1`)
   : (typeof window !== "undefined" ? "/api/v1" : "https://ai-api-dusky-eight.vercel.app/api/v1");
 
+export type UserRole = "USER" | "ADMIN" | "RESEARCHER";
+
 export interface User {
   id: string;
   username: string;
   email: string;
-  role: "USER" | "ADMIN";
+  role: UserRole;
   full_name?: string | null;
   is_active: boolean;
   created_at: string;
@@ -32,7 +34,7 @@ export interface AuthResponse {
   user_id: string;
   username: string;
   email: string;
-  role: "USER" | "ADMIN";
+  role: UserRole;
   full_name?: string | null;
 }
 

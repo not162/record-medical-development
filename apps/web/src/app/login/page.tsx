@@ -26,7 +26,7 @@ export default function LoginPage() {
         password,
       });
 
-      if (loggedUser.role === "ADMIN") {
+      if (loggedUser.role === "ADMIN" || loggedUser.role === "RESEARCHER") {
         router.push("/admin/dashboard");
       } else {
         router.push("/chat");
