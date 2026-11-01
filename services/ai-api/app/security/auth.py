@@ -1,4 +1,3 @@
-import bcrypt
 import jwt
 import datetime
 from typing import Optional
@@ -9,21 +8,13 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models import User
+from app.security.password import (
+    hash_password,
+    verify_password,
+    verify_and_check_rehash,
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/login")
-
-def hash_password(password: str) -> str:
-    """Hashes a password using secure bcrypt."""
-    salt = bcrypt.gensalt(rounds=12)
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed.decode("utf-8")
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifies a plain password against the stored bcrypt hash."""
-    try:
-        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
-    except Exception:
-        return False
 
 def create_access_token(data: dict, expires_delta: Optional[datetime.timedelta] = None) -> str:
     """Creates a signed JWT access token."""
@@ -105,3 +96,28 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
         )
     return current_user
 
+
+
+oauth2_optional_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_PREFIX}/auth/login",
+    auto_error=False
+)
+
+def get_optional_user(
+    token: Optional[str] = Depends(oauth2_optional_scheme),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """Extracts authenticated user if token present, or returns None for guest tier."""
+    if not token:
+        return None
+    try:
+        payload = decode_access_token(token)
+        user_id: Optional[str] = payload.get("sub")
+        if not user_id:
+            return None
+        user = db.query(User).filter(User.id == user_id).first()
+        if user and user.is_active:
+            return user
+        return None
+    except Exception:
+        return None

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { API_BASE_URL } from "@/lib/api";
+import { getChatTier } from "@/lib/chat/tiers";
 
 export interface QuotaStatus {
   quota_used: number;
@@ -181,6 +182,12 @@ function renderFormattedInline(text: string): React.ReactNode {
 
 export default function ChatPage() {
   const { role: userRole } = useAuth();
+  const { user } = useAuth();
+  const currentTier = getChatTier(user);
+  const [guestConsentDismissed, setGuestConsentDismissed] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
   const pageRouter = useRouter();
 
   // Strict separation: Administrator dilarang keras masuk ke ruang konsultasi pasien (UU PDP No. 27/2022)
@@ -214,7 +221,6 @@ export default function ChatPage() {
   const [totalSessionMessages, setTotalSessionMessages] = useState<number>(0);
   const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [modelSize, setModelSize] = useState("70b");
   const [reasoningMode, setReasoningMode] = useState<"thinking" | "fast">("thinking");
   const [quotaStatus, setQuotaStatus] = useState<QuotaStatus | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
@@ -528,9 +534,8 @@ export default function ChatPage() {
     setInputQuery("");
 
     let activeSessId = currentSessionId;
-    const token = localStorage.getItem("clinical_token");
+    const token = typeof window !== "undefined" ? localStorage.getItem("clinical_token") : null;
 
-    // If no active session, create one first
     if (!activeSessId && token) {
       try {
         const sRes = await fetch(`${API_BASE_URL}/chat/sessions`, {
@@ -549,6 +554,11 @@ export default function ChatPage() {
       } catch {
         // continue
       }
+    }
+
+    // Guest fallback session id
+    if (!activeSessId) {
+      activeSessId = `guest-session-${Date.now()}`;
     }
 
     const tempUserMsg: Message = {
@@ -572,19 +582,26 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, initialStreamMsg]);
 
     try {
-      if (token && activeSessId) {
+      if (activeSessId) {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const effectiveMode = token ? reasoningMode : "fast";
+
         // Respons Percakapan Real-Time (Server-Sent Events)
         const res = await fetch(`${API_BASE_URL}/chat/messages/stream`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
+          headers,
+          credentials: "include",
           body: JSON.stringify({
             session_id: activeSessId,
             content: query,
-            reasoning_mode: reasoningMode,
-            model_size: modelSize
+            reasoning_mode: effectiveMode,
+            model_size: effectiveMode === "thinking" ? "70b" : "8b"
           })
         });
 
@@ -667,7 +684,7 @@ export default function ChatPage() {
                         : m
                     )
                   );
-                  fetchSessions();
+                  if (token) fetchSessions();
                 }
               } catch {
                 // ignore incomplete json chunk
@@ -678,14 +695,12 @@ export default function ChatPage() {
           // Fallback ke synchronous POST jika streaming tidak tersedia
           const syncRes = await fetch(`${API_BASE_URL}/chat/messages`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
-            },
+            headers,
+            credentials: "include",
             body: JSON.stringify({
               session_id: activeSessId,
               content: query,
-              reasoning_mode: reasoningMode
+              reasoning_mode: effectiveMode
             })
           });
 
@@ -712,7 +727,7 @@ export default function ChatPage() {
                   : m
               )
             );
-            fetchSessions();
+            if (token) fetchSessions();
           } else {
             throw new Error("Gagal menerima respons dari server");
           }
@@ -916,8 +931,7 @@ export default function ChatPage() {
                   type="button"
                   onClick={() => {
                     setReasoningMode("thinking");
-                    setModelSize("70b");
-                  }}
+                                      }}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
                     reasoningMode === "thinking"
                       ? "bg-white text-indigo-700 shadow-2xs border border-indigo-200"
@@ -933,8 +947,7 @@ export default function ChatPage() {
                   type="button"
                   onClick={() => {
                     setReasoningMode("fast");
-                    setModelSize("8b");
-                  }}
+                                      }}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition ${
                     reasoningMode === "fast"
                       ? "bg-white text-amber-700 shadow-2xs border border-amber-200"
@@ -962,6 +975,17 @@ export default function ChatPage() {
               </span>
               <span className="text-slate-400 text-[10px] hidden sm:inline">| 24 Jam</span>
             </div>
+
+                        {currentTier.tier === "GUEST" && messages.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setShowUpgradeModal(true)}
+                className="px-2.5 py-1 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs"
+                title="Simpan percakapan ke akun terdaftar"
+              >
+                <span>Simpan ke Akun</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -1297,6 +1321,24 @@ export default function ChatPage() {
         )}
 
         {/* Mobile-Friendly Composer Input Area */}
+              {/* 2.2 Guest Consent Banner (UU No. 27/2022) */}
+      {currentTier.tier === "GUEST" && !guestConsentDismissed && (
+        <div className="mb-2 p-2.5 rounded-xl bg-cyan-50/90 border border-cyan-200 flex items-center justify-between text-xs text-cyan-900 shadow-xs">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-cyan-600 shrink-0" />
+            <span className="text-[11px]">
+              <strong>Mode Tamu (Anonim):</strong> Dengan melanjutkan konsultasi, Anda menyetujui pemrosesan data anamnesis secara anonim sesuai UU No. 27/2022 (UU PDP).
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGuestConsentDismissed(true)}
+            className="text-cyan-700 hover:text-cyan-900 text-[11px] font-semibold px-2 py-0.5 rounded hover:bg-cyan-100/70 ml-2 shrink-0 transition"
+          >
+            Saya Setuju
+          </button>
+        </div>
+      )}
         <form onSubmit={handleSendMessage} className="relative mt-auto">
           <div className={`p-2 rounded-2xl border shadow-xs transition ${
             quotaStatus?.is_clinic_health_lock
@@ -1305,6 +1347,7 @@ export default function ChatPage() {
           }`}>
             <textarea
               rows={2}
+              maxLength={currentTier.maxChars}
               disabled={Boolean(quotaStatus?.is_clinic_health_lock)}
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
@@ -1326,17 +1369,25 @@ export default function ChatPage() {
               <div className="flex items-center gap-1.5 text-xs text-slate-500">
                 <span className="text-[11px] text-slate-500 font-medium">Mode:</span>
                 <select
-                  value={reasoningMode}
+                  value={currentTier.tier === "GUEST" ? "fast" : reasoningMode}
+                  disabled={currentTier.tier === "GUEST"}
                   onChange={(e) => {
                     const m = e.target.value as "thinking" | "fast";
                     setReasoningMode(m);
-                    setModelSize(m === "thinking" ? "70b" : "8b");
-                  }}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-cyan-500 font-semibold"
+                                      }}
+                  className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-cyan-500 font-semibold disabled:opacity-80"
                 >
-                  <option value="thinking">Thinking Mode</option>
+                  {currentTier.tier === "AUTHENTICATED" && (
+                    <option value="thinking">Thinking Mode</option>
+                  )}
                   <option value="fast">Fast Mode</option>
                 </select>
+                {currentTier.tier === "GUEST" ? (
+                  <span className="text-[10px] text-slate-400 hidden sm:inline">(Masuk akun untuk Thinking Mode)</span>
+                ) : null}
+                <span className="text-[10px] text-slate-400 ml-1">
+                  {inputQuery.length}/{currentTier.maxChars}
+                </span>
               </div>
 
               <button
@@ -1361,6 +1412,72 @@ export default function ChatPage() {
           </div>
         </form>
       </div>
+
+            {/* 2.2 Upgrade Session Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+            <h3 className="text-sm font-bold text-slate-900">Simpan Riwayat Konsultasi ke Akun</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              {user
+                ? "Apakah Anda ingin menyimpan seluruh riwayat percakapan sesi tamu ini ke akun rekam medis terdaftar Anda?"
+                : "Untuk menyimpan dan mensinkronkan riwayat percakapan ini ke semua perangkat, silakan masuk atau daftar akun pasien RSUKT."}
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowUpgradeModal(false)}
+                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg transition"
+              >
+                Batal
+              </button>
+              {user ? (
+                <button
+                  type="button"
+                  disabled={isUpgrading}
+                  onClick={async () => {
+                    setIsUpgrading(true);
+                    try {
+                      const token = localStorage.getItem("clinical_token");
+                      const res = await fetch(`${API_BASE_URL}/chat/sessions/upgrade`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                          guest_session_id: currentSessionId || "guest",
+                          messages: messages.map(m => ({ sender: m.sender, content: m.content }))
+                        })
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        alert(data.message);
+                        setShowUpgradeModal(false);
+                        fetchSessions();
+                      }
+                    } catch {
+                      alert("Gagal menyimpan riwayat.");
+                    } finally {
+                      setIsUpgrading(false);
+                    }
+                  }}
+                  className="px-3.5 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition"
+                >
+                  {isUpgrading ? "Menyimpan..." : "Ya, Simpan ke Akun"}
+                </button>
+              ) : (
+                <a
+                  href="/login"
+                  className="px-3.5 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition inline-block"
+                >
+                  Masuk / Daftar
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Citation Metadata Modal */}
       {selectedCitation && (

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 import datetime
 from pydantic import BaseModel, Field
 
@@ -12,7 +13,7 @@ from app.schemas import (
 import json
 from app.security.owasp_scanner import owasp_scanner
 from app.security.auth import (
-    hash_password, verify_password, create_access_token, get_current_user, require_user
+    hash_password, verify_password, verify_and_check_rehash, create_access_token, get_current_user, require_user
 )
 
 router = APIRouter(tags=["Authentication & Profile"])
@@ -61,9 +62,12 @@ def register_user(req: UserRegisterRequest, request: Request, db: Session = Depe
         )
 
 
-    # 1. Cek keunikan username dan email
+    # 1. Cek keunikan username dan email secara case-insensitive
+    clean_username = req.username.strip()
+    clean_email = req.email.strip().lower()
     existing = db.query(User).filter(
-        (User.username == req.username) | (User.email == req.email)
+        (func.lower(User.username) == clean_username.lower()) |
+        (func.lower(User.email) == clean_email)
     ).first()
     if existing:
         raise HTTPException(
@@ -73,8 +77,8 @@ def register_user(req: UserRegisterRequest, request: Request, db: Session = Depe
         
     # 2. Buat pengguna baru dengan peran USER secara mutlak
     new_user = User(
-        username=req.username,
-        email=req.email,
+        username=clean_username,
+        email=clean_email,
         hashed_password=hash_password(req.password),
         full_name=req.full_name,
         role="USER", # Hard-coded role: Always USER for public registration
@@ -122,50 +126,43 @@ def register_user(req: UserRegisterRequest, request: Request, db: Session = Depe
 def login_user(req: UserLoginRequest, request: Request, db: Session = Depends(get_db)):
     """
     Autentikasi Pengguna dan Penerbitan Token JWT Terproteksi.
+    Mendukung lazy migration password dan pencarian case-insensitive.
     """
     client_ip = request.client.host if request.client else "unknown"
+    clean_target = (req.username_or_email or "").strip()
     
-    # Cari pengguna berdasarkan username atau email
+    # Cari pengguna berdasarkan username atau email secara case-insensitive
     user = db.query(User).filter(
-        (User.username == req.username_or_email) | (User.email == req.username_or_email)
+        (func.lower(User.username) == clean_target.lower()) |
+        (func.lower(User.email) == clean_target.lower())
     ).first()
 
-    # 0.3 Temporary Diagnostic Logging (Masked & Security Compliant)
-    raw_target = (req.username_or_email or '').strip()
-    if '@' in raw_target:
-        parts = raw_target.split('@')
-        masked_target = f'{parts[0][:2]}***@{parts[1]}'
-    else:
-        masked_target = f'{raw_target[:2]}***' if len(raw_target) >= 2 else '***'
-        
-    user_found = user is not None
-    hash_prefix = user.hashed_password[:7] if (user and user.hashed_password) else 'NONE'
-    pwd_valid = verify_password(req.password, user.hashed_password) if user else False
-    user_status = 'ACTIVE' if (user and user.is_active) else ('INACTIVE' if user else 'NOT_FOUND')
-    user_role = user.role if user else 'UNKNOWN'
-
-    print(
-        f'[DIAGNOSTIC_AUTH_LOG] target=\'{masked_target}\' found={user_found} '
-        f'hash_prefix=\'{hash_prefix}\' pwd_valid={pwd_valid} status=\'{user_status}\' '
-        f'role=\'{user_role}\' provider=\'custom_jwt_bcrypt\'',
-        flush=True
-    )
+    # Verifikasi kata sandi dengan multi-format & lazy migration
+    is_valid, needs_rehash, new_hash = verify_and_check_rehash(req.password, user.hashed_password if user else None)
+    if is_valid and needs_rehash and new_hash and user:
+        try:
+            user.hashed_password = new_hash
+            user.updated_at = datetime.datetime.now(datetime.timezone.utc)
+            db.commit()
+        except Exception as _rehash_err:
+            db.rollback()
     
-    if not user or not verify_password(req.password, user.hashed_password):
+    # 1.7 Generic error for security against account enumeration
+    if not user or not is_valid:
         audit = AuditLog(
             user_id=user.id if user else None,
             action="USER_LOGIN_FAILED",
             resource_type="AUTH",
-            resource_id=req.username_or_email,
+            resource_id=clean_target[:100],
             status="FAILURE",
             ip_address=client_ip,
-            details="Percobaan login gagal: Kredensial tidak cocok."
+            details="Percobaan login gagal: Kredensial tidak valid."
         )
         db.add(audit)
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Username/email atau kata sandi tidak valid."
+            detail="Email atau kata sandi salah."
         )
         
     if not user.is_active:
@@ -294,14 +291,15 @@ def forgot_password_request(req: ForgotPasswordRequest, request: Request, db: Se
     """
     clean_target = req.username_or_email.strip()
     user = db.query(User).filter(
-        (User.username == clean_target) | (User.email == clean_target)
+        (func.lower(User.username) == clean_target.lower()) |
+        (func.lower(User.email) == clean_target.lower())
     ).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Akun dengan username atau email tersebut tidak ditemukan dalam sistem rekam medis."
-        )
+        return {
+            "status": "success",
+            "message": "Jika akun terdaftar, instruksi atau kode pemulihan kata sandi telah dikirimkan."
+        }
 
     code_hash = abs(hash(f"{user.id}-{datetime.date.today().isoformat()}")) % 900000 + 100000
     verification_code = f"RSUKT-{code_hash}"
@@ -346,7 +344,8 @@ def reset_password(req: ResetPasswordRequest, request: Request, db: Session = De
 
     clean_target = req.username_or_email.strip()
     user = db.query(User).filter(
-        (User.username == clean_target) | (User.email == clean_target)
+        (func.lower(User.username) == clean_target.lower()) |
+        (func.lower(User.email) == clean_target.lower())
     ).first()
 
     if not user:

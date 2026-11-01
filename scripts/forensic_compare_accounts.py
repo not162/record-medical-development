@@ -30,3 +30,4 @@ for col_idx, col_name in enumerate(colnames):
     print(f"{col_name:<18} | {vals[0]:<20} | {vals[1]:<20} | {vals[2]:<20} | {vals[3]:<20}")
 
 conn.close()
+

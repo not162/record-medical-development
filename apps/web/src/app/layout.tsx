@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 import { PwaRegistration } from "@/components/PwaRegistration";
+import BrandLoader from "@/components/BrandLoader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,9 +67,34 @@ export default function RootLayout({
     <html lang="id" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased light`}>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-800 selection:bg-cyan-600 selection:text-white">
         <Providers>
+          <BrandLoader />
           <PwaRegistration />
           {children}
         </Providers>
+        {/* 3.3 Structured Data (Schema.org / MedicalOrganization) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "MedicalOrganization",
+              "name": "Web Klinik RSUKT",
+              "url": "https://klinik.rsukt.go.id",
+              "logo": "https://klinik.rsukt.go.id/icons/icon-512.png",
+              "slogan": "healthy with clinic and hospital",
+              "description": "Layanan Konsultasi Triase Medis Berbasis Kecerdasan Artifisial & Rekam Medis Terverifikasi RSUKT",
+              "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "ID"
+              },
+              "medicalSpecialty": [
+                "EmergencyMedicine",
+                "Cardiovascular",
+                "InternalMedicine"
+              ]
+            })
+          }}
+        />
       </body>
     </html>
   );

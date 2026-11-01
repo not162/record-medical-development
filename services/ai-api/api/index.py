@@ -76,5 +76,6 @@ async def app(scope, receive, send):
 
         scope["path"] = target_path
         scope["raw_path"] = target_path.encode("latin1")
+        scope["root_path"] = ""
 
     await fastapi_app(scope, receive, send)

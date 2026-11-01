@@ -47,3 +47,4 @@ for uid, uname, email in cur.fetchall():
         print(f"  Non-normalized in DB: Username='{uname}', Email='{email}' (upper_uname={has_upper_uname}, upper_email={has_upper_email}, space={has_space})")
 
 conn.close()
+

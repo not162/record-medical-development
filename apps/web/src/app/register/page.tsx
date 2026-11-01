@@ -41,10 +41,10 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register({
-        username,
-        email,
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
         password,
-        full_name: fullName || undefined,
+        full_name: fullName ? fullName.trim() : undefined,
       });
 
       setSuccess(true);
@@ -124,6 +124,9 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="pasien@rsukt.go.id"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition"
               />
             </div>
