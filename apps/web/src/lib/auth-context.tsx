@@ -3,6 +3,11 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { User, UserRole, api, getToken, setToken, removeToken } from "./api";
 import { useRouter } from "next/navigation";
+import { normalizeRole } from "./roles";
+
+function withNormalizedRole(u: User): User {
+  return { ...u, role: normalizeRole(u.role) ?? "USER" };
+}
 
 interface AuthContextType {
   user: User | null;
@@ -31,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const currentUser = await api.auth.me();
-      setUser(currentUser);
+      setUser(withNormalizedRole(currentUser));
     } catch (err) {
       console.warn("Failed to restore session:", err);
       removeToken();
@@ -54,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       try {
         const currentUser = await api.auth.me();
-        if (!ignore) setUser(currentUser);
+        if (!ignore) setUser(withNormalizedRole(currentUser));
       } catch (err) {
         console.warn("Failed to restore session:", err);
         removeToken();
@@ -78,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: res.user_id,
         username: res.username,
         email: res.email,
-        role: res.role,
+        role: normalizeRole(res.role) ?? "USER",
         full_name: res.full_name,
         is_active: true,
         created_at: new Date().toISOString(),

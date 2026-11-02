@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { isAdminRole, isSuperadmin } from "@/lib/roles";
 import { 
   Stethoscope, Bot, ShieldCheck, ArrowRight, Activity, 
   Sparkles, Lock, HeartPulse, FileCheck, CheckCircle2,
@@ -235,12 +236,12 @@ export default function HomePage() {
                 <span className="text-xs text-slate-600 hidden sm:inline">
                   Halo, <strong className="text-cyan-700">{user?.full_name || user?.username}</strong>
                 </span>
-                {role === "ADMIN" ? (
+                {isAdminRole(role) ? (
                   <Link
                     href="/admin/dashboard"
                     className="px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5"
                   >
-                    <span>Ruang Kerja Admin</span>
+                    <span>{isSuperadmin(role) ? "Ruang Kerja Admin Riset" : "Ruang Kerja Admin Operasional"}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 ) : (

@@ -37,6 +37,12 @@ class UserResponse(BaseModel):
     
     model_config = ConfigDict(from_attributes=True)
 
+class UserAdminUpdateRequest(BaseModel):
+    """Dipakai khusus Admin Periset untuk mengubah peran / status akun."""
+    model_config = ConfigDict(extra="forbid")
+    role: Optional[str] = Field(None, pattern="^(USER|ADMIN|RESEARCHER)$")
+    is_active: Optional[bool] = None
+
 class PatientProfileResponse(BaseModel):
     id: str
     user_id: str

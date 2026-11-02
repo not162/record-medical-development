@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User, DatasetRecord
-from app.security.auth import require_user, require_admin
+from app.security.auth import require_user, require_admin, require_researcher
 from app.rag.hybrid_search import hybrid_rag_engine
 from app.rag.metrics import evaluate_retrieval
 from app.cache import cache_manager, make_cache_key
@@ -45,7 +45,7 @@ def search_clinical_knowledge(
 
 @router.post("/admin/rag/index")
 def trigger_rag_indexing(
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -88,7 +88,7 @@ def get_rag_index_status(
 
 @router.post("/admin/rag/evaluate")
 def evaluate_rag_retrieval(
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """

@@ -138,7 +138,7 @@ class ClinicalAgent:
             ChatSession.is_deleted == False
         ).first()
         if session:
-            if session.user_id != current_user.id and current_user.role != "ADMIN":
+            if session.user_id != current_user.id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Akses Ditolak: Isolasi data klinis antar-pasien dilanggar."

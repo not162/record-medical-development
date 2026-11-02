@@ -6,6 +6,8 @@ import {
   Activity, CheckCircle2, RefreshCw, Server, AlertTriangle
 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { isSuperadmin } from "@/lib/roles";
 
 interface HealthData {
   status: string;
@@ -38,6 +40,8 @@ interface HealthData {
 }
 
 export default function AdminSettingsPage() {
+  const { role } = useAuth();
+  const canRunAudit = isSuperadmin(role);
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [testingConnection, setTestingConnection] = useState(false);
@@ -341,7 +345,8 @@ export default function AdminSettingsPage() {
 
             <button
               onClick={handleRunAudit}
-              disabled={auditRunning}
+              disabled={auditRunning || !canRunAudit}
+ title={canRunAudit ? undefined : "Hanya Admin Riset yang bisa menjalankan audit"}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-semibold text-xs shadow-sm transition self-start sm:self-auto"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${auditRunning ? "animate-spin" : ""}`} />

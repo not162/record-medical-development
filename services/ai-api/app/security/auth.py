@@ -83,31 +83,48 @@ def require_user(current_user: User = Depends(get_current_user)) -> User:
 
 def require_clinician(current_user: User = Depends(get_current_user)) -> User:
     """Enforces server-side CLINICIAN or ADMIN role authorization (Permenkes RME / ISO 27001 Access Control)."""
-    if current_user.role not in ["ADMIN", "CLINICIAN", "DOCTOR"]:
+    if normalize_role(current_user.role) not in ["ADMIN", "RESEARCHER", "CLINICIAN", "DOCTOR"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Akses ditolak: Operasi ini membutuhkan hak akses TENAGA MEDIS (CLINICIAN) atau ADMINISTRATOR.",
         )
     return current_user
 
+LEGACY_ROLE_ALIASES = {"ADMIN_PERISET": "RESEARCHER"}
+ADMIN_ROLES = ("ADMIN", "RESEARCHER")
+
+
+def normalize_role(role: Optional[str]) -> str:
+    """Satu-satunya tempat yang memetakan nama peran lama (ADMIN_PERISET) ke peran baku."""
+    r = (role or "").strip().upper()
+    return LEGACY_ROLE_ALIASES.get(r, r)
+
+
+def is_researcher(user: User) -> bool:
+    return normalize_role(user.role) == "RESEARCHER"
+
+
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
-    """Enforces server-side ADMIN or RESEARCHER role authorization."""
-    if current_user.role not in ["ADMIN", "RESEARCHER", "ADMIN_PERISET"]:
+    """ADMIN (Admin Operasional) atau RESEARCHER (Admin Periset / superadmin)."""
+    if normalize_role(current_user.role) not in ADMIN_ROLES:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses ditolak: Operasi ini membutuhkan hak akses ADMINISTRATOR atau PENELITI MEDIS (RESEARCHER).",
+            detail="Akses ditolak: Operasi ini membutuhkan hak akses admin.",
         )
     return current_user
+
 
 def require_researcher(current_user: User = Depends(get_current_user)) -> User:
-    """Enforces server-side RESEARCHER or ADMIN role authorization for AI training, models, and evaluation."""
-    if current_user.role not in ["ADMIN", "RESEARCHER", "ADMIN_PERISET"]:
+    """Hanya RESEARCHER (Admin Periset / superadmin): training, model, dataset, graf, pengetahuan, kelola peran."""
+    if normalize_role(current_user.role) != "RESEARCHER":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses ditolak: Fitur ini khusus untuk peran PENELITI MEDIS (RESEARCHER) / Data Scientist AI.",
+            detail="Akses ditolak: Fitur ini khusus untuk Admin Periset (superadmin).",
         )
     return current_user
 
+
+require_superadmin = require_researcher
 
 
 oauth2_optional_scheme = OAuth2PasswordBearer(

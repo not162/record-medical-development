@@ -11,7 +11,7 @@ from app.models_graph import GraphNode, GraphEdge
 from app.rag.knowledge_graph import (
     ALLOWED_NODE_TYPES, ALLOWED_RELATIONS, seed_graph,
 )
-from app.security.auth import require_admin
+from app.security.auth import require_admin, require_researcher
 
 router = APIRouter(prefix="/admin/graph", tags=["Knowledge Graph CRUD"])
 
@@ -93,7 +93,7 @@ def graph_schema(admin: User = Depends(require_admin)):
 @router.post("/nodes", status_code=status.HTTP_201_CREATED)
 def create_node(
     payload: NodeCreate,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     if db.get(GraphNode, payload.id) is not None:
@@ -109,7 +109,7 @@ def create_node(
 def update_node(
     node_id: str,
     payload: NodeUpdate,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     node = db.get(GraphNode, node_id)
@@ -128,7 +128,7 @@ def update_node(
 @router.delete("/nodes/{node_id}")
 def delete_node(
     node_id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     node = db.get(GraphNode, node_id)
@@ -148,7 +148,7 @@ def delete_node(
 @router.post("/edges", status_code=status.HTTP_201_CREATED)
 def create_edge(
     payload: EdgeCreate,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     for end in (payload.source, payload.target):
@@ -174,7 +174,7 @@ def create_edge(
 @router.delete("/edges/{edge_id}")
 def delete_edge(
     edge_id: int,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     edge = db.get(GraphEdge, edge_id)
@@ -188,7 +188,7 @@ def delete_edge(
 @router.post("/seed")
 def seed_graph_endpoint(
     payload: Optional[SeedRequest] = None,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     """Mengisi graf dari data klinis standar (idempoten). reset=true mengosongkan dulu."""

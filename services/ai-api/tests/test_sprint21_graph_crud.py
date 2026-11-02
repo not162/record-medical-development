@@ -12,7 +12,7 @@ from app.rag.knowledge_graph import (
     ClinicalKnowledgeGraph, CLINICAL_GRAPH_NODES, CLINICAL_GRAPH_EDGES,
 )
 from app.routes import graph_crud
-from app.security.auth import require_admin
+from app.security.auth import require_researcher
 
 
 @pytest.fixture()
@@ -31,7 +31,7 @@ def env(tmp_path):
     app = FastAPI()
     app.include_router(graph_crud.router, prefix="/api/v1")
     app.dependency_overrides[get_db] = _get_db
-    app.dependency_overrides[require_admin] = lambda: object()
+    app.dependency_overrides[require_researcher] = lambda: object()
     graph = ClinicalKnowledgeGraph(session_factory=Session)
     yield TestClient(app), graph, app, Session
     engine.dispose()
@@ -129,7 +129,7 @@ def test_admin_only(env):
 
     def deny():
         raise HTTPException(status_code=403, detail="no")
-    app.dependency_overrides[require_admin] = deny
+    app.dependency_overrides[require_researcher] = deny
     assert client.post("/api/v1/admin/graph/nodes", json={"id": "A", "label": "A", "type": "DRUG"}).status_code == 403
     assert client.delete("/api/v1/admin/graph/nodes/A").status_code == 403
     assert client.post("/api/v1/admin/graph/seed").status_code == 403

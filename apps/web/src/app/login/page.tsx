@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { homePathForRole } from "@/lib/roles";
 import { Stethoscope, Lock, User as UserIcon, ArrowRight, AlertCircle, Shield } from "lucide-react";
 
 export default function LoginPage() {
@@ -26,11 +27,7 @@ export default function LoginPage() {
         password,
       });
 
-      if (loggedUser.role === "ADMIN" || loggedUser.role === "RESEARCHER") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/chat");
-      }
+      router.push(homePathForRole(loggedUser.role));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Gagal masuk. Cek lagi username/email dan kata sandi Anda.");
     } finally {

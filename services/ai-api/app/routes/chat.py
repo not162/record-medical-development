@@ -479,7 +479,7 @@ def send_chat_message(
         db.add(session)
         db.flush()
 
-    if session.user_id != current_user.id and current_user.role != "ADMIN":
+    if session.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Akses ditolak.")
 
     quota = get_user_quota_status(current_user, db)

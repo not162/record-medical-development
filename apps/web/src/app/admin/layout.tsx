@@ -1,39 +1,36 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { isAdminRole, isSuperadmin, canAccess, roleLabel } from "@/lib/roles";
 import { 
   LayoutDashboard, Database, FileText, CheckSquare, 
   Cpu, Activity, BarChart3, BookOpen, GitFork, 
   ThumbsUp, ShieldAlert, Settings, LogOut,
-  ShieldCheck, AlertTriangle
+  ShieldCheck, AlertTriangle, Users, Lock
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, role, isAuthenticated, isLoading, logout } = useAuth();
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || (role !== "ADMIN" && role !== "RESEARCHER"))) {
-      // Don't auto redirect immediately if showing error banner
-    }
-  }, [isLoading, isAuthenticated, role]);
+  const superadmin = isSuperadmin(role);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-700">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs text-slate-500">Memverifikasi Otorisasi Hak Akses Administrator...</span>
+          <span className="text-xs text-slate-500">Memeriksa hak akses...</span>
         </div>
       </div>
     );
   }
 
   // Server-side / Client-side RBAC Guard
-  if (!isAuthenticated || (role !== "ADMIN" && role !== "RESEARCHER")) {
+  if (!isAuthenticated || !isAdminRole(role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
         <div className="max-w-md w-full bg-white p-8 rounded-2xl text-center space-y-5 border border-red-200 shadow-sm">
@@ -41,9 +38,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <AlertTriangle className="w-7 h-7" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Akses Ditolak (403 Forbidden)</h2>
+            <h2 className="text-xl font-bold text-slate-900">Halaman ini hanya untuk admin</h2>
             <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-              Area ini adalah Workspace Riset dan Manajemen Data khusus Administrator. Akun Anda (<strong>{user?.username || "Tamu"}</strong>) dengan peran <strong>{role || "UNAUTHORIZED"}</strong> tidak memiliki izin mengakses rute administratif.
+              Akun Anda (<strong>{user?.username || "Tamu"}</strong>) tidak punya izin untuk membuka area admin. Silakan masuk dengan akun admin.
             </p>
           </div>
           <div className="flex flex-col gap-2 pt-2">
@@ -51,13 +48,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               href="/chat"
               className="py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm"
             >
-              Kembali ke Chatbot Klinis
+              Kembali ke Asisten
             </Link>
             <Link
               href="/login"
               className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-semibold text-xs transition"
             >
-              Ganti Akun (Login Administrator)
+              Masuk dengan akun lain
             </Link>
           </div>
         </div>
@@ -69,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/dashboard", label: "Ringkasan", icon: LayoutDashboard },
     { href: "/admin/feedback", label: "Masukan Pengguna", icon: ThumbsUp },
     { href: "/admin/audit-logs", label: "Catatan Aktivitas", icon: ShieldAlert },
-    { href: "/admin/settings", label: "Pengaturan", icon: Settings },
+    { href: "/admin/settings", label: superadmin ? "Pengaturan" : "Pengaturan (hanya lihat)", icon: Settings },
   ];
 
   const researchNavItems = [
@@ -81,7 +78,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/annotations", label: "Pemberian Label Data", icon: CheckSquare },
     { href: "/admin/knowledge-base", label: "Basis Pengetahuan", icon: BookOpen },
     { href: "/admin/graph", label: "Peta Hubungan Penyakit", icon: GitFork },
+    { href: "/admin/users", label: "Kelola Pengguna", icon: Users },
   ];
+
+  const allowed = canAccess(role, pathname);
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100">
@@ -105,9 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div>
               <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
                 <span>Menu Admin</span>
-                {role === "ADMIN" && (
-                  <span className="text-[9px] px-1.5 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">Aktif</span>
-                )}
+                
               </div>
               <div className="space-y-0.5">
                 {operationalNavItems.map((item) => {
@@ -131,13 +129,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             </div>
 
-            {/* Kategori 2: Workspace Riset & AI Engineering */}
+            {/* Kategori 2: khusus Admin Riset */}
+            {superadmin && (
             <div>
               <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                <span>Workspace Riset AI</span>
-                {role === "RESEARCHER" && (
-                  <span className="text-[9px] px-1.5 py-0.2 bg-sky-50 text-sky-700 rounded border border-sky-200">Periset Aktif</span>
-                )}
+                <span>Khusus Admin Riset</span>
               </div>
               <div className="space-y-0.5">
                 {researchNavItems.map((item) => {
@@ -160,6 +156,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 })}
               </div>
             </div>
+            )}
           </nav>
         </div>
 
@@ -172,15 +169,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 shadow-sm">
             <div className="truncate">
-              <p className={`text-xs font-semibold truncate ${role === "RESEARCHER" ? "text-sky-700" : "text-emerald-700"}`}>
+              <p className={`text-xs font-semibold truncate ${superadmin ? "text-sky-700" : "text-emerald-700"}`}>
                 {user?.username}
               </p>
               <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
-                role === "RESEARCHER"
+                superadmin
                   ? "bg-sky-50 text-sky-700 border-sky-200"
                   : "bg-emerald-50 text-emerald-700 border-emerald-200"
               }`}>
-                {role === "RESEARCHER" ? "ADMIN PERISET" : "ADMIN OPERASIONAL"}
+                {roleLabel(role)}
               </span>
             </div>
             <button
@@ -209,12 +206,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              FastAPI Engine Connected
+              Server terhubung
             </span>
           </div>
         </header>
 
-        <div className="p-6 flex-1">{children}</div>
+        <div className="p-6 flex-1">
+          {allowed ? (
+            children
+          ) : (
+            <div className="max-w-md mx-auto mt-16 bg-white p-8 rounded-2xl text-center space-y-4 border border-amber-200 shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mx-auto">
+                <Lock className="w-7 h-7" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">Halaman ini hanya untuk Admin Riset</h2>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Akun Anda adalah Admin Operasional, jadi belum bisa membuka halaman ini. Hubungi Admin Riset kalau Anda butuh aksesnya.
+              </p>
+              <Link
+                href="/admin/dashboard"
+                className="inline-block py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-sm"
+              >
+                Kembali ke Ringkasan
+              </Link>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLabel } from "@/lib/roles";
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Settings, Shield, Key, Trash2 } from "lucide-react";
@@ -38,7 +39,7 @@ export default function SettingsPage() {
             <div>
               <span className="text-slate-500 block">Peran Sistem:</span>
               <span className="inline-block mt-0.5 px-2 py-0.5 rounded bg-cyan-50 border border-cyan-200 text-cyan-800 font-semibold">
-                {user?.role}
+                {roleLabel(user?.role)}
               </span>
             </div>
           </div>

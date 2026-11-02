@@ -358,7 +358,7 @@ export default function AdminTrainingPage() {
           <div className="space-y-1">
             <p className="font-semibold text-amber-950">Mode Peninjau (Admin Operasional):</p>
             <p className="text-amber-800 leading-relaxed">
-              Halaman pelatihan model machine learning ini dirancang khusus untuk <strong>Admin Periset (Tim Riset Medis & AI Engineering RSUKT)</strong>. Anda dapat melihat antrean job dan menjalankan simulasi pipeline. Untuk melatih model ke produksi, silakan gunakan akun Admin Periset (<code className="font-mono bg-amber-100 text-amber-900 px-1 py-0.5 rounded">periset@rsukt.go.id</code>).
+              Halaman pelatihan model machine learning ini dirancang khusus untuk <strong>Admin Riset (Superadmin)</strong>. Anda dapat melihat antrean job dan menjalankan simulasi pipeline. Untuk melatih model ke produksi, silakan gunakan akun Admin Riset (<code className="font-mono bg-amber-100 text-amber-900 px-1 py-0.5 rounded">periset@rsukt.go.id</code>).
             </p>
           </div>
         </div>

@@ -10,7 +10,7 @@ from app.cache import cache_manager
 from app.database import get_db
 from app.models import DatasetRecord, User
 from app.rag.hybrid_search import hybrid_rag_engine
-from app.security.auth import require_admin
+from app.security.auth import require_admin, require_researcher
 
 router = APIRouter(tags=["Knowledge Base CRUD"])
 
@@ -111,7 +111,7 @@ def list_knowledge(
 @router.post("/admin/knowledge", status_code=status.HTTP_201_CREATED)
 def create_knowledge(
     req: KnowledgeCreate,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     rec = DatasetRecord(
@@ -133,7 +133,7 @@ def create_knowledge(
 
 @router.post("/admin/knowledge/reindex")
 def reindex_knowledge(
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     """Bangun ulang seluruh indeks RAG dari rekam APPROVED."""
@@ -156,7 +156,7 @@ def get_knowledge(
 def update_knowledge(
     doc_id: str,
     req: KnowledgeUpdate,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     rec = _get_or_404(db, doc_id)
@@ -179,7 +179,7 @@ def update_knowledge(
 @router.delete("/admin/knowledge/{doc_id}")
 def delete_knowledge(
     doc_id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db),
 ):
     rec = _get_or_404(db, doc_id)

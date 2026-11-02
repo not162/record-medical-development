@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models import TrainingJob, User
-from app.security.auth import decode_access_token
+from app.security.auth import decode_access_token, normalize_role
 from app.ml.training_worker import process_next_job, recover_stale_jobs
 
 logger = logging.getLogger("jobs")
@@ -30,7 +30,7 @@ def require_cron_or_admin(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ) -> str:
-    """Izinkan CRON_SECRET (cron Vercel) atau JWT milik ADMIN."""
+    """Izinkan CRON_SECRET (cron Vercel) atau JWT milik Admin Periset."""
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -43,10 +43,10 @@ def require_cron_or_admin(
 
     payload = decode_access_token(token)
     user = db.query(User).filter(User.id == payload.get("sub")).first()
-    if not user or not user.is_active or user.role not in ["ADMIN", "RESEARCHER", "ADMIN_PERISET"]:
+    if not user or not user.is_active or normalize_role(user.role) != "RESEARCHER":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses ditolak: membutuhkan ADMIN, RESEARCHER, atau CRON_SECRET.",
+            detail="Akses ditolak: membutuhkan Admin Periset atau CRON_SECRET.",
         )
     return f"admin:{user.id}"
 

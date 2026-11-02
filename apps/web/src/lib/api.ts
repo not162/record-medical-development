@@ -3,7 +3,25 @@ export const API_BASE_URL = rawApiUrl
   ? (rawApiUrl.endsWith("/api/v1") ? rawApiUrl : `${rawApiUrl.replace(/\/+$/, "")}/api/v1`)
   : (typeof window !== "undefined" ? "/api/v1" : "https://ai-api-dusky-eight.vercel.app/api/v1");
 
-export type UserRole = "USER" | "ADMIN" | "RESEARCHER";
+import { normalizeRole, type UserRole } from "./roles";
+
+export type { UserRole };
+
+export interface ManagedUser {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;
+  full_name?: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ManagedUserUpdate {
+  role?: UserRole;
+  is_active?: boolean;
+}
+
 
 export interface User {
   id: string;
@@ -284,6 +302,20 @@ export const api = {
       }),
   },
   admin: {
+    users: {
+      list: async (): Promise<ManagedUser[]> => {
+        const res = await apiRequest<ManagedUser[] | { items: ManagedUser[] }>("/admin/users/manage?limit=500");
+        const rows = Array.isArray(res) ? res : res.items ?? [];
+        return rows.map((u) => ({ ...u, role: normalizeRole(u.role) ?? "USER" }));
+      },
+      update: async (userId: string, data: ManagedUserUpdate): Promise<ManagedUser> => {
+        const u = await apiRequest<ManagedUser>(`/admin/users/${encodeURIComponent(userId)}`, {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        });
+        return { ...u, role: normalizeRole(u.role) ?? "USER" };
+      },
+    },
     // Knowledge base CRUD (DatasetRecord)
     listKnowledge: () => apiRequest<KnowledgeDoc[] | { items: KnowledgeDoc[] }>("/admin/knowledge"),
     getKnowledge: (id: string) => apiRequest<KnowledgeDoc>(`/admin/knowledge/${encodeURIComponent(id)}`),

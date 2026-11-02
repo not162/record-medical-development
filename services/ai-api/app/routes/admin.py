@@ -12,8 +12,8 @@ import io
 
 from app.database import get_db
 from app.models import User, AuditLog, DatasetRecord, ChatSession, FeedbackRecord, ChatMessage
-from app.schemas import AuditLogResponse, UserResponse, AdminFeedbackUpdateRequest
-from app.security.auth import require_admin
+from app.schemas import AuditLogResponse, UserResponse, AdminFeedbackUpdateRequest, UserAdminUpdateRequest
+from app.security.auth import require_admin, require_researcher, is_researcher, normalize_role, get_current_user
 from app.rag.language_scanning import language_scanner
 from app.cache import cache_manager
 
@@ -94,6 +94,61 @@ def list_system_users(
     users = db.query(User).order_by(User.created_at.desc()).offset(offset).limit(limit).all()
     return users
 
+@router.get("/users/manage", response_model=List[UserResponse])
+def list_users_for_role_management(
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    role: Optional[str] = None,
+    admin: User = Depends(require_researcher),
+    db: Session = Depends(get_db)
+):
+    """Daftar akun lengkap untuk Admin Periset (kelola peran dan status akun)."""
+    q = db.query(User)
+    if role:
+        wanted = role.upper()
+        q = q.filter(User.role.in_(["RESEARCHER", "ADMIN_PERISET"]) if wanted in ("RESEARCHER", "ADMIN_PERISET") else User.role == wanted)
+    return q.order_by(User.created_at.desc()).offset(offset).limit(limit).all()
+
+@router.patch("/users/{user_id}", response_model=UserResponse)
+def update_user_role_or_status(
+    user_id: str,
+    req: UserAdminUpdateRequest,
+    admin: User = Depends(require_researcher),
+    db: Session = Depends(get_db)
+):
+    """Ubah peran atau aktif/nonaktif akun. Tidak boleh mengubah diri sendiri atau Admin Periset terakhir."""
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Pengguna tidak ditemukan.")
+    if req.role is None and req.is_active is None:
+        raise HTTPException(status_code=400, detail="Tidak ada perubahan yang dikirim.")
+    if target.id == admin.id:
+        raise HTTPException(status_code=400, detail="Anda tidak dapat mengubah peran atau status akun Anda sendiri.")
+
+    was_researcher = normalize_role(target.role) == "RESEARCHER"
+    new_role = req.role if req.role is not None else normalize_role(target.role)
+    new_active = req.is_active if req.is_active is not None else bool(target.is_active)
+    loses_researcher = was_researcher and bool(target.is_active) and (new_role != "RESEARCHER" or not new_active)
+    if loses_researcher:
+        others = [u for u in db.query(User).filter(User.is_active == True, User.id != target.id).all()  # noqa: E712
+                  if normalize_role(u.role) == "RESEARCHER"]
+        if not others:
+            raise HTTPException(status_code=400, detail="Tidak boleh menghapus Admin Periset terakhir yang aktif.")
+
+    before = f"role={target.role}, is_active={target.is_active}"
+    target.role = new_role
+    target.is_active = new_active
+    db.add(AuditLog(
+        user_id=admin.id,
+        action="USER_ROLE_STATUS_CHANGED",
+        resource_type="USER",
+        resource_id=target.id,
+        details=f"{admin.username} mengubah {target.username}: {before} -> role={target.role}, is_active={target.is_active}"
+    ))
+    db.commit()
+    db.refresh(target)
+    return target
+
 # ==============================================================================
 # DATASET INGESTION & MANAGEMENT ENDPOINTS (SPRINT 02)
 # ==============================================================================
@@ -109,7 +164,7 @@ def list_datasets(
     status: Optional[str] = None,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -148,7 +203,7 @@ def list_datasets(
 @router.post("/datasets/sync")
 def sync_dataset_inbox(
     force: bool = False,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -165,7 +220,7 @@ def sync_dataset_inbox(
 @router.post("/datasets/upload")
 async def upload_dataset_file(
     file: UploadFile = File(...),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -199,7 +254,7 @@ async def upload_dataset_file(
 @router.post("/datasets/{id}/approve")
 def approve_dataset_records(
     id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -220,7 +275,7 @@ def approve_dataset_records(
 @router.get("/datasets/{id}/status")
 def get_dataset_status(
     id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -250,7 +305,7 @@ def get_dataset_status(
 @router.post("/datasets/{id}/index")
 def index_dataset(
     id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -280,7 +335,7 @@ class AnnotationRequest(BaseModel):
 def list_annotations(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -311,7 +366,7 @@ def list_annotations(
 @router.post("/annotations")
 def submit_annotation(
     req: AnnotationRequest,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -356,7 +411,7 @@ from app.ingestion.export_service import dataset_export_service
 
 @router.post("/exports/jsonl")
 def export_datasets_to_jsonl(
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -367,7 +422,7 @@ def export_datasets_to_jsonl(
 
 @router.get("/exports/jsonl")
 def download_exported_jsonl(
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_researcher)
 ):
     """
     Mengunduh berkas kanonikal JSONL yang diekspor.
@@ -383,7 +438,7 @@ def download_exported_jsonl(
 
 @router.post("/exports/sync-to-rag")
 def sync_exported_jsonl_to_rag(
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -401,7 +456,7 @@ from app.rag.knowledge_graph import knowledge_graph
 
 @router.get("/graph/all")
 def get_knowledge_graph_all(
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_researcher)
 ):
     """
     Mengambil seluruh elemen simpul (nodes) dan relasi (edges) graf pengetahuan
@@ -413,14 +468,14 @@ def get_knowledge_graph_all(
 @router.get("/graph/subgraph")
 def get_knowledge_subgraph(
     entity: str,
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_researcher)
 ):
     """Subgraf di sekitar entitas klinis (mis. ?entity=Asma)."""
     return knowledge_graph.get_subgraph(entity)
 
 @router.post("/graph/optimize-15pct")
 def optimize_knowledge_graph_15pct(
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_researcher)
 ):
     """
     Code of Product 15% Graph & Database Optimization:
@@ -437,7 +492,7 @@ from app.training.data_processing_engine import (
 @router.post("/pipeline/simulate-modes")
 def simulate_pipeline_modes(
     query: str = Query("dada sakit sesak napas tembus ke punggung", description="Sample input"),
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_researcher)
 ):
     """
     Simulates:
@@ -503,7 +558,7 @@ class TextPredictRequest(BaseModel):
 @router.post("/models/train")
 def launch_training_job(
     req: TrainModelRequest,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -531,7 +586,7 @@ def launch_training_job(
 @router.get("/models/jobs")
 def list_training_jobs(
     limit: int = Query(50, ge=1, le=200),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """Mengambil daftar riwayat dan status training jobs asinkron."""
@@ -556,7 +611,7 @@ def list_training_jobs(
 @router.get("/models/jobs/{job_id}")
 def get_training_job_detail(
     job_id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """Mengambil rincian progress dan log real-time dari suatu training job."""
@@ -580,7 +635,7 @@ def get_training_job_detail(
 @router.get("/models")
 def list_registered_models(
     task_type: Optional[str] = None,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """Mengambil daftar model yang teregistrasi di Admin Model Registry."""
@@ -620,7 +675,7 @@ def list_registered_models(
 @router.get("/models/{model_id}")
 def get_registered_model_detail(
     model_id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """Mengambil rincian model dan Model Card lengkap berdasarkan Model ID."""
@@ -648,7 +703,7 @@ def get_registered_model_detail(
 @router.post("/models/{model_id}/activate")
 def activate_registered_model(
     model_id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -691,7 +746,7 @@ def activate_registered_model(
 @router.post("/models/predict/cardio")
 def predict_cardio_risk(
     req: CardioPredictRequest,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -719,7 +774,7 @@ def predict_cardio_risk(
 @router.post("/models/predict/text")
 def predict_clinical_text(
     req: TextPredictRequest,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -765,7 +820,7 @@ class ExportRequest(BaseModel):
 
 @router.get("/evaluation")
 def get_evaluation_dashboard_data(
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -842,7 +897,7 @@ def get_evaluation_dashboard_data(
 @router.post("/evaluation/run-stress-test")
 def run_noise_stress_test(
     req: StressTestRequest,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -920,7 +975,7 @@ def run_noise_stress_test(
 
 @router.post("/evaluation/consensus")
 def run_model_consensus(
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -951,7 +1006,7 @@ def run_model_consensus(
 @router.post("/exports")
 def export_research_artifacts(
     req: ExportRequest,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -1015,7 +1070,7 @@ def export_research_artifacts(
 @router.get("/exports/download/{filename}")
 def download_export_file(
     filename: str,
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_researcher)
 ):
     """
     Mengunduh file artefak riset yang diekspor (CSV, JSONL, PNG).
@@ -1084,6 +1139,7 @@ def get_admin_feedback_list(
     mean_adjusted_score = round(sum(f.adjusted_score for f in all_fb) / max(total_fb_count, 1), 4)
     satisfaction_ratio = round(likes_count / max(total_fb_count, 1), 4)
 
+    can_see_chat = is_researcher(admin)
     results = []
     for f in records:
         msg = db.query(ChatMessage).filter(ChatMessage.id == f.message_id).first()
@@ -1113,8 +1169,10 @@ def get_admin_feedback_list(
             "model_version": f.model_version or "groq-llama3.3-v1.0",
             "notes": f.notes,
             "created_at": f.created_at.isoformat(),
-            "assistant_content": msg.content if msg else "",
-            "user_prompt": user_prompt
+            # Privasi: isi percakapan pribadi hanya boleh dilihat Admin Periset.
+            "assistant_content": (msg.content if msg else "") if can_see_chat else "",
+            "user_prompt": user_prompt if can_see_chat else "",
+            "content_hidden": not can_see_chat,
         })
 
     return {
@@ -1183,7 +1241,7 @@ def update_admin_feedback_review(
 
 @router.post("/feedback/export-preference")
 def export_dpo_preference_dataset(
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """
@@ -1353,7 +1411,7 @@ def export_dpo_preference_dataset(
 @router.get("/feedback/download/{filename}")
 def download_preference_export(
     filename: str,
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_researcher)
 ):
     """Mengunduh file preferensi DPO yang diekspor."""
     clean_name = os.path.basename(filename)
@@ -1372,7 +1430,7 @@ def download_preference_export(
 # SPRINT 11-17: PERIODIC SYSTEM AUDIT & COMPLIANCE ENDPOINTS
 @router.post("/audit/run-periodic")
 def trigger_periodic_system_audit(
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_researcher)
 ):
     """
     Menjalankan audit sistem klinis, integritas database, dan kepatuhan guardrail keselamatan
@@ -1442,7 +1500,7 @@ def get_periodic_audit_report_detail(
 @router.get("/conversations/export")
 def export_conversations_for_colab(
     format: str = Query("jsonl", pattern="^(csv|jsonl)$"),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_researcher),
     db: Session = Depends(get_db)
 ):
     """

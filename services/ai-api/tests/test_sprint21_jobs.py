@@ -132,7 +132,7 @@ def test_process_endpoint_auth(env):
     assert r.status_code == 200 and r.json()["job"]["status"] == "COMPLETED"
 
     user = User(username="u1", email="u@test.id", full_name="U", hashed_password="x", role="USER")
-    admin = User(username="a1", email="a@test.id", full_name="A", hashed_password="x", role="ADMIN")
+    admin = User(username="a1", email="a@test.id", full_name="A", hashed_password="x", role="RESEARCHER")
     db.add_all([user, admin])
     db.commit()
     tok = lambda u: {"Authorization": "Bearer " + create_access_token({"sub": u.id})}
