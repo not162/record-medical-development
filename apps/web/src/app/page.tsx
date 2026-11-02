@@ -896,28 +896,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Metrics Banner */}
-      <section className="py-12 bg-cyan-800 text-white px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold text-cyan-300">99.4%</div>
-            <div className="text-xs sm:text-sm text-cyan-100 mt-1 font-medium">Mengacu Pedoman Resmi</div>
-          </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold text-emerald-300">&lt; 1.2 Detik</div>
-            <div className="text-xs sm:text-sm text-emerald-100 mt-1 font-medium">Jawaban Cepat</div>
-          </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold text-teal-300">100%</div>
-            <div className="text-xs sm:text-sm text-teal-100 mt-1 font-medium">Data Pribadi Disamarkan</div>
-          </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold text-white">24/7</div>
-            <div className="text-xs sm:text-sm text-slate-300 mt-1 font-medium">Siap Membantu Kapan Saja</div>
-          </div>
-        </div>
-      </section>
-
       {/* Security & UU PDP Compliance Callout */}
       <section id="keamanan" className="py-16 bg-white border-t border-slate-200 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto rounded-xl bg-cyan-900 text-white p-8 sm:p-12 shadow-sm relative overflow-hidden">

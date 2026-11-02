@@ -1163,7 +1163,8 @@ def get_admin_feedback_list(
     mean_adjusted_score = round(sum(f.adjusted_score for f in all_fb) / max(total_fb_count, 1), 4)
     satisfaction_ratio = round(likes_count / max(total_fb_count, 1), 4)
 
-    can_see_chat = is_researcher(admin)
+    # Privasi: isi percakapan pasien tidak ditampilkan ke admin mana pun (Operasional maupun Riset).
+    can_see_chat = False
     results = []
     for f in records:
         msg = db.query(ChatMessage).filter(ChatMessage.id == f.message_id).first()
@@ -1193,7 +1194,7 @@ def get_admin_feedback_list(
             "model_version": f.model_version or "groq-llama3.3-v1.0",
             "notes": f.notes,
             "created_at": f.created_at.isoformat(),
-            # Privasi: isi percakapan pribadi hanya boleh dilihat Admin Periset.
+            # Privasi: isi percakapan pribadi disembunyikan untuk semua admin.
             "assistant_content": (msg.content if msg else "") if can_see_chat else "",
             "user_prompt": user_prompt if can_see_chat else "",
             "content_hidden": not can_see_chat,

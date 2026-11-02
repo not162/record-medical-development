@@ -442,7 +442,7 @@ export default function AdminFeedbackPage() {
 
                     <td className="py-3 px-4 max-w-xs">
                       <p className="line-clamp-2 text-slate-700 text-xs font-serif">
-                        &quot;{item.user_prompt || "Konsultasi Klinis"}&quot;
+                        {item.user_prompt ? `“${item.user_prompt}”` : "Isi percakapan disembunyikan demi privasi pasien"}
                       </p>
                     </td>
 
@@ -523,7 +523,7 @@ export default function AdminFeedbackPage() {
               <div>
                 <label className="text-slate-500 block mb-1 font-medium">Prompt Pertanyaan Pasien:</label>
                 <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700">
-                  {selectedFeedback.user_prompt || "Konsultasi Klinis"}
+                  {selectedFeedback.user_prompt || "Isi percakapan disembunyikan demi privasi pasien"}
                 </div>
               </div>
 

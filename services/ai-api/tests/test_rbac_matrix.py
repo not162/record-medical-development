@@ -184,10 +184,13 @@ def test_profile_update_cannot_set_role():
 
 
 def test_admin_feedback_hides_private_chat():
-    r = client.get(P + "/admin/feedback", headers=HDRS["ADMIN"])
-    assert r.status_code == 200
-    for rec in r.json()["records"]:
-        assert rec["assistant_content"] == "" and rec["user_prompt"] == ""
+    # Isi chat pasien disembunyikan untuk Admin Operasional maupun Admin Riset.
+    for role in ("ADMIN", "RESEARCHER"):
+        r = client.get(P + "/admin/feedback", headers=HDRS[role])
+        assert r.status_code == 200
+        for rec in r.json()["records"]:
+            assert rec["assistant_content"] == "" and rec["user_prompt"] == ""
+            assert rec["content_hidden"] is True
 
 
 def test_role_management_rules():
