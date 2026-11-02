@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
       }
 
       setVerificationCode(data.verification_code || "");
-      setInfoMessage(`Kode verifikasi pemulihan untuk akun '${data.username}' telah diterbitkan.`);
+      setInfoMessage(data.message || "Jika akun terdaftar, kode pemulihan telah diterbitkan. Hubungi administrator RSUKT bila tidak menerimanya.");
       setStep(2);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan saat memproses pemulihan kata sandi.");

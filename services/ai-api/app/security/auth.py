@@ -1,4 +1,7 @@
 import jwt
+import hmac
+import hashlib
+import time
 import datetime
 from typing import Optional
 from fastapi import Depends, HTTPException, status
@@ -130,3 +133,23 @@ def get_optional_user(
         return None
     except Exception:
         return None
+
+
+RESET_CODE_WINDOW_SECONDS = 900  # 15 menit
+
+
+def _reset_code_for(user: User, window: int) -> str:
+    # Terikat ke hash kata sandi saat ini => otomatis sekali pakai (hash berubah setelah reset).
+    msg = f"{user.id}|{user.hashed_password}|{window}".encode("utf-8")
+    digest = hmac.new(settings.JWT_SECRET_KEY.encode("utf-8"), msg, hashlib.sha256).digest()
+    return f"{int.from_bytes(digest[:4], 'big') % 1000000:06d}"
+
+
+def create_reset_code(user: User) -> str:
+    return _reset_code_for(user, int(time.time() // RESET_CODE_WINDOW_SECONDS))
+
+
+def verify_reset_code(user: User, code: str) -> bool:
+    window = int(time.time() // RESET_CODE_WINDOW_SECONDS)
+    code = (code or "").strip()
+    return any(hmac.compare_digest(code, _reset_code_for(user, w)) for w in (window, window - 1))

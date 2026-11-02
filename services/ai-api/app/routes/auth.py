@@ -11,10 +11,18 @@ from app.schemas import (
     PatientProfileResponse, ProfileUpdateRequest
 )
 import json
+import logging
+from app.config import settings
+from app.security.rate_limit import login_limiter, recovery_limiter
 from app.security.owasp_scanner import owasp_scanner
 from app.security.auth import (
-    hash_password, verify_password, verify_and_check_rehash, create_access_token, get_current_user, require_user
+    hash_password, verify_password, verify_and_check_rehash, create_access_token, get_current_user, require_user,
+    create_reset_code, verify_reset_code
 )
+
+logger = logging.getLogger(__name__)
+# Hash dummy agar waktu respons login sama untuk akun yang tidak ada (anti user-enumeration).
+_DUMMY_HASH = hash_password("dummy-password-for-timing")
 
 router = APIRouter(tags=["Authentication & Profile"])
 
@@ -130,7 +138,9 @@ def login_user(req: UserLoginRequest, request: Request, db: Session = Depends(ge
     """
     client_ip = request.client.host if request.client else "unknown"
     clean_target = (req.username_or_email or "").strip()
-    
+    limit_key = f"{client_ip}|{clean_target.lower()}"
+    login_limiter.check(limit_key)
+
     # Cari pengguna berdasarkan username atau email secara case-insensitive
     user = db.query(User).filter(
         (func.lower(User.username) == clean_target.lower()) |
@@ -138,7 +148,9 @@ def login_user(req: UserLoginRequest, request: Request, db: Session = Depends(ge
     ).first()
 
     # Verifikasi kata sandi dengan multi-format & lazy migration
-    is_valid, needs_rehash, new_hash = verify_and_check_rehash(req.password, user.hashed_password if user else None)
+    is_valid, needs_rehash, new_hash = verify_and_check_rehash(req.password, user.hashed_password if user else _DUMMY_HASH)
+    if not user:
+        is_valid = False
     if is_valid and needs_rehash and new_hash and user:
         try:
             user.hashed_password = new_hash
@@ -149,6 +161,7 @@ def login_user(req: UserLoginRequest, request: Request, db: Session = Depends(ge
     
     # 1.7 Generic error for security against account enumeration
     if not user or not is_valid:
+        login_limiter.hit(limit_key)
         audit = AuditLog(
             user_id=user.id if user else None,
             action="USER_LOGIN_FAILED",
@@ -170,7 +183,8 @@ def login_user(req: UserLoginRequest, request: Request, db: Session = Depends(ge
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Akun pengguna dinonaktifkan oleh administrator."
         )
-        
+    login_limiter.reset(limit_key)
+
     # Buat token akses JWT
     token_payload = {
         "sub": user.id,
@@ -290,21 +304,24 @@ def forgot_password_request(req: ForgotPasswordRequest, request: Request, db: Se
     Menerbitkan kode verifikasi pemulihan untuk akun yang valid.
     """
     clean_target = req.username_or_email.strip()
+    client_ip = request.client.host if request.client else "unknown"
+    forgot_key = f"forgot|{client_ip}"
+    recovery_limiter.check(forgot_key)
+    recovery_limiter.hit(forgot_key)
     user = db.query(User).filter(
         (func.lower(User.username) == clean_target.lower()) |
         (func.lower(User.email) == clean_target.lower())
     ).first()
 
+    generic = {
+        "status": "success",
+        "message": "Jika akun terdaftar, instruksi atau kode pemulihan kata sandi telah dikirimkan."
+    }
     if not user:
-        return {
-            "status": "success",
-            "message": "Jika akun terdaftar, instruksi atau kode pemulihan kata sandi telah dikirimkan."
-        }
+        return generic
 
-    code_hash = abs(hash(f"{user.id}-{datetime.date.today().isoformat()}")) % 900000 + 100000
-    verification_code = f"RSUKT-{code_hash}"
+    verification_code = create_reset_code(user)
 
-    client_ip = request.client.host if request.client else "unknown"
     audit = AuditLog(
         user_id=user.id,
         action="FORGOT_PASSWORD_REQUESTED",
@@ -317,14 +334,12 @@ def forgot_password_request(req: ForgotPasswordRequest, request: Request, db: Se
     db.add(audit)
     db.commit()
 
-    masked_email = f"{user.email[:2]}***@{user.email.split('@')[-1]}" if "@" in user.email else user.email
-    return {
-        "status": "success",
-        "message": "Kode pemulihan akun berhasil diterbitkan.",
-        "username": user.username,
-        "email_masked": masked_email,
-        "verification_code": verification_code
-    }
+    # Kode TIDAK dikembalikan di produksi (belum ada layanan email); dicatat sebagai
+    # peringatan di log server sampai pengiriman via kanal terverifikasi tersedia.
+    if settings.is_production:
+        logger.warning("Kode pemulihan diterbitkan untuk user_id=%s", user.id)
+        return generic
+    return {**generic, "verification_code": verification_code}
 
 @router.post("/auth/reset-password")
 def reset_password(req: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
@@ -343,23 +358,22 @@ def reset_password(req: ResetPasswordRequest, request: Request, db: Session = De
         )
 
     clean_target = req.username_or_email.strip()
+    client_ip = request.client.host if request.client else "unknown"
+    reset_key = f"reset|{client_ip}|{clean_target.lower()}"
+    recovery_limiter.check(reset_key)
     user = db.query(User).filter(
         (func.lower(User.username) == clean_target.lower()) |
         (func.lower(User.email) == clean_target.lower())
     ).first()
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Akun pengguna tidak ditemukan."
-        )
-
-    expected_code = f"RSUKT-{abs(hash(f'{user.id}-{datetime.date.today().isoformat()}')) % 900000 + 100000}"
-    if req.token_or_code.strip() != expected_code and req.token_or_code.strip() != "RSUKT-ADMIN":
+    # Respons seragam untuk akun tak ada / kode salah (anti enumerasi)
+    if not user or not verify_reset_code(user, req.token_or_code):
+        recovery_limiter.hit(reset_key)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Kode verifikasi pemulihan tidak sah atau telah kadaluarsa."
         )
+    recovery_limiter.reset(reset_key)
 
     user.hashed_password = hash_password(req.new_password)
     user.updated_at = datetime.datetime.now(datetime.timezone.utc)
