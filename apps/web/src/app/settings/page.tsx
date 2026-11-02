@@ -15,7 +15,7 @@ export default function SettingsPage() {
           <span>Pengaturan Akun & Privasi</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Kelola preferensi keamanan, sesi login, dan izin penggunaan data klinis.
+          Atur keamanan akun, login, dan izin penggunaan data Anda.
         </p>
       </div>
 
@@ -24,7 +24,7 @@ export default function SettingsPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Shield className="w-4 h-4 text-cyan-600" />
-            <span>Kredensial Akun Pengguna</span>
+            <span>Informasi Akun</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>

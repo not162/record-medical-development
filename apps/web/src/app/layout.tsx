@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     default: "Web Klinik RSUKT | healthy with clinic and hospital",
     template: "%s | Web Klinik RSUKT",
   },
-  description: "Web Klinik RSUKT — healthy with clinic and hospital: Sistem Asisten AI Medis Pasien Real-Time, Scanning Bahasa Klinis, dan Rekam Medis Elektronik Terpadu",
+  description: "Web Klinik RSUKT: tanya seputar kesehatan dengan asisten AI, kapan saja.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -45,8 +45,8 @@ export const metadata: Metadata = {
     apple: "/icons/icon-192.png",
   },
   openGraph: {
-    title: "Web Klinik RSUKT | Asisten AI Klinis Real-Time & Rekam Medis",
-    description: "Sistem Asisten AI Medis Pasien Real-Time, Scanning Bahasa Klinis, dan Rekam Medis Elektronik Terpadu",
+    title: "Web Klinik RSUKT | Asisten Kesehatan AI",
+    description: "Tanya seputar kesehatan dengan asisten AI, kapan saja.",
     url: "/",
     siteName: "Web Klinik RSUKT",
     locale: "id_ID",

@@ -32,7 +32,7 @@ export default function LoginPage() {
         router.push("/chat");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Gagal masuk. Periksa kembali username/email dan kata sandi.");
+      setError(err instanceof Error ? err.message : "Gagal masuk. Cek lagi username/email dan kata sandi Anda.");
     } finally {
       setLoading(false);
     }
@@ -47,10 +47,10 @@ export default function LoginPage() {
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            Portal Masuk Sistem Medis & Anamnesis Klinis
+            Masuk ke Akun Anda
           </h2>
           <p className="text-xs text-slate-500">
-            Layanan Konsultasi Triase Pasien Berbasis AI & Workspace Peneliti Medis RSUKT
+            Tanya seputar kesehatan dengan bantuan AI, kapan saja.
           </p>
         </div>
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Identitas Pasien / Username / Surel Klinis
+              Username atau Email
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -75,7 +75,7 @@ export default function LoginPage() {
                 required
                 value={usernameOrEmail}
                 onChange={(e) => setUsernameOrEmail(e.target.value)}
-                placeholder="No. Rekam Medis / nama_pasien / email@rsukt.go.id"
+                placeholder="username atau email Anda"
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck="false"
@@ -87,7 +87,7 @@ export default function LoginPage() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-semibold text-slate-700">
-                Kata Sandi Kredensial Medis
+                Kata Sandi
               </label>
               <Link
                 href="/forgot-password"
@@ -117,10 +117,10 @@ export default function LoginPage() {
             className="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
-              <span>Memverifikasi Otorisasi Kredensial Medis...</span>
+              <span>Sedang masuk...</span>
             ) : (
               <>
-                <span>Autentikasi Akses Klinis</span>
+                <span>Masuk</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -131,12 +131,12 @@ export default function LoginPage() {
           <div>
             Belum memiliki akun?{" "}
             <Link href="/register" className="text-cyan-700 hover:text-cyan-800 font-semibold underline underline-offset-2">
-              Registrasi Pasien Baru (Peran: Pasien / User)
+              Daftar di sini
             </Link>
           </div>
           <div className="text-[10px] text-slate-500 flex items-center justify-center gap-1">
             <Shield className="w-3 h-3 text-emerald-600" />
-            <span>Keamanan data terlindungi sesuai UU PDP No. 27/2022 & ISO 27001 ISMS</span>
+            <span>Data Anda dijaga kerahasiaannya.</span>
           </div>
         </div>
       </div>

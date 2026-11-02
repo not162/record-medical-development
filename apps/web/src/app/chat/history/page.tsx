@@ -89,7 +89,7 @@ export default function ChatHistoryPage() {
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <History className="w-5 h-5 text-cyan-700" />
-            <span>Riwayat Sesi Percakapan Klinis</span>
+            <span>Riwayat Percakapan</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Daftar konsultasi sebelumnya yang tersimpan dengan aman pada database terisolasi pasien (UU PDP).
@@ -144,7 +144,7 @@ export default function ChatHistoryPage() {
           </div>
           <h3 className="text-base font-semibold text-slate-800">Belum Ada Riwayat Percakapan</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Mulai sesi konsultasi medis pertama Anda untuk mendapatkan edukasi klinis yang dipandu asisten berdasar panduan resmi.
+            Mulai percakapan pertama Anda untuk mendapat informasi kesehatan dari asisten, berdasarkan pedoman resmi.
           </p>
           <div className="pt-2">
             <Link

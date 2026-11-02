@@ -27,9 +27,9 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   }, [isLoading, isAuthenticated, role, router]);
 
   const navItems = [
-    { href: "/chat", label: "Chatbot Klinis", icon: Bot },
+    { href: "/chat", label: "Tanya Asisten", icon: Bot },
     { href: "/chat/history", label: "Riwayat Sesi", icon: History },
-    { href: "/profile", label: "Rekam Medis Saya", icon: User },
+    { href: "/profile", label: "Profil Saya", icon: User },
     { href: "/settings", label: "Pengaturan Akun", icon: Settings },
   ];
 
@@ -42,7 +42,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           </div>
           <h3 className="font-bold text-lg text-slate-900">Akses Ditolak (UU PDP No. 27/2022)</h3>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Sesuai regulasi kerahasiaan medis & UU Perlindungan Data Pribadi Pasal 4, akun Administrator dilarang keras mengakses ruang konsultasi dan rekam medis privat pasien.
+            Demi menjaga privasi pengguna, akun Administrator tidak boleh membuka ruang chat dan data kesehatan pribadi pengguna.
           </p>
           <Link href="/admin/dashboard" className="inline-block py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md">
             Buka Dashboard Administrator
@@ -58,7 +58,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-50 text-slate-700">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs text-slate-500">Memuat Sesi Klinis...</span>
+            <span className="text-xs text-slate-500">Memuat...</span>
           </div>
         </div>
       )}
@@ -177,10 +177,10 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               <div className="p-2 rounded-xl bg-white border border-slate-200 text-[9px] text-slate-600 flex items-center justify-between shadow-2xs">
                 <span className="font-semibold text-slate-700 flex items-center gap-1">
                   <Shield className="w-3 h-3 text-cyan-600" />
-                  UU PDP • ISO 27001 • HIPAA
+                  Data Anda Terlindungi
                 </span>
                 <span className="text-[8px] bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-200 text-cyan-800 font-mono font-medium">
-                  Permenkes RME
+                  Aman
                 </span>
               </div>
 
@@ -264,10 +264,10 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           <div className="p-2 rounded-xl bg-slate-100 border border-slate-200/80 text-[9px] text-slate-600 flex items-center justify-between shadow-2xs">
             <span className="font-semibold text-slate-700 flex items-center gap-1">
               <Shield className="w-3 h-3 text-cyan-600" />
-              UU PDP • ISO 27001 • HIPAA
+              Data Anda Terlindungi
             </span>
             <span className="text-[8px] bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-500 font-mono font-medium">
-              Permenkes RME
+              Aman
             </span>
           </div>
 

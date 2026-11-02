@@ -55,7 +55,7 @@ export default function ProfilePage() {
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Gagal memperbarui profil rekam medis.");
+      setError(err instanceof Error ? err.message : "Gagal memperbarui profil.");
     } finally {
       setSaving(false);
     }
@@ -64,7 +64,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-6 text-slate-500">
-        <span className="text-xs">Memuat Rekam Medis Personal...</span>
+        <span className="text-xs">Memuat profil...</span>
       </div>
     );
   }
@@ -74,17 +74,17 @@ export default function ProfilePage() {
       <div className="pb-4 border-b border-slate-200">
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
           <User className="w-5 h-5 text-cyan-600" />
-          <span>Profil Rekam Medis & Anamnesis Pasien</span>
+          <span>Profil Kesehatan Saya</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Parameter klinis dan riwayat komorbiditas yang digunakan secara personal untuk kalibrasi penalaran AI dan deteksi kontraindikasi farmakologis.
+          Data kesehatan dan riwayat penyakit Anda membantu asisten memberi jawaban yang lebih sesuai dan memperingatkan obat yang tidak cocok.
         </p>
       </div>
 
       {savedSuccess && (
         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-xs text-emerald-800">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          <span>Profil rekam medis personal berhasil diperbarui dengan aman.</span>
+          <span>Profil berhasil disimpan.</span>
         </div>
       )}
 
@@ -117,7 +117,7 @@ export default function ProfilePage() {
       <form onSubmit={handleSave} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
           <FileText className="w-4 h-4 text-cyan-600" />
-          <span>Informasi Klinis & Riwayat Penyakit</span>
+          <span>Data Kesehatan & Riwayat Penyakit</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -175,7 +175,7 @@ export default function ProfilePage() {
 
         <div>
           <label className="block text-xs text-slate-700 font-medium mb-1.5">
-            Anamnesis Riwayat Penyakit Kronis, Alergi Farmakologis, & Pengobatan Berjalan
+            Penyakit kronis, alergi obat, dan obat yang sedang dikonsumsi
           </label>
           <textarea
             rows={4}
@@ -189,7 +189,7 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between pt-3 border-t border-slate-100">
           <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
             <Lock className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Rekam medis dilindungi enkripsi AES-256 pada database server lokal</span>
+            <span>Data kesehatan Anda disimpan dengan aman dan terenkripsi</span>
           </div>
 
           <button
@@ -198,7 +198,7 @@ export default function ProfilePage() {
             className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs shadow-sm hover:shadow transition flex items-center gap-1.5"
           >
             <Save className="w-4 h-4" />
-            <span>{saving ? "Sinkronisasi..." : "Simpan & Sinkronisasi Rekam Medis"}</span>
+            <span>{saving ? "Menyimpan..." : "Simpan"}</span>
           </button>
         </div>
       </form>

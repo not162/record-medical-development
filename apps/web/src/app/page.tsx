@@ -34,71 +34,71 @@ interface DemoScenario {
 const DEMO_SCENARIOS: DemoScenario[] = [
   {
     id: "cardio",
-    category: "Anamnesis Kardiovaskular",
+    category: "Nyeri Dada",
     badge: "Tanda Bahaya (Red-Flag)",
-    query: "Nyeri dada retrosternal onset 30 menit menjalar ke lengan kiri, disertai sesak napas dan keringat dingin (diaphoresis).",
+    query: "Dada saya nyeri sudah 30 menit, rasanya menjalar ke lengan kiri, disertai sesak napas dan keringat dingin.",
     mode: "Thinking Mode",
-    analysis: "Pola keluhan nyeri dada retrosternal dengan penjalaran ke lengan kiri dan keringat dingin memiliki karakteristik khas Sindrom Koroner Akut (SKA) atau iskemia miokard. Ini merupakan kondisi darurat medis yang memerlukan penanganan segera.",
+    analysis: "Nyeri dada yang menjalar ke lengan kiri dan disertai keringat dingin bisa menjadi tanda serangan jantung. Ini keadaan darurat dan perlu segera ditangani.",
     recommendations: [
-      "Hentikan seluruh aktivitas fisik dan istirahatkan diri dalam posisi setengah duduk santai.",
-      "Segera hubungi ambulans darurat (119) atau minta keluarga mengantar ke Instalasi Gawat Darurat (IGD) rumah sakit terdekat.",
-      "Jangan mengemudi kendaraan sendiri menuju rumah sakit.",
-      "Jika memiliki riwayat penyakit jantung dan telah diresepkan Nitrat sublingual oleh dokter, konsumsi sesuai petunjuk medis."
+      "Hentikan semua aktivitas dan duduk bersandar dengan santai.",
+      "Segera hubungi ambulans (119) atau minta keluarga mengantar ke IGD rumah sakit terdekat.",
+      "Jangan menyetir sendiri ke rumah sakit.",
+      "Jika dokter pernah meresepkan obat jantung yang diletakkan di bawah lidah, pakai sesuai petunjuk dokter."
     ],
     redFlag: {
       isCritical: true,
-      title: "Triase Merah: Potensi Kegawatdaruratan Kardiovaskular",
-      instructions: "Segera menuju IGD Rumah Sakit Terdekat atau hubungi Hotline Darurat RSUKT / 119."
+      title: "Tanda Bahaya: Kemungkinan Masalah Jantung Serius",
+      instructions: "Segera ke IGD rumah sakit terdekat atau hubungi 119."
     },
     citation: "Pedoman Tata Laksana Sindrom Koroner Akut — Perhimpunan Dokter Spesialis Kardiovaskular Indonesia (PERKI 2023)",
-    department: "Kardiologi & Vaskular"
+    department: "Poli Jantung"
   },
   {
     id: "respi",
-    category: "Skrining Obstruksi Respirasi",
+    category: "Sesak Napas",
     badge: "Evaluasi Paru",
-    query: "Sesak napas akut berulang disertai bunyi mengi ekspiratoir sejak dini hari, riwayat alergi dingin dan asma bronkial.",
+    query: "Sejak dini hari saya sesak napas dan napas berbunyi “ngik-ngik”. Saya punya asma dan alergi udara dingin.",
     mode: "Thinking Mode",
-    analysis: "Kombinasi sesak napas akut dengan mengi ekspiratoir dan riwayat atopi sangat mengarah pada eksaserbasi asma bronkial atau bronkospasme akut akibat pemicu cuaca/alergen.",
+    analysis: "Sesak napas disertai napas berbunyi, apalagi dengan riwayat asma dan alergi, kemungkinan besar asma Anda sedang kambuh karena cuaca dingin atau pemicu alergi.",
     recommendations: [
-      "Gunakan inhaler bronkodilator pelega (SABA) sesuai instruksi dokter yang pernah merawat Anda.",
-      "Posisikan tubuh tegak dan condongkan sedikit ke depan (posisi tripod) untuk mempermudah ekspansi paru.",
-      "Jauhkan diri dari paparan asap rokok, debu, atau udara dingin.",
-      "Jika sesak napas tidak membaik dalam 15 menit setelah pemakaian inhaler, segera ke poliklinik spesialis atau IGD."
+      "Gunakan inhaler pelega napas sesuai petunjuk dokter Anda.",
+      "Duduk tegak dan condongkan badan sedikit ke depan supaya napas lebih lega.",
+      "Jauhi asap rokok, debu, dan udara dingin.",
+      "Jika sesak tidak membaik dalam 15 menit setelah memakai inhaler, segera ke poli spesialis atau IGD."
     ],
     citation: "Pedoman Diagnosis & Penatalaksanaan Asma — Perhimpunan Dokter Paru Indonesia (PDPI)",
-    department: "Pulmonologi & Kedokteran Respirasi"
+    department: "Poli Paru"
   },
   {
     id: "gastro",
-    category: "Evaluasi Nyeri Epigastrium",
+    category: "Perut Perih & Kembung",
     badge: "Saluran Cerna",
-    query: "Rasa terbakar retrosternal menjalar ke tenggorokan setelah makan pedas, dispepsia, dan perut terasa kembung begah.",
+    query: "Setelah makan pedas, dada terasa panas sampai ke tenggorokan, dan perut terasa penuh dan kembung.",
     mode: "Fast Mode",
-    analysis: "Gejala rasa panas terbakar di dada (heartburn) disertai regurgitasi asam dan begah merupakan manifestasi tipikal Gastroesophageal Reflux Disease (GERD) dan sindrom dispepsia fungsional.",
+    analysis: "Dada terasa panas, ada rasa asam naik ke tenggorokan, dan perut begah. Gejala ini umum terjadi pada penyakit asam lambung (GERD) atau maag.",
     recommendations: [
-      "Hindari langsung berbaring minimal 2-3 jam setelah makan.",
-      "Batasi makanan yang merangsang asam lambung seperti makanan pedas, asam, kafein, dan cokelat.",
-      "Konsumsi makanan dalam porsi kecil namun lebih sering (small frequent meals).",
-      "Konsultasikan ke Dokter Spesialis Penyakit Dalam jika keluhan disertai sulit menelan atau penurunan berat badan."
+      "Jangan langsung berbaring setelah makan, tunggu 2-3 jam.",
+      "Kurangi makanan pedas, asam, kopi, dan cokelat karena bisa memicu asam lambung.",
+      "Makan dalam porsi kecil tapi lebih sering.",
+      "Periksakan ke dokter spesialis penyakit dalam jika disertai sulit menelan atau berat badan turun."
     ],
     citation: "Konsensus Nasional Penatalaksanaan GERD di Indonesia — Perkumpulan Gastroenterologi Indonesia (PGI)",
-    department: "Penyakit Dalam (Gastroenterohepatologi)"
+    department: "Poli Penyakit Dalam"
   },
   {
     id: "pharma",
-    category: "Verifikasi Kontraindikasi Obat",
+    category: "Cek Keamanan Obat",
     badge: "Keamanan Farmakologis",
-    query: "Apakah pasien dengan riwayat asma bronkial boleh mengonsumsi obat antihipertensi golongan Propranolol?",
+    query: "Saya punya asma. Bolehkah saya minum obat darah tinggi Propranolol?",
     mode: "Thinking Mode",
-    analysis: "Propranolol adalah penyekat beta non-selektif (Beta-Blocker) yang dapat memblokade reseptor beta-2 pada saluran napas, sehingga memicu bronkospasme berat pada penderita asma. Obat ini KONTRAINDIKASI bagi pasien asma.",
+    analysis: "Propranolol bisa menyempitkan saluran napas dan membuat asma kambuh parah. Obat ini tidak boleh dipakai penderita asma.",
     recommendations: [
-      "JANGAN mengonsumsi Propranolol tanpa konsultasi ulang dengan dokter penanggung jawab Anda.",
-      "Dokter dapat mempertimbangkan alternatif obat antihipertensi lain yang lebih aman bagi saluran napas (misal: CCB seperti Amlodipin atau ARB).",
-      "Selalu sampaikan riwayat asma kepada setiap dokter yang meresepkan obat baru."
+      "Jangan minum Propranolol sebelum bertanya lagi ke dokter Anda.",
+      "Dokter bisa memilihkan obat darah tinggi lain yang lebih aman untuk pernapasan Anda.",
+      "Selalu beri tahu dokter bahwa Anda punya asma setiap kali diberi obat baru."
     ],
     citation: "National Clinical Practice Guidelines for Hypertension Management & Drug Contraindications (Kemenkes RI)",
-    department: "Farmakologi Klinis & Kardiologi"
+    department: "Poli Penyakit Dalam / Jantung"
   }
 ];
 
@@ -223,10 +223,10 @@ export default function HomePage() {
           </div>
 
           <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
-            <a href="#tutorial-demo" className="text-cyan-700 font-bold hover:text-cyan-800 transition">Tutorial & Video Demo</a>
-            <a href="#scope-limits" className="hover:text-cyan-700 transition">Batas Konteks Medis</a>
-            <a href="#layanan" className="hover:text-cyan-700 transition">Layanan Klinis</a>
-            <a href="#keamanan" className="hover:text-cyan-700 transition">Privasi & UU PDP</a>
+            <a href="#tutorial-demo" className="text-cyan-700 font-bold hover:text-cyan-800 transition">Cara Pakai</a>
+            <a href="#scope-limits" className="hover:text-cyan-700 transition">Yang Bisa & Tidak Bisa</a>
+            <a href="#layanan" className="hover:text-cyan-700 transition">Layanan</a>
+            <a href="#keamanan" className="hover:text-cyan-700 transition">Privasi</a>
           </nav>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
@@ -240,7 +240,7 @@ export default function HomePage() {
                     href="/admin/dashboard"
                     className="px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5"
                   >
-                    <span>Workspace Riset</span>
+                    <span>Ruang Kerja Admin</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 ) : (
@@ -249,7 +249,7 @@ export default function HomePage() {
                     className="px-4 py-2 sm:py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5"
                   >
                     <Bot className="w-3.5 h-3.5" />
-                    <span>Konsultasi Klinis</span>
+                    <span>Mulai Bertanya</span>
                   </Link>
                 )}
               </div>
@@ -259,13 +259,13 @@ export default function HomePage() {
                   href="/login"
                   className="px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-cyan-700 hover:bg-slate-100 transition"
                 >
-                  Masuk (Login)
+                  Masuk
                 </Link>
                 <Link
                   href="/register"
                   className="px-3.5 sm:px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1"
                 >
-                  <span>Daftar Pasien</span>
+                  <span>Daftar</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -280,18 +280,18 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-50 border border-cyan-200/80 text-cyan-800 text-xs font-semibold shadow-xs">
             <Sparkles className="w-3.5 h-3.5 text-cyan-600 animate-pulse" />
-            <span>Asisten Kecerdasan Artifisial Medis Klinis RSUKT</span>
+            <span>Asisten Kesehatan AI RSUKT</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
-            Anamnesis Cerdas & Penapisan Bahaya{" "}
+            Tanya Soal Kesehatan,{" "}
             <span className="block mt-1 sm:mt-2 text-cyan-600">
-              Cepat, Tepat, dan Berbasis Bukti
+              Dijawab dengan Bahasa Sehari-hari
             </span>
           </h1>
 
           <p className="max-w-3xl mx-auto text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed">
-            Pemeriksaan anamnesis terstruktur, penapisan tanda bahaya dini (*Red Flags*), dan panduan rujukan poliklinik spesialis berbasis bukti protokol medis terverifikasi. Terlindungi UU PDP No. 27/2022 dan standar ISO/IEC 27001:2022.
+            Ceritakan keluhan Anda dengan bahasa sehari-hari. Asisten kami membantu mengenali tanda bahaya, memberi saran awal, dan menunjukkan poli yang tepat untuk Anda datangi. Data Anda dijaga kerahasiaannya.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
@@ -300,7 +300,7 @@ export default function HomePage() {
               className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm shadow-sm transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               <Bot className="w-4 h-4" />
-              <span>Mulai Konsultasi Chatbot</span>
+              <span>Mulai Bertanya</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
 
@@ -309,7 +309,7 @@ export default function HomePage() {
               className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm border border-slate-300 shadow-xs transition flex items-center justify-center gap-2"
             >
               <Play className="w-4 h-4 text-cyan-600" />
-              <span>Tonton Video Demo Interaktif</span>
+              <span>Lihat Contoh</span>
             </a>
           </div>
 
@@ -317,19 +317,19 @@ export default function HomePage() {
           <div className="pt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] sm:text-xs text-slate-500 font-medium border-t border-slate-200/60 max-w-3xl mx-auto">
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Kepatuhan UU PDP No. 27/2022</span>
+              <span>Data Terlindungi</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Lock className="w-4 h-4 text-cyan-600" />
-              <span>Enkripsi ISO/IEC 27001 ISMS</span>
+              <span>Aman & Terenkripsi</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-teal-600" />
-              <span>Sanitasi OWASP Top 10</span>
+              <span>Dicek Keamanannya</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Activity className="w-4 h-4 text-indigo-600" />
-              <span>Protokol Klinis Kemenkes</span>
+              <span>Mengacu Pedoman Kemenkes</span>
             </div>
           </div>
         </div>
@@ -345,13 +345,13 @@ export default function HomePage() {
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-700 text-xs font-bold uppercase tracking-wider">
               <Play className="w-3.5 h-3.5" />
-              <span>Simulasi Video Demo Interaktif</span>
+              <span>Contoh Penggunaan</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Tata Cara & Alur Penggunaan Chatbot Klinis
+              Cara Menggunakan Asisten Kesehatan
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Pilih skenario klinis di bawah untuk melihat simulasi interaktif pengetikan keluhan, analisis mode inferensi medis, penapisan red-flag, hingga sitasi protokol klinis.
+              Pilih salah satu contoh di bawah untuk melihat bagaimana keluhan ditanyakan dan dijawab.
             </p>
           </div>
 
@@ -423,7 +423,7 @@ export default function HomePage() {
                 <div className="flex justify-end">
                   <div className="max-w-xl bg-cyan-600 text-white p-4 rounded-2xl rounded-tr-xs text-xs sm:text-sm leading-relaxed shadow-lg">
                     <div className="text-[10px] font-bold text-cyan-200 mb-1 flex items-center justify-between">
-                      <span>Keluhan Klinis Pasien (Input Awam)</span>
+                      <span>Keluhan Anda</span>
                       <span>Baru saja</span>
                     </div>
                     <p className="font-medium">
@@ -445,7 +445,7 @@ export default function HomePage() {
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
                         <div className="font-bold text-white flex items-center gap-1.5">
                           <Bot className="w-4 h-4 text-cyan-400" />
-                          <span>Telaah Asisten Edukasi Medis RSUKT</span>
+                          <span>Jawaban Asisten</span>
                         </div>
                         <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                           Departemen: {activeScenario.department}
@@ -482,7 +482,7 @@ export default function HomePage() {
                       {/* Recommendations List */}
                       <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1.5">
                         <span className="text-[11px] font-bold text-cyan-400 block">
-                          Panduan Pertolongan Awal & Tindakan Mandiri:
+                          Yang bisa Anda lakukan sekarang:
                         </span>
                         <ul className="space-y-1 text-slate-300 text-xs">
                           {activeScenario.recommendations.map((rec, i) => (
@@ -510,7 +510,7 @@ export default function HomePage() {
                             className={`p-1 rounded transition ${
                               userRating === "LIKE" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 text-slate-400"
                             }`}
-                            title="Jawaban Tepat & Edukatif"
+                            title="Jawaban membantu"
                           >
                             <ThumbsUp className="w-3.5 h-3.5" />
                           </button>
@@ -519,7 +519,7 @@ export default function HomePage() {
                             className={`p-1 rounded transition ${
                               userRating === "DISLIKE" ? "bg-rose-600 text-white" : "hover:bg-slate-800 text-slate-400"
                             }`}
-                            title="Perlu Koreksi Dokter"
+                            title="Jawaban kurang tepat"
                           >
                             <ThumbsDown className="w-3.5 h-3.5" />
                           </button>
@@ -530,7 +530,7 @@ export default function HomePage() {
                 ) : (
                   <div className="flex items-center gap-2 text-xs text-slate-400 italic py-6">
                     <Cpu className="w-4 h-4 animate-spin text-cyan-400" />
-                    <span>AI Engine sedang menelaah protokol medis & tanda bahaya...</span>
+                    <span>Asisten sedang menyiapkan jawaban...</span>
                   </div>
                 )}
               </div>
@@ -564,7 +564,7 @@ export default function HomePage() {
                     <button
                       onClick={handleRestartDemo}
                       className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1 text-xs"
-                      title="Ulangi Simulasi Skenario"
+                      title="Ulangi contoh"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Ulangi</span>
@@ -604,7 +604,7 @@ export default function HomePage() {
                       onClick={() => setShowCaptions(!showCaptions)}
                       aria-label="Tampilkan atau sembunyikan teks terjemahan/takarir (C)"
                       className={`p-1.5 rounded-lg transition ${showCaptions ? "bg-cyan-950 text-cyan-400 border border-cyan-800" : "bg-slate-800 text-slate-400"}`}
-                      title="Takarir / Subtitel (Tekan C)"
+                      title="Teks / Subtitel (Tekan C)"
                     >
                       <Subtitles className="w-3.5 h-3.5" />
                     </button>
@@ -634,7 +634,7 @@ export default function HomePage() {
                       href="/chat"
                       className="px-4 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow"
                     >
-                      <span>Coba Chatbot Langsung</span>
+                      <span>Coba Langsung</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
@@ -648,7 +648,7 @@ export default function HomePage() {
             <div className="text-center max-w-xl mx-auto space-y-2">
               <span className="text-xs font-bold text-cyan-700 uppercase tracking-widest">Tutorial Praktis</span>
               <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
-                4 Langkah Mudah Menggunakan Chatbot Klinis
+                4 Langkah Mudah Menggunakan Asisten
               </h3>
             </div>
 
@@ -656,26 +656,26 @@ export default function HomePage() {
               {[
                 {
                   step: "01",
-                  title: "Pilih / Tuliskan Keluhan",
-                  desc: "Gunakan tombol cepat (Kardiovaskular, Paru, Lambung, dsb.) atau ketikkan gejala Anda dalam bahasa awam sehari-hari.",
+                  title: "Tulis Keluhan Anda",
+                  desc: "Pilih tombol cepat (jantung, paru, lambung, dll.) atau ketik keluhan Anda dengan bahasa sehari-hari.",
                   icon: FileCheck
                 },
                 {
                   step: "02",
-                  title: "Tentukan Mode Analisis",
-                  desc: "Pilih 'Thinking Mode' untuk penelusuran protokol mendalam & rujukan spesialis, atau 'Fast Mode' untuk informasi kilat.",
+                  title: "Pilih Cara Menjawab",
+                  desc: "Pilih 'Thinking Mode' untuk jawaban yang lebih teliti, atau 'Fast Mode' untuk jawaban singkat dan cepat.",
                   icon: Layers
                 },
                 {
                   step: "03",
-                  title: "Simak Telaah & Red-Flag",
-                  desc: "Baca penjelasan ramah awam tanpa jargon teknis membingungkan, serta perhatikan arahan darurat jika terdeteksi gejala kritis.",
+                  title: "Baca Jawabannya",
+                  desc: "Jawaban ditulis dengan bahasa mudah dipahami. Jika ada tanda bahaya, Anda akan diminta segera ke IGD.",
                   icon: Activity
                 },
                 {
                   step: "04",
-                  title: "Tindak Lanjut & Evaluasi",
-                  desc: "Gunakan informasi rujukan poliklinik rumah sakit untuk periksa langsung ke dokter dan berikan rating suka/tidak suka.",
+                  title: "Lanjutkan ke Dokter",
+                  desc: "Datangi poli yang disarankan untuk diperiksa langsung oleh dokter, lalu beri tahu kami apakah jawabannya membantu.",
                   icon: ThumbsUp
                 }
               ].map((item, idx) => (
@@ -702,13 +702,13 @@ export default function HomePage() {
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200 border border-slate-300 text-slate-800 text-xs font-bold uppercase tracking-wider">
               <ShieldAlert className="w-3.5 h-3.5 text-slate-700" />
-              <span>Etika Medis & Kebijakan Batasan Sistem</span>
+              <span>Batasan Layanan</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Konteks Layanan: Apa yang Dapat & TIDAK DAPAT Diproses
+              Apa yang Bisa & Tidak Bisa Dibantu
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Demi keselamatan pasien dan kepatuhan terhadap standar Konsil Kedokteran Indonesia (KKI) serta Permenkes No. 24/2022, sistem memiliki batasan operasional yang tegas.
+              Demi keselamatan Anda, asisten ini punya batasan yang jelas. Asisten ini membantu memberi informasi, bukan menggantikan dokter.
             </p>
           </div>
 
@@ -723,10 +723,10 @@ export default function HomePage() {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-lg text-slate-900">
-                      Konteks yang DAPAT Diproses
+                      Yang Bisa Dibantu
                     </h3>
                     <p className="text-xs text-emerald-700 font-semibold">
-                      Fokus Edukasi, Skrining & Panduan Mandiri
+                      Informasi, pengecekan awal, dan saran di rumah
                     </p>
                   </div>
                 </div>
@@ -734,30 +734,30 @@ export default function HomePage() {
                 <ul className="space-y-3.5 text-xs sm:text-sm text-slate-700">
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Anamnesis Gejala Terstruktur:</strong> Analisis kemungkinan sindrom klinis berdasarkan keluhan awam, durasi sakit, dan faktor pencetus.</span>
+                    <span><strong>Memahami keluhan Anda:</strong> Menanyakan gejala, sudah berapa lama, dan apa yang memicunya.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Penapisan Tanda Bahaya (*Red-Flags*):</strong> Deteksi dini gejala kritis seperti nyeri dada menjalar, apnea, henti napas, dan stroke akut.</span>
+                    <span><strong>Mengenali tanda bahaya:</strong> Mengingatkan jika gejalanya serius, seperti nyeri dada menjalar, sulit bernapas, atau tanda stroke.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Rekomendasi Poliklinik Rujukan:</strong> Membimbing pasien ke spesialisasi rumah sakit yang tepat (Kardiologi, Paru, Penyakit Dalam, dsb.).</span>
+                    <span><strong>Menunjukkan poli yang tepat:</strong> Menyarankan dokter spesialis yang cocok, misalnya jantung, paru, atau penyakit dalam.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Panduan Pertolongan Pertama Non-Invasif:</strong> Instruksi posisi istirahat, kompres, cairan hidrasi, dan pencegahan komplikasi.</span>
+                    <span><strong>Pertolongan pertama sederhana:</strong> Saran posisi istirahat, kompres, minum cukup, dan hal yang perlu dihindari.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Edukasi Informasi Umum Obat:</strong> Informasi umum interaksi farmakologis, kontraindikasi, dan aturan pakai suplemen/vitamin.</span>
+                    <span><strong>Informasi umum obat:</strong> Penjelasan umum tentang aturan pakai, obat yang tidak boleh dicampur, dan vitamin.</span>
                   </li>
                 </ul>
               </div>
 
               <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 flex items-center gap-2">
                 <BadgeCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Seluruh jawaban grounded pada basis data pedoman klinis resmi Kemenkes RI & jurnal terverifikasi.</span>
+                <span>Jawaban mengacu pada pedoman resmi Kemenkes RI dan sumber kesehatan terpercaya.</span>
               </div>
             </div>
 
@@ -770,10 +770,10 @@ export default function HomePage() {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-lg text-slate-900">
-                      Yang TIDAK DAPAT Diproses
+                      Yang Tidak Bisa Dibantu
                     </h3>
                     <p className="text-xs text-rose-700 font-semibold">
-                      Batasan Etika Hukum & Keamanan Medis Mutlak
+                      Demi keselamatan dan sesuai aturan
                     </p>
                   </div>
                 </div>
@@ -781,30 +781,30 @@ export default function HomePage() {
                 <ul className="space-y-3.5 text-xs sm:text-sm text-slate-700">
                   <li className="flex items-start gap-2.5">
                     <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <span><strong>Peresepan Obat Keras & Narkotika:</strong> AI TIDAK BERWENANG mengeluarkan resep antibiotik, psikotropika, atau obat daftar G tanpa tatap muka dokter.</span>
+                    <span><strong>Memberi resep obat keras:</strong> AI tidak bisa meresepkan antibiotik atau obat keras. Itu harus lewat dokter.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <span><strong>Vonis Diagnosis Definitif & Surat Medis:</strong> Sistem tidak menerbitkan surat sakit resmi, surat bebas narkoba, atau sertifikat legal asuransi.</span>
+                    <span><strong>Diagnosis pasti dan surat dokter:</strong> Asisten tidak bisa membuat surat sakit, surat keterangan sehat, atau surat untuk asuransi.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <span><strong>Pengganti Tindakan Gawat Darurat Fisik:</strong> Pasien henti napas/jantung tidak boleh menunggu respons teks; wajib segera ke IGD 119.</span>
+                    <span><strong>Menggantikan pertolongan darurat:</strong> Jika seseorang berhenti bernapas atau pingsan, jangan menunggu jawaban chat. Segera hubungi 119 atau ke IGD.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <span><strong>Instruksi Prosedur Bedah Mandiri:</strong> Permintaan petunjuk penjahitan luka, injeksi cairan berbahaya, atau bedah mandiri DITOLAK KERAS.</span>
+                    <span><strong>Tindakan medis sendiri di rumah:</strong> Asisten menolak memberi petunjuk menjahit luka, menyuntik, atau operasi sendiri.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <span><strong>Kueri Non-Medis & Injeksi Sistem:</strong> Pertanyaan coding, politik, atau percobaan SQL/Prompt Injection otomatis diblokir filter OWASP.</span>
+                    <span><strong>Pertanyaan di luar kesehatan:</strong> Pertanyaan soal pemrograman, politik, atau upaya membobol sistem akan diblokir.</span>
                   </li>
                 </ul>
               </div>
 
               <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-900 flex items-center gap-2">
                 <AlertOctagon className="w-4 h-4 text-rose-600 shrink-0" />
-                <span>Pelanggaran kueri terlarang akan dicatat dalam Audit Trail Kepatuhan ISO 27001 secara otomatis.</span>
+                <span>Permintaan yang dilarang akan dicatat otomatis untuk menjaga keamanan.</span>
               </div>
             </div>
 
@@ -818,10 +818,10 @@ export default function HomePage() {
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="text-xs font-bold text-cyan-700 uppercase tracking-widest">Layanan Terpadu</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">
-              Solusi Lengkap Kesehatan Digital Pasien
+              Layanan untuk Anda
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
-              Dirancang untuk memberikan ketenangan pikiran dengan panduan medis berbasis bukti protokol kesehatan terverifikasi.
+              Dibuat supaya Anda lebih tenang dan tahu langkah apa yang perlu diambil.
             </p>
           </div>
 
@@ -829,31 +829,31 @@ export default function HomePage() {
             {[
               {
                 icon: Bot,
-                title: "Anamnesis AI 24/7",
-                desc: "Konsultasi keluhan kesehatan kapan saja dengan penjelasan ramah awam, akurat, dan tanpa jargon teknis membingungkan.",
+                title: "Tanya AI Kapan Saja",
+                desc: "Tanyakan keluhan kesehatan kapan saja. Jawabannya mudah dipahami dan tanpa istilah yang membingungkan.",
                 color: "bg-cyan-600",
-                badge: "Thinking & Fast"
+                badge: "Teliti atau Cepat"
               },
               {
                 icon: HeartPulse,
-                title: "Deteksi Red Flags",
-                desc: "Penapisan tanda bahaya dini otomatis untuk mendeteksi kegawatan klinis sebelum terjadi komplikasi lebih lanjut.",
+                title: "Kenali Tanda Bahaya",
+                desc: "Asisten otomatis mengenali gejala yang berbahaya supaya Anda bisa segera mendapat pertolongan.",
                 color: "bg-red-600",
-                badge: "Keselamatan Prioritas"
+                badge: "Keselamatan Nomor Satu"
               },
               {
                 icon: CalendarCheck,
-                title: "Rujukan Spesialis",
-                desc: "Rekomendasi poliklinik spesialis yang sesuai dengan pola gejala pasien untuk mempermudah kunjungan rumah sakit.",
+                title: "Poli yang Tepat",
+                desc: "Saran dokter spesialis yang sesuai dengan keluhan Anda, supaya kunjungan ke rumah sakit lebih mudah.",
                 color: "bg-teal-600",
-                badge: "Terarah & Tepat"
+                badge: "Tepat Sasaran"
               },
               {
                 icon: ShieldCheck,
-                title: "Privasi Rekam Medis",
-                desc: "Data kesehatan bersifat spesifik dilindungi enkripsi penuh. Hak penghapusan permanen sesuai UU PDP No. 27/2022.",
+                title: "Data Anda Aman",
+                desc: "Data kesehatan Anda dilindungi dan dienkripsi. Anda berhak meminta data Anda dihapus.",
                 color: "bg-indigo-600",
-                badge: "Enkripsi AES-256"
+                badge: "Terenkripsi"
               }
             ].map((card, idx) => (
               <div 
@@ -889,19 +889,19 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
           <div>
             <div className="text-3xl sm:text-4xl font-extrabold text-cyan-300">99.4%</div>
-            <div className="text-xs sm:text-sm text-cyan-100 mt-1 font-medium">Akurasi Protokol Klinis</div>
+            <div className="text-xs sm:text-sm text-cyan-100 mt-1 font-medium">Mengacu Pedoman Resmi</div>
           </div>
           <div>
             <div className="text-3xl sm:text-4xl font-extrabold text-emerald-300">&lt; 1.2 Detik</div>
-            <div className="text-xs sm:text-sm text-emerald-100 mt-1 font-medium">Latensi Respons Cepat</div>
+            <div className="text-xs sm:text-sm text-emerald-100 mt-1 font-medium">Jawaban Cepat</div>
           </div>
           <div>
             <div className="text-3xl sm:text-4xl font-extrabold text-teal-300">100%</div>
-            <div className="text-xs sm:text-sm text-teal-100 mt-1 font-medium">PII Teranonimkan (UU PDP)</div>
+            <div className="text-xs sm:text-sm text-teal-100 mt-1 font-medium">Data Pribadi Disamarkan</div>
           </div>
           <div>
             <div className="text-3xl sm:text-4xl font-extrabold text-white">24/7</div>
-            <div className="text-xs sm:text-sm text-slate-300 mt-1 font-medium">Kesiagaan Konsultasi Digital</div>
+            <div className="text-xs sm:text-sm text-slate-300 mt-1 font-medium">Siap Membantu Kapan Saja</div>
           </div>
         </div>
       </section>
@@ -912,26 +912,26 @@ export default function HomePage() {
           <div className="max-w-2xl space-y-5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-400/30">
               <Lock className="w-3.5 h-3.5" />
-              <span>Standar Perlindungan Data Kesehatan Indonesia</span>
+              <span>Perlindungan Data Kesehatan</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Kerahasiaan Medis Anda Terjamin Secara Mutlak
+              Data Kesehatan Anda Dijaga Kerahasiaannya
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Setiap pertukaran data dilindungi oleh pemindaian keamanan OWASP Top 10, sanitasi data pengenal (PII De-identification), dan pemenuhan hak subjek data (Right to Erasure) sesuai UU No. 27/2022 Pasal 4, 8, dan 10. Administrator sistem secara ketat dilarang melihat sesi konsultasi pribadi pasien.
+              Setiap data yang Anda kirim dilindungi dan data pribadi Anda disamarkan. Anda juga berhak meminta data Anda dihapus, sesuai UU Perlindungan Data Pribadi (UU No. 27/2022). Administrator sistem secara ketat dilarang melihat sesi konsultasi pribadi pasien.
             </p>
             <div className="pt-2 flex flex-wrap gap-3">
               <Link
                 href="/register"
                 className="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition shadow-md"
               >
-                Daftar Akun Terlindungi
+                Buat Akun
               </Link>
               <Link
                 href="/chat"
                 className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition"
               >
-                Coba Anamnesis Sekarang
+                Coba Sekarang
               </Link>
             </div>
           </div>
@@ -955,7 +955,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-4 text-slate-400">
               <Link href="/login" className="hover:text-white transition">Masuk Akun</Link>
-              <Link href="/register" className="hover:text-white transition">Daftar Pasien</Link>
+              <Link href="/register" className="hover:text-white transition">Daftar</Link>
               <Link href="/chat" className="hover:text-white transition">Chatbot Medis</Link>
                             <Link href="/privacy" className="hover:text-white transition">Kebijakan Privasi</Link>
               <Link href="/terms" className="hover:text-white transition">Syarat & Ketentuan</Link>

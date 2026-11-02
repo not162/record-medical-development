@@ -209,7 +209,7 @@ export default function ChatPage() {
     {
       id: "welcome-1",
       sender: "assistant",
-      content: "Halo! Saya Asisten AI Klinis Rumah Sakit Umum Kota Terpadu (RSUKT). Anda dapat mendiskusikan informasi kesehatan umum, penjelasan gejala, atau protokol klinis rumah sakit.\n\nSetiap jawaban yang saya berikan akan dirujuk ke dokumen bukti protokol medis yang telah disetujui oleh tim medis kami. Bagaimana saya dapat membantu Anda hari ini?",
+      content: "Halo! Saya asisten kesehatan AI dari RSUKT. Anda bisa bertanya seputar kesehatan, menjelaskan keluhan, atau menanyakan layanan rumah sakit.\n\nJawaban saya mengacu pada pedoman yang sudah disetujui tim medis kami. Ada yang bisa saya bantu hari ini?",
       department: "Umum",
       timestamp: "Baru saja",
       scanningDeteksiBahasa: null,
@@ -272,7 +272,7 @@ export default function ChatPage() {
         const data = await res.json();
         setQuotaStatus(data.quota);
         setSecondsLeft(0);
-        alert("Siklus kuota 24 jam berhasil di-reset untuk pengujian.");
+        alert("Batas harian berhasil di-reset untuk pengujian.");
       }
     } catch {
       // ignore
@@ -349,7 +349,7 @@ export default function ChatPage() {
   }, [secondsLeft, fetchQuota]);
 
   const handleDeleteSession = async (sessId: string) => {
-    if (!confirm("Hapus sesi percakapan ini secara permanen sesuai hak privasi GDPR & Permenkes?")) return;
+    if (!confirm("Hapus percakapan ini secara permanen?")) return;
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
@@ -498,7 +498,7 @@ export default function ChatPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ title: "Konsultasi Klinis Baru" })
+        body: JSON.stringify({ title: "Percakapan Baru" })
       });
       if (res.ok) {
         const newSess = await res.json();
@@ -507,7 +507,7 @@ export default function ChatPage() {
           {
             id: `welcome-${Date.now()}`,
             sender: "assistant",
-            content: "Halo! Sesi konsultasi klinis baru telah dibuka. Silakan ajukan pertanyaan atau jelaskan keluhan Anda.",
+            content: "Halo! Percakapan baru sudah dibuka. Silakan tanyakan atau ceritakan keluhan Anda.",
             department: "Umum",
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             scanningDeteksiBahasa: null,
@@ -526,7 +526,7 @@ export default function ChatPage() {
     if (!inputQuery.trim() || isGenerating) return;
 
     if (quotaStatus?.is_clinic_health_lock && !isAdmin) {
-      alert("Batas 7 keluaran AI harian tercapai. Sesi dialihkan ke Clinic Health Reset selama 24 jam penuh.");
+      alert("Batas 7 jawaban AI hari ini sudah tercapai. Silakan coba lagi besok.");
       return;
     }
 
@@ -614,7 +614,7 @@ export default function ChatPage() {
           const lockedReply: Message = {
             id: `lock-${Date.now()}`,
             sender: "assistant",
-            content: "⚠️ **BATAS KONSULTASI AI HARIAN TERCAPAI (7/7 RESPON)** ⚠️\n\nSesuai standar Permenkes No. 12 Tahun 2025 demi keselamatan pasien, sesi dialihkan ke Clinic Health Reset selama 1 hari / 24 jam penuh.\n\nSilakan hubungi IGD 119 atau jadwalkan kunjungan ke Poliklinik Fisik RSUKT untuk pemeriksaan medis langsung oleh dokter.",
+            content: "⚠️ **Batas jawaban AI hari ini sudah tercapai (7 dari 7)** ⚠️\n\nDemi keselamatan Anda, chat ditutup sementara selama 24 jam.\n\nJika perlu bantuan, hubungi IGD 119 atau buat janji ke poli RSUKT untuk diperiksa langsung oleh dokter.",
             department: "Clinic Health",
             safetyAlert: true,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -740,7 +740,7 @@ export default function ChatPage() {
       const errorReply: Message = {
         id: `err-${Date.now()}`,
         sender: "assistant",
-        content: "Halo! Saya Asisten AI Klinis RSUKT. Sistem beroperasi dalam mode terverifikasi. Jika ada kendala jaringan, silakan muat ulang atau periksa status koneksi Anda.",
+        content: "Halo! Saya asisten kesehatan AI RSUKT. Jika ada kendala jaringan, silakan muat ulang halaman atau cek koneksi internet Anda.",
         department: "Sistem",
         safetyAlert: false,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -854,7 +854,7 @@ export default function ChatPage() {
           className="w-full py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm mb-3"
         >
           <Plus className="w-4 h-4" />
-          <span>Anamnesis Klinis Baru</span>
+          <span>Percakapan Baru</span>
         </button>
 
         <div className="flex-1 overflow-y-auto space-y-1 pr-1">
@@ -890,7 +890,7 @@ export default function ChatPage() {
                   handleDeleteSession(sess.id);
                 }}
                 className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition shrink-0"
-                title="Hapus Sesi (GDPR Art. 17 Right to Erasure)"
+                title="Hapus percakapan"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -981,7 +981,7 @@ export default function ChatPage() {
                 type="button"
                 onClick={() => setShowUpgradeModal(true)}
                 className="px-2.5 py-1 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs"
-                title="Simpan percakapan ke akun terdaftar"
+                title="Simpan percakapan ke akun Anda"
               >
                 <span>Simpan ke Akun</span>
               </button>
@@ -991,7 +991,7 @@ export default function ChatPage() {
               type="button"
               onClick={() => setShowConsentModal(true)}
               className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold flex items-center gap-1 transition"
-              title="Kepatuhan Regulasi ISO 27001, GDPR, HIPAA & Permenkes No. 12/2025"
+              title="Data Anda dilindungi"
             >
               <Shield className="w-3 h-3 text-cyan-600" />
               <span>Consent</span>
@@ -1000,7 +1000,7 @@ export default function ChatPage() {
             <span className="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-semibold flex items-center gap-1.5 shadow-2xs">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span className="hidden sm:inline">Terverifikasi RSUKT</span>
-              <span className="text-[9px] text-emerald-600 font-normal">| Permenkes 12/2025</span>
+              <span className="text-[9px] text-emerald-600 font-normal">| Aman & Terjaga</span>
             </span>
           </div>
         </div>
@@ -1014,10 +1014,10 @@ export default function ChatPage() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                  Asisten Kecerdasan Artifisial Medis Klinis RSUKT
+                  Asisten Kesehatan AI RSUKT
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-md">
-                  Pemeriksaan anamnesis terstruktur, penapisan tanda bahaya (*Red Flags*), dan panduan rujukan poliklinik spesialis berbasis bukti protokol medis terverifikasi.
+                  Ceritakan keluhan Anda. Saya bantu mengenali tanda bahaya dan menunjukkan poli yang tepat.
                 </p>
               </div>
 
@@ -1025,30 +1025,30 @@ export default function ChatPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full pt-2 text-left">
                 {[
                   {
-                    title: "Anamnesis Kardiovaskular",
-                    desc: "Nyeri dada retrosternal, penjalaran lengan kiri, diaphoresis",
-                    prompt: "Saya merasakan nyeri dada substernal yang menjalar ke leher dan lengan kiri disertai keringat dingin sejak 30 menit yang lalu.",
+                    title: "Nyeri Dada",
+                    desc: "Nyeri dada menjalar ke lengan kiri, keringat dingin",
+                    prompt: "Dada saya nyeri dan menjalar ke leher dan lengan kiri, disertai keringat dingin sejak 30 menit lalu.",
                     icon: Activity,
                     color: "border-red-200 bg-red-50/70 text-red-950 hover:bg-red-100/80",
                   },
                   {
-                    title: "Skrining Obstruksi Respirasi",
-                    desc: "Sesak napas akut, mengi ekspiratoir, riwayat asma",
-                    prompt: "Pasien mengeluhkan sesak napas akut berbunyi mengi ekspiratoir dan riwayat asma bronkial.",
+                    title: "Sesak Napas",
+                    desc: "Sesak napas, napas berbunyi, punya asma",
+                    prompt: "Saya sesak napas dan napas berbunyi “ngik-ngik”. Saya punya riwayat asma.",
                     icon: Stethoscope,
                     color: "border-cyan-200 bg-cyan-50/70 text-cyan-950 hover:bg-cyan-100/80",
                   },
                   {
-                    title: "Evaluasi Nyeri Epigastrium",
-                    desc: "Rasa terbakar retrosternal, dispepsia, dan begah",
-                    prompt: "Keluhan nyeri ulu hati rasa terbakar yang diperberat makanan asam disertai mual dan begah.",
+                    title: "Perut Perih",
+                    desc: "Perut perih, dada panas, kembung",
+                    prompt: "Ulu hati saya terasa perih seperti terbakar, makin parah setelah makan makanan asam, disertai mual dan kembung.",
                     icon: FileText,
                     color: "border-amber-200 bg-amber-50/70 text-amber-950 hover:bg-amber-100/80",
                   },
                   {
-                    title: "Verifikasi Kontraindikasi Obat",
-                    desc: "Kontraindikasi Beta-blocker dan interaksi farmakologis",
-                    prompt: "Apakah terdapat kontraindikasi pemberian Beta-blocker non-selektif pada pasien dengan riwayat asma bronkial?",
+                    title: "Cek Keamanan Obat",
+                    desc: "Keamanan obat untuk penderita asma",
+                    prompt: "Saya punya asma. Apakah aman minum obat penyekat beta (beta-blocker)?",
                     icon: ShieldCheck,
                     color: "border-emerald-200 bg-emerald-50/70 text-emerald-950 hover:bg-emerald-100/80",
                   },
@@ -1071,7 +1071,7 @@ export default function ChatPage() {
               {/* Regulatory Trust Badge */}
               <div className="flex items-center justify-center gap-2 pt-2 text-[10px] text-slate-400">
                 <Lock className="w-3 h-3 text-emerald-600" />
-                <span>Kerahasiaan Medis Terenkripsi: UU No. 27/2022 (UU PDP) & ISO/IEC 27001:2022 ISMS</span>
+                <span>Percakapan Anda dijaga kerahasiaannya</span>
               </div>
             </div>
           )}
@@ -1130,7 +1130,7 @@ export default function ChatPage() {
                     <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
                       <span className="text-[11px] font-semibold text-cyan-700 flex items-center gap-1">
                         <FileText className="w-3.5 h-3.5" />
-                        Sitasi Dokumen Bukti Terverifikasi:
+                        Sumber jawaban:
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {msg.citations.map((c, i) => (
@@ -1172,7 +1172,7 @@ export default function ChatPage() {
                             ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                             : "bg-white border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300"
                         }`}
-                        title="Penjelasan bermanfaat dan mudah dipahami"
+                        title="Jawaban membantu"
                       >
                         <ThumbsUp className="w-3.5 h-3.5" />
                       </button>
@@ -1183,7 +1183,7 @@ export default function ChatPage() {
                             ? "bg-amber-50 border-amber-200 text-amber-700"
                             : "bg-white border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300"
                         }`}
-                        title="Beri masukan koreksi penjelasan klinis"
+                        title="Jawaban kurang tepat"
                       >
                         <ThumbsDown className="w-3.5 h-3.5" />
                       </button>
@@ -1229,7 +1229,7 @@ export default function ChatPage() {
                 <div className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce delay-100"></div>
                 <div className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce delay-200"></div>
                 <span className="ml-1 text-slate-700 font-medium text-xs">
-                  AI sedang merumuskan penjelasan edukasi medis terverifikasi...
+                  Asisten sedang menyiapkan jawaban...
                 </span>
               </div>
             </div>
@@ -1247,14 +1247,14 @@ export default function ChatPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-sm font-bold text-red-900">
-                      Batas Konsultasi AI Harian Tercapai (7/7 Respon)
+                      Batas Jawaban AI Hari Ini Tercapai (7 dari 7)
                     </h4>
                     <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-mono font-semibold">
-                      Dialihkan ke Clinic Health Reset
+                      Chat ditutup sementara, buka lagi besok
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Sesuai regulasi rekam medis Permenkes No. 12 Tahun 2025 demi keselamatan klinis pasien, keluaran Asisten AI dibatasi 7 respon dalam jendela 24 jam penuh. Pasien dialihkan untuk pemeriksaan fisik langsung oleh dokter spesialis di poliklinik rumah sakit.
+                    Demi keselamatan Anda, asisten AI dibatasi 7 jawaban dalam 24 jam. Untuk keluhan Anda, sebaiknya periksa langsung ke dokter di poli rumah sakit.
                   </p>
                 </div>
               </div>
@@ -1284,7 +1284,7 @@ export default function ChatPage() {
 
               <button
                 type="button"
-                onClick={() => alert("Membuka loket pendaftaran Poliklinik Fisik Rawat Jalan RSUKT.")}
+                onClick={() => alert("Membuka pendaftaran poli rawat jalan RSUKT.")}
                 className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-bold transition shadow-xs"
               >
                 <Calendar className="w-4 h-4" />
@@ -1297,7 +1297,7 @@ export default function ChatPage() {
                 className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-bold transition shadow-2xs"
               >
                 <Download className="w-4 h-4 text-slate-600" />
-                <span>Unduh Resume RME</span>
+                <span>Unduh Ringkasan Chat</span>
               </button>
             </div>
 
@@ -1310,7 +1310,7 @@ export default function ChatPage() {
                   className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-semibold flex items-center gap-1.5 transition"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  <span>Reset Siklus 24 Jam</span>
+                  <span>Reset Batas Harian</span>
                 </button>
               </div>
             )}
@@ -1324,7 +1324,7 @@ export default function ChatPage() {
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-cyan-600 shrink-0" />
             <span className="text-[11px]">
-              <strong>Mode Tamu (Anonim):</strong> Dengan melanjutkan konsultasi, Anda menyetujui pemrosesan data anamnesis secara anonim sesuai UU No. 27/2022 (UU PDP).
+              <strong>Mode Tamu:</strong> Dengan melanjutkan, Anda setuju keluhan Anda diproses tanpa identitas (anonim).
             </span>
           </div>
           <button
@@ -1356,8 +1356,8 @@ export default function ChatPage() {
               }}
               placeholder={
                 quotaStatus?.is_clinic_health_lock
-                  ? "Batas 7 keluaran AI tercapai. Sesi dialihkan ke Clinic Health Reset (24 Jam Penuh). Silakan hubungi IGD 119 atau kunjungi Poliklinik Fisik RSUKT..."
-                  : "Sampaikan anamnesis keluhan utama & gejala klinis Anda (misal: 'Nyeri dada retrosternal onset 30 menit menjalar ke lengan kiri disertai dispnea dan diaphoresis')..."
+                  ? "Batas 7 jawaban hari ini tercapai. Silakan hubungi IGD 119 atau datang ke poli RSUKT..."
+                  : "Ceritakan keluhan Anda (contoh: 'Dada saya nyeri sudah 30 menit dan menjalar ke lengan kiri, disertai sesak napas')..."
               }
               className="w-full bg-transparent p-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none resize-none disabled:opacity-60"
             />
@@ -1399,7 +1399,7 @@ export default function ChatPage() {
                   </>
                 ) : (
                   <>
-                    <span className="hidden sm:inline">Konsultasikan Keluhan Klinis</span>
+                    <span className="hidden sm:inline">Ceritakan Keluhan Anda</span>
                     <span className="sm:hidden">Konsultasi</span>
                     <Send className="w-3.5 h-3.5" />
                   </>
@@ -1414,11 +1414,11 @@ export default function ChatPage() {
       {showUpgradeModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-900">Simpan Riwayat Konsultasi ke Akun</h3>
+            <h3 className="text-sm font-bold text-slate-900">Simpan Riwayat Chat ke Akun</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
               {user
-                ? "Apakah Anda ingin menyimpan seluruh riwayat percakapan sesi tamu ini ke akun rekam medis terdaftar Anda?"
-                : "Untuk menyimpan dan mensinkronkan riwayat percakapan ini ke semua perangkat, silakan masuk atau daftar akun pasien RSUKT."}
+                ? "Mau menyimpan seluruh percakapan sebagai tamu ini ke akun Anda?"
+                : "Agar riwayat chat tersimpan dan bisa dibuka di perangkat lain, silakan masuk atau daftar akun RSUKT."}
             </p>
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
@@ -1483,7 +1483,7 @@ export default function ChatPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-sm font-bold text-slate-900">Metadata Sitasi Bukti Klinis</h3>
+                <h3 className="text-sm font-bold text-slate-900">Sumber Jawaban</h3>
               </div>
               <button
                 onClick={() => setSelectedCitation(null)}
@@ -1532,7 +1532,7 @@ export default function ChatPage() {
               onClick={() => setSelectedCitation(null)}
               className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-semibold transition"
             >
-              Tutup Rincian Sitasi
+              Tutup Rincian Sumber
             </button>
           </div>
         </div>
@@ -1623,7 +1623,7 @@ export default function ChatPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-cyan-900 leading-relaxed">
-                  Asisten AI ini beroperasi sebagai <strong>Sistem Pendukung Keputusan Klinis (CDSS)</strong> rujukan protokol medis terakreditasi dan <strong>BUKAN merupakan pengganti diagnosis langsung dokter</strong>. AI tidak meresepkan terapi obat mandiri. Untuk kondisi darurat, segera hubungi IGD 119.
+                  Asisten AI ini hanya memberi informasi awal dan <strong>bukan pengganti pemeriksaan langsung oleh dokter</strong>. AI tidak memberi resep obat. Untuk kondisi darurat, segera hubungi IGD 119.
                 </p>
               </div>
 
@@ -1660,7 +1660,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Modal Koreksi Kualitas Penjelasan Klinis (RLHF Reinforcement Loop) */}
+      {/* Modal Laporkan Jawaban yang Kurang Tepat (RLHF Reinforcement Loop) */}
       {feedbackModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40">
           <div className="w-full max-w-lg bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -1671,7 +1671,7 @@ export default function ChatPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
-                    Koreksi Kualitas Penjelasan Klinis
+                    Laporkan Jawaban yang Kurang Tepat
                   </h3>
                   <p className="text-xs text-slate-500">
                     Bantu tim medis menyempurnakan keakuratan dan kenyamanan asisten edukasi
@@ -1744,7 +1744,7 @@ export default function ChatPage() {
                 onClick={handleSubmitDislikeModal}
                 className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50"
               >
-                {isSubmittingFeedback ? "Menyimpan Masukan..." : "Kirim Masukan Klinis"}
+                {isSubmittingFeedback ? "Menyimpan Masukan..." : "Kirim Masukan"}
               </button>
             </div>
           </div>

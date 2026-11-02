@@ -25,7 +25,7 @@ export default function RegisterPage() {
 
     const cleanUser = username.trim().toLowerCase();
     if (["admin", "administrator", "root", "superuser", "admin_rsukt", "system"].includes(cleanUser)) {
-      setError("Nama pengguna ini dicadangkan khusus untuk administrator sistem dan tidak dapat didaftarkan.");
+      setError("Username ini tidak bisa dipakai. Silakan pilih username lain.");
       return;
     }
 
@@ -34,7 +34,7 @@ export default function RegisterPage() {
       return;
     }
     if (password.length < 8) {
-      setError("Kata sandi harus memiliki panjang minimal 8 karakter.");
+      setError("Kata sandi minimal 8 karakter.");
       return;
     }
 
@@ -52,7 +52,7 @@ export default function RegisterPage() {
         router.push("/login");
       }, 1500);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Gagal melakukan pendaftaran. Silakan coba kembali.");
+      setError(err instanceof Error ? err.message : "Pendaftaran gagal. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -67,10 +67,10 @@ export default function RegisterPage() {
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            Registrasi Pasien & Rekam Medis Elektronik
+            Buat Akun Baru
           </h2>
           <p className="text-xs text-slate-500">
-            Pendaftaran Pasien untuk Konsultasi Anamnesis Terpandu AI & Rekam Medis Terenkripsi
+            Daftar gratis untuk mulai bertanya seputar kesehatan.
           </p>
         </div>
 
@@ -84,14 +84,14 @@ export default function RegisterPage() {
         {success && (
           <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3 text-xs text-emerald-700">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span>Pendaftaran berhasil! Mengalihkan ke halaman login...</span>
+            <span>Pendaftaran berhasil! Mengarahkan ke halaman masuk...</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              ID Pengguna Pasien / Rekam Medis <span className="text-red-500">*</span>
+              Username <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -102,7 +102,7 @@ export default function RegisterPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="misal: pasien_anamnesis_01"
+                placeholder="contoh: siti_rahma"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition"
               />
             </div>
@@ -110,7 +110,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Alamat Surel Pasien Terdaftar <span className="text-red-500">*</span>
+              Email <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -121,7 +121,7 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="pasien@rsukt.go.id"
+                placeholder="nama@email.com"
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck="false"
@@ -132,7 +132,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Nama Lengkap Pasien Sesuai Identitas Resmi (KTP/KIA)
+              Nama Lengkap
             </label>
             <input
               type="text"
@@ -145,7 +145,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Kata Sandi Kredensial Medis (Min. 8 karakter) <span className="text-red-500">*</span>
+              Kata Sandi (minimal 8 karakter) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -165,7 +165,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Konfirmasi Kata Sandi Kredensial Medis <span className="text-red-500">*</span>
+              Ulangi Kata Sandi <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -189,10 +189,10 @@ export default function RegisterPage() {
             className="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
-              <span>Mendaftarkan Subjek Klinis ke Basis Data...</span>
+              <span>Membuat akun...</span>
             ) : (
               <>
-                <span>Daftarkan Pasien (Peran: Pasien / User Klinis)</span>
+                <span>Daftar</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -208,11 +208,11 @@ export default function RegisterPage() {
           </div>
           <div className="text-[11px] text-slate-500 flex items-center justify-center gap-1">
             <Shield className="w-3.5 h-3.5 text-cyan-600" />
-            <span>Registrasi publik secara otomatis menetapkan hak akses Pasien / Pengguna Klinis (USER)</span>
+            <span>Akun baru otomatis terdaftar sebagai pengguna biasa.</span>
           </div>
           <div className="text-[10px] text-emerald-700 font-medium flex items-center justify-center gap-1">
             <Shield className="w-3 h-3 text-emerald-600" />
-            <span>Data kesehatan sensitif dilindungi sesuai UU PDP No. 27/2022 (Pasal 4) & ISO/IEC 27001 ISMS</span>
+            <span>Data kesehatan Anda dijaga kerahasiaannya.</span>
           </div>
         </div>
       </div>
