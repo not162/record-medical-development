@@ -1,86 +1,151 @@
-"""Ready-to-run SFT (LoRA) script. NOT executed in this repo yet: no local causal LM, peft, or trl was available.
+"""LoRA SFT with peft + trl (SFTTrainer). Runs on CPU or GPU.
 
-Needs:  pip install transformers peft trl datasets accelerate  (plus a LOCAL base model folder)
-Usage:  python scripts/run_sft.py --base-model D:/models/<causal-lm> --mode fast
-        python scripts/run_sft.py --base-model D:/models/<causal-lm> --mode thinking --epochs 3
-Data:   datasets/sft/sft_<mode>_{train,val}.jsonl (chat format: messages[system,user,assistant])
-Output: services/ai-api/models/sft/<mode>/ (LoRA adapter) + metrics.json (val loss before/after)
-Works on CPU (slow, use a <=1B model) or GPU (bf16/fp16 auto). Not clinically validated.
+Usage (real model, YOU must have it locally, e.g. D:/models/Qwen2.5-0.5B-Instruct):
+  python scripts/run_sft.py --base-model D:/models/<model> --mode fast
+  python scripts/run_sft.py --base-model D:/models/<model> --mode both --epochs 3 --lora-r 8
+Data:   datasets/sft/sft_<mode>_{train,val}.jsonl (chat 'messages': system, user, assistant)
+Output: <output-dir>/<mode>/ (LoRA adapter) + run_report.json (real val loss before/after)
+Nothing is downloaded unless you pass --allow-download together with a Hugging Face id.
+Only the answer (last assistant turn) counts for the loss; the prompt is masked.
+Not clinically validated.
 """
-import argparse, json, math, sys
+import argparse, json, math, sys, time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+SFT_DIR = ROOT / "datasets" / "sft"
+DEFAULT_OUT = ROOT / "services" / "ai-api" / "models" / "sft"
+
+# Fallback when the tokenizer has no chat template.
+SIMPLE_TEMPLATE = (
+    "{% for m in messages %}<|{{ m['role'] }}|>\n{{ m['content'] }}\n{% endfor %}"
+    "{% if add_generation_prompt %}<|assistant|>\n{% endif %}"
+)
+
+
+def load_rows(mode, split, limit=None):
+    path = SFT_DIR / f"sft_{mode}_{split}.jsonl"
+    if not path.exists():
+        raise FileNotFoundError(f"Dataset file not found: {path}")
+    rows = []
+    with open(path, encoding="utf8") as f:
+        for line in f:
+            if line.strip():
+                rows.append(json.loads(line))
+    return rows[:limit] if limit else rows
+
+
+def to_prompt_completion(rows):
+    """Split chat rows so only the final assistant message is trained (completion-only loss)."""
+    out = []
+    for r in rows:
+        m = r["messages"]
+        if len(m) < 2 or m[-1]["role"] != "assistant":
+            continue
+        out.append({"prompt": m[:-1], "completion": [m[-1]]})
+    return out
+
+
+def train_sft(model, tokenizer, mode, output_dir, epochs=3, lr=2e-4, lora_r=8, lora_alpha=None,
+              batch=2, max_len=1024, seed=42, max_steps=-1, limit=None, target_modules="all-linear",
+              use_gpu=None, grad_accum=1, log=print):
+    """Train a LoRA adapter on the SFT files for `mode`. Returns the run report dict.
+
+    `model` and `tokenizer` are already loaded (so tests can pass a tiny random model).
+    """
+    import torch
+    from datasets import Dataset
+    from peft import LoraConfig
+    from trl import SFTConfig, SFTTrainer
+    from transformers import set_seed
+
+    set_seed(seed)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    if not getattr(tokenizer, "chat_template", None):
+        tokenizer.chat_template = SIMPLE_TEMPLATE
+    gpu = torch.cuda.is_available() if use_gpu is None else use_gpu
+    out = Path(output_dir) / mode
+    out.mkdir(parents=True, exist_ok=True)
+
+    train_ds = Dataset.from_list(to_prompt_completion(load_rows(mode, "train", limit)))
+    val_ds = Dataset.from_list(to_prompt_completion(load_rows(mode, "val", limit)))
+    cfg = SFTConfig(
+        output_dir=str(out / "ckpt"), num_train_epochs=epochs, max_steps=max_steps, learning_rate=lr,
+        per_device_train_batch_size=batch, per_device_eval_batch_size=batch,
+        gradient_accumulation_steps=grad_accum, max_length=max_len, completion_only_loss=True,
+        eval_strategy="no", save_strategy="no", logging_steps=1, seed=seed, report_to=[],
+        use_cpu=not gpu, bf16=bool(gpu and torch.cuda.is_bf16_supported()),
+        fp16=bool(gpu and not torch.cuda.is_bf16_supported()),
+    )
+    lcfg = LoraConfig(r=lora_r, lora_alpha=lora_alpha or 2 * lora_r, lora_dropout=0.05,
+                      task_type="CAUSAL_LM", target_modules=target_modules)
+    trainer = SFTTrainer(model=model, args=cfg, train_dataset=train_ds, eval_dataset=val_ds,
+                         processing_class=tokenizer, peft_config=lcfg)
+    t0 = time.time()
+    before = float(trainer.evaluate()["eval_loss"])
+    log(f"[{mode}] val loss before: {before:.4f}")
+    trainer.train()
+    after = float(trainer.evaluate()["eval_loss"])
+    log(f"[{mode}] val loss after: {after:.4f}")
+    trainer.model.save_pretrained(out)
+    tl = [h["loss"] for h in trainer.state.log_history if "loss" in h]
+    n_params = sum(p.numel() for p in trainer.model.parameters())
+    n_train = sum(p.numel() for p in trainer.model.parameters() if p.requires_grad)
+    report = {
+        "mode": mode, "n_train": len(train_ds), "n_val": len(val_ds), "epochs": epochs,
+        "max_steps": max_steps, "lr": lr, "lora_r": lora_r, "batch": batch, "max_len": max_len,
+        "seed": seed, "device": "gpu" if gpu else "cpu", "total_params": n_params,
+        "trainable_params": n_train, "train_steps": int(trainer.state.global_step),
+        "train_loss_first": tl[0] if tl else None, "train_loss_last": tl[-1] if tl else None,
+        "train_loss_curve": tl, "val_loss_before": before, "val_loss_after": after,
+        "val_ppl_before": math.exp(min(before, 50)), "val_ppl_after": math.exp(min(after, 50)),
+        "seconds": round(time.time() - t0, 1), "adapter_dir": str(out),
+    }
+    (out / "run_report.json").write_text(json.dumps(report, indent=2), encoding="utf8")
+    return report
+
+
+def load_base(path_or_id, allow_download):
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    local = Path(path_or_id).exists()
+    if not local and not allow_download:
+        sys.exit(f"Base model '{path_or_id}' is not a local folder. Download it yourself, "
+                 f"or pass --allow-download to let transformers fetch this HF id.")
+    kw = {"local_files_only": local or not allow_download}
+    tok = AutoTokenizer.from_pretrained(path_or_id, **kw)
+    gpu = torch.cuda.is_available()
+    dtype = (torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16) if gpu else torch.float32
+    model = AutoModelForCausalLM.from_pretrained(path_or_id, dtype=dtype, **kw)
+    return model, tok
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--base-model", required=True, help="local path to a causal LM (no download is done)")
-    ap.add_argument("--mode", choices=["fast", "thinking"], required=True)
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--base-model", required=True, help="local folder (or HF id with --allow-download)")
+    ap.add_argument("--mode", choices=["fast", "thinking", "both"], required=True)
     ap.add_argument("--epochs", type=int, default=3)
     ap.add_argument("--lr", type=float, default=2e-4)
+    ap.add_argument("--lora-r", type=int, default=8)
     ap.add_argument("--batch", type=int, default=2)
     ap.add_argument("--max-len", type=int, default=1024)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--output-dir", default=str(DEFAULT_OUT))
+    ap.add_argument("--allow-download", action="store_true", help="permit fetching a HF model id")
     a = ap.parse_args()
-    try:
-        import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments, set_seed
-        from peft import LoraConfig, get_peft_model
-    except ImportError as e:
-        sys.exit(f"Missing dependency: {e}. Install transformers, peft, accelerate first.")
-    base = Path(a.base_model)
-    if not base.exists():
-        sys.exit(f"Base model path not found: {base}")
-    set_seed(a.seed)
-    tok = AutoTokenizer.from_pretrained(base, local_files_only=True)
-    if tok.pad_token is None:
-        tok.pad_token = tok.eos_token
-    gpu = torch.cuda.is_available()
-    dtype = torch.bfloat16 if gpu and torch.cuda.is_bf16_supported() else (torch.float16 if gpu else torch.float32)
-    model = AutoModelForCausalLM.from_pretrained(base, local_files_only=True, torch_dtype=dtype)
-    model = get_peft_model(model, LoraConfig(r=8, lora_alpha=16, lora_dropout=0.05, task_type="CAUSAL_LM",
-                                             target_modules="all-linear"))
-
-    def load(split):
-        rows = [json.loads(l) for l in open(ROOT / "datasets/sft" / f"sft_{a.mode}_{split}.jsonl", encoding="utf8") if l.strip()]
-        out = []
-        for r in rows:
-            msgs = r["messages"]
-            prompt = tok.apply_chat_template(msgs[:-1], tokenize=False, add_generation_prompt=True)
-            full = prompt + msgs[-1]["content"] + (tok.eos_token or "")
-            p_ids = tok(prompt, add_special_tokens=False)["input_ids"]
-            ids = tok(full, add_special_tokens=False, truncation=True, max_length=a.max_len)["input_ids"]
-            labels = [-100] * min(len(p_ids), len(ids)) + ids[len(p_ids):]  # loss on the answer only
-            out.append({"input_ids": ids, "labels": labels})
-        return out
-
-    train, val = load("train"), load("val")
-
-    def collate(b):
-        n = max(len(x["input_ids"]) for x in b)
-        pad = tok.pad_token_id
-        return {"input_ids": torch.tensor([x["input_ids"] + [pad] * (n - len(x["input_ids"])) for x in b]),
-                "attention_mask": torch.tensor([[1] * len(x["input_ids"]) + [0] * (n - len(x["input_ids"])) for x in b]),
-                "labels": torch.tensor([x["labels"] + [-100] * (n - len(x["labels"])) for x in b])}
-
-    out_dir = ROOT / "services/ai-api/models/sft" / a.mode
-    out_dir.mkdir(parents=True, exist_ok=True)
-    args = TrainingArguments(output_dir=str(out_dir / "ckpt"), num_train_epochs=a.epochs, learning_rate=a.lr,
-                             per_device_train_batch_size=a.batch, per_device_eval_batch_size=a.batch,
-                             eval_strategy="epoch", save_strategy="no", logging_steps=5, seed=a.seed,
-                             bf16=(dtype == torch.bfloat16), fp16=(dtype == torch.float16),
-                             use_cpu=not gpu, report_to=[], remove_unused_columns=False)
-    tr = Trainer(model=model, args=args, train_dataset=train, eval_dataset=val, data_collator=collate)
-    before = tr.evaluate()["eval_loss"]
-    tr.train()
-    after = tr.evaluate()["eval_loss"]
-    model.save_pretrained(out_dir)
-    m = {"mode": a.mode, "base_model": str(base), "n_train": len(train), "n_val": len(val), "epochs": a.epochs,
-         "val_loss_before": before, "val_loss_after": after, "val_ppl_before": math.exp(before),
-         "val_ppl_after": math.exp(after), "seed": a.seed, "device": "gpu" if gpu else "cpu"}
-    (out_dir / "metrics.json").write_text(json.dumps(m, indent=2), encoding="utf8")
-    print(json.dumps(m, indent=2))
+    modes = ["fast", "thinking"] if a.mode == "both" else [a.mode]
+    reports = []
+    for m in modes:
+        model, tok = load_base(a.base_model, a.allow_download)  # fresh base for each mode
+        reports.append(dict(train_sft(model, tok, m, a.output_dir, epochs=a.epochs, lr=a.lr,
+                                      lora_r=a.lora_r, batch=a.batch, max_len=a.max_len, seed=a.seed),
+                            base_model=str(a.base_model)))
+        del model
+    Path(a.output_dir).mkdir(parents=True, exist_ok=True)
+    (Path(a.output_dir) / "run_report.json").write_text(json.dumps(reports, indent=2), encoding="utf8")
+    for r in reports:
+        print(f"{r['mode']}: val loss {r['val_loss_before']:.4f} -> {r['val_loss_after']:.4f} ({r['device']}, {r['seconds']}s)")
 
 
 if __name__ == "__main__":

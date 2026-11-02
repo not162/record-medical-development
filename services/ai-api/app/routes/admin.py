@@ -150,6 +150,26 @@ def update_user_role_or_status(
     return target
 
 # ==============================================================================
+# ADAPTIVE MODEL UPDATE (runs in background after dataset changes)
+# ==============================================================================
+
+def _trigger_adaptation(reason: str, user_id: Optional[str]) -> None:
+    """Fire-and-forget: never blocks or breaks the dataset request."""
+    try:
+        from app.ml.adaptive_update import adaptive_updater
+        adaptive_updater.trigger(reason, user_id)
+    except Exception:
+        pass
+
+
+@router.get("/adaptation/status")
+def get_adaptation_status(admin: User = Depends(require_researcher)):
+    """Status penyesuaian otomatis model keputusan (tahap, progres, waktu, metrik). Hanya Admin Riset."""
+    from app.ml.adaptive_update import adaptive_updater
+    return adaptive_updater.get_status()
+
+
+# ==============================================================================
 # DATASET INGESTION & MANAGEMENT ENDPOINTS (SPRINT 02)
 # ==============================================================================
 
@@ -244,6 +264,7 @@ async def upload_dataset_file(
 
     # Jalankan ingesti otomatis untuk berkas yang baru diunggah
     sync_result = ingestion_service.sync_inbox_directory(db=db, user_id=admin.id)
+    _trigger_adaptation("upload", admin.id)
 
     return {
         "status": "success",
@@ -264,6 +285,8 @@ def approve_dataset_records(
     approved_count = ingestion_service.approve_dataset(dataset_id=id, db=db, admin_id=admin.id)
     if approved_count == 0:
         raise HTTPException(status_code=404, detail=f"Dataset atau rekam dengan ID '{id}' tidak ditemukan.")
+
+    _trigger_adaptation("approve", admin.id)
 
     return {
         "status": "success",
@@ -313,6 +336,7 @@ def index_dataset(
     """
     from app.rag.hybrid_search import hybrid_rag_engine
     result = hybrid_rag_engine.index_approved_records(db=db)
+    _trigger_adaptation("index", admin.id)
     return {
         "status": "success",
         "dataset_id": id,

@@ -66,33 +66,73 @@ def rule_based(f: Dict[str, float]) -> Dict[str, Any]:
 
 _model = None
 _loaded = False
+_mtime = None          # mtime_ns of the artifact that _model was loaded from
+_loaded_path = None    # path that _model was loaded from
+
+
+def _stat_mtime():
+    try:
+        return ARTIFACT.stat().st_mtime_ns
+    except OSError:
+        return None
 
 
 def _load():
-    global _model, _loaded
-    if _loaded:
+    """Return the model, hot-reloading when the artifact file changed on disk (mtime check)."""
+    global _model, _loaded, _mtime, _loaded_path
+    cur = _stat_mtime()
+    if _loaded and cur == _mtime and _loaded_path == ARTIFACT:
         return _model
     _loaded = True
+    _mtime = cur
+    _loaded_path = ARTIFACT
+    if cur is None:
+        _model = None
+        return _model
     try:
         import joblib
-        _model = joblib.load(ARTIFACT) if ARTIFACT.exists() else None
+        _model = joblib.load(ARTIFACT)
     except Exception:
-        _model = None
+        # keep the previously loaded model if the new file is unreadable
+        pass
     return _model
+
+
+def _predict(m, f: Dict[str, float]):
+    x = [[f[k] for k in FEATURES]]
+    classes = list(m.classes_)
+    if hasattr(m, "predict_proba"):
+        proba = [float(p) for p in m.predict_proba(x)[0]]
+    else:  # e.g. LinearSVC: squash the margin
+        import math
+        d = m.decision_function(x)[0]
+        if hasattr(d, "__len__"):
+            ex = [math.exp(float(v) - max(float(w) for w in d)) for v in d]
+            proba = [e / sum(ex) for e in ex]
+        else:
+            p1 = 1.0 / (1.0 + math.exp(-float(d)))
+            proba = [1.0 - p1, p1]
+    i = max(range(len(proba)), key=lambda k: proba[k])
+    return classes[i], max(proba)
+
+
+def route_with(model, text: str) -> Dict[str, Any]:
+    """Route using an explicit model (None -> rule-based). Red flags always win."""
+    f = extract_features(text)
+    if f["redflag_hits"] > 0:
+        return {"mode": "thinking", "confidence": 1.0, "reasons": ["ada tanda bahaya (aturan keselamatan)"]}
+    if model is None:
+        return rule_based(f)
+    try:
+        mode, conf = _predict(model, f)
+        reasons = [f"{k}={int(f[k])}" for k in ("symptom_hits", "drug_hits", "graph_hits") if f[k] > 0]             or ["tidak ada sinyal kompleks"]
+        return {"mode": mode, "confidence": round(float(conf), 4), "reasons": reasons}
+    except Exception:
+        return rule_based(f)
 
 
 def route_mode(text: str) -> Dict[str, Any]:
     f = extract_features(text)
     if f["redflag_hits"] > 0:
         return {"mode": "thinking", "confidence": 1.0, "reasons": ["ada tanda bahaya (aturan keselamatan)"]}
-    m = _load()
-    if m is None:
-        return rule_based(f)
-    try:
-        proba = m.predict_proba([[f[k] for k in FEATURES]])[0]
-        mode = list(m.classes_)[int(proba.argmax())]
-        reasons = [f"{k}={int(f[k])}" for k in ("symptom_hits", "drug_hits", "graph_hits") if f[k] > 0] \
-            or ["tidak ada sinyal kompleks"]
-        return {"mode": mode, "confidence": round(float(proba.max()), 4), "reasons": reasons}
-    except Exception:
-        return rule_based(f)
+    return route_with(_load(), text)

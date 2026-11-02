@@ -8,6 +8,7 @@ from sqlalchemy import func
 from groq import Groq
 
 from app.config import settings
+from app.security.auth import normalize_role, ADMIN_ROLES
 from app.models import User, ChatMessage, ChatSession
 from app.agents.gp_safety import gp_safety_gate
 from app.agents.safety import evaluate_clinical_safety, evaluate_contraindications, evaluate_prompt_injection, CLINICAL_DISCLAIMER
@@ -132,6 +133,13 @@ class ClinicalAgent:
         4. Stage 3: LLM generation via Groq API (Thinking with 17 ML + 8 DL vs Fast with 5 ML + 2 DL).
         5. Stage 4: Citation attachment & uncertainty verification.
         """
+        # -2. Lapisan kedua: admin (Operasional / Riset / ADMIN_PERISET) tidak boleh memproses sesi pasien
+        if current_user is not None and normalize_role(current_user.role) in ADMIN_ROLES:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Akses ditolak: demi privasi pasien, akun admin tidak boleh memakai percakapan pasien."
+            )
+
         # -1. Strict Cross-Patient Isolation Check
         session = db.query(ChatSession).filter(
             ChatSession.id == session_id,
@@ -296,6 +304,11 @@ class ClinicalAgent:
                     "3. KETIDAKPASTIAN & BUKTI TIDAK CUKUP: Jika informasi tidak cukup, nyatakan secara eksplisit dan sarankan pemeriksaan fisik dokter.\n"
                     "4. KEGAWATDARURATAN (RED FLAGS): Prioritaskan rujukan ke IGD / 119.\n"
                     f"5. {CLINICAL_DISCLAIMER}\n"
+                    "6. BAHASA AWAM: Tulis dengan bahasa sehari-hari yang mudah dipahami pasien. Hindari istilah medis; "
+                    "jika terpaksa dipakai, jelaskan artinya dengan kata sederhana.\n"
+                    "7. TABEL: Jika membandingkan beberapa hal (misalnya tanda bahaya vs tanda ringan, atau jadwal minum obat), "
+                    "sajikan dalam tabel markdown singkat (maksimal 4 kolom, baris pertama judul kolom). "
+                    "Jangan memakai garis atau simbol hias di luar tabel.\n"
                 )
                 if session_summary:
                     system_prompt += (

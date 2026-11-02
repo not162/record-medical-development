@@ -1,5 +1,6 @@
 "use client";
 
+import PersonAvatar from "@/components/PersonAvatar";
 import React, { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
@@ -13,7 +14,7 @@ function useMounted() {
   );
 }
 import { 
-  Send, Bot, User as UserIcon,
+  Send, User as UserIcon,
   ThumbsUp, ThumbsDown, FileText,
   Activity, Plus, MessageSquare, ExternalLink, X,
   History, ShieldCheck, Stethoscope,
@@ -21,6 +22,7 @@ import {
   Clock, PhoneCall, Calendar, Download, RefreshCw, Zap, Brain, Loader2
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { isAdminRole } from "@/lib/roles";
 import { API_BASE_URL } from "@/lib/api";
 import { getChatTier } from "@/lib/chat/tiers";
 
@@ -118,6 +120,66 @@ interface ApiSessionMessage {
  * Komponen pemformatan teks klinis untuk pasien:
  * Menghilangkan simbol teknis (*, '', ##, ###) dan merender judul, list, dan penekanan secara bersih.
  */
+type MdItem = { type: "line"; line: string } | { type: "table"; header: string[]; rows: string[][] };
+
+function splitTableRow(line: string): string[] {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+}
+
+function isTableSeparator(line: string): boolean {
+  return /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(line) && line.includes("-");
+}
+
+/** Mengelompokkan baris tabel markdown (| a | b |) agar tampil sebagai tabel rapi, bukan garis dan simbol. */
+function groupTables(lines: string[]): MdItem[] {
+  const items: MdItem[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const cur = lines[i].trim();
+    if (cur.startsWith("|") && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+      const header = splitTableRow(cur);
+      const rows: string[][] = [];
+      i += 2;
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        rows.push(splitTableRow(lines[i]));
+        i++;
+      }
+      items.push({ type: "table", header, rows });
+    } else {
+      items.push({ type: "line", line: lines[i] });
+      i++;
+    }
+  }
+  return items;
+}
+
+function SimpleTable({ header, rows }: { header: string[]; rows: string[][] }) {
+  return (
+    <div className="overflow-x-auto my-2 rounded-lg border border-slate-200">
+      <table className="w-full text-xs sm:text-sm text-left">
+        <thead className="bg-cyan-50 text-cyan-950">
+          <tr>
+            {header.map((h, i) => (
+              <th key={i} className="px-3 py-2 font-semibold border-b border-slate-200">{renderFormattedInline(h)}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, ri) => (
+            <tr key={ri} className={ri % 2 ? "bg-slate-50" : "bg-white"}>
+              {header.map((_, ci) => (
+                <td key={ci} className="px-3 py-2 align-top text-slate-700 border-b border-slate-100">
+                  {renderFormattedInline(r[ci] ?? "")}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function CleanClinicalMarkdown({ content }: { content: string; isAdmin?: boolean }) {
   if (!content) return null;
 
@@ -125,7 +187,11 @@ function CleanClinicalMarkdown({ content }: { content: string; isAdmin?: boolean
 
   return (
     <div className="space-y-2 text-xs sm:text-sm text-slate-800 leading-relaxed">
-      {lines.map((line, idx) => {
+      {groupTables(lines).map((item, idx) => {
+        if (item.type === "table") {
+          return <SimpleTable key={idx} header={item.header} rows={item.rows} />;
+        }
+        const line = item.line;
         const trimmed = line.trim();
         if (!trimmed) {
           return <div key={idx} className="h-1.5" />;
@@ -181,7 +247,7 @@ function renderFormattedInline(text: string): React.ReactNode {
 }
 
 export default function ChatPage() {
-  const { role: userRole } = useAuth();
+  const { role: userRole, isLoading: authLoading } = useAuth();
   const { user } = useAuth();
   const currentTier = getChatTier(user);
   const [guestConsentDismissed, setGuestConsentDismissed] = useState(false);
@@ -192,14 +258,14 @@ export default function ChatPage() {
 
   // Strict separation: Administrator dilarang keras masuk ke ruang konsultasi pasien (UU PDP No. 27/2022)
   useEffect(() => {
-    if (userRole === "ADMIN") {
+    if (isAdminRole(userRole)) {
       pageRouter.replace("/admin/dashboard");
     }
   }, [userRole, pageRouter]);
 
   const mounted = useMounted();
   const { role } = useAuth();
-  const isAdmin = role === "ADMIN";
+  const isAdmin = isAdminRole(role);
   const isEffectiveAdmin = mounted && isAdmin;
 
   const [sessions, setSessions] = useState<SessionItem[]>([]);
@@ -242,6 +308,7 @@ export default function ChatPage() {
   };
 
   const fetchQuota = useCallback(async () => {
+    if (isAdminRole(userRole)) return;
     const token = localStorage.getItem("clinical_token");
     if (!token) return;
     try {
@@ -258,7 +325,7 @@ export default function ChatPage() {
     } catch {
       // offline fallback
     }
-  }, []);
+  }, [userRole]);
 
   const handleResetQuota = async () => {
     const token = localStorage.getItem("clinical_token");
@@ -311,6 +378,8 @@ export default function ChatPage() {
   useEffect(() => {
     let ignore = false;
     const initQuota = async () => {
+      // Admin tidak pernah memanggil API percakapan pasien.
+      if (authLoading || isAdminRole(userRole)) return;
       const token = localStorage.getItem("clinical_token");
       if (!token || ignore) return;
       try {
@@ -332,7 +401,7 @@ export default function ChatPage() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [authLoading, userRole]);
 
   useEffect(() => {
     if (!secondsLeft || secondsLeft <= 0) return;
@@ -464,6 +533,7 @@ export default function ChatPage() {
   useEffect(() => {
     let ignore = false;
     const run = async () => {
+      if (authLoading || isAdminRole(userRole)) return;
       const token = localStorage.getItem("clinical_token");
       if (!token) return;
       try {
@@ -486,7 +556,7 @@ export default function ChatPage() {
     return () => {
       ignore = true;
     };
-  }, [loadSession]);
+  }, [loadSession, authLoading, userRole]);
 
   const createNewSession = async () => {
     const token = localStorage.getItem("clinical_token");
@@ -1010,7 +1080,7 @@ export default function ChatPage() {
           {messages.length === 0 && (
             <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-center space-y-4 max-w-xl mx-auto my-auto animate-in fade-in duration-200">
               <div className="w-14 h-14 rounded-2xl bg-cyan-600 flex items-center justify-center text-white shadow-sm">
-                <Stethoscope className="w-7 h-7" />
+                <PersonAvatar className="w-9 h-9" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900">
@@ -1108,7 +1178,7 @@ export default function ChatPage() {
             >
               {msg.sender === "assistant" && (
                 <div className="w-8 h-8 rounded-xl bg-cyan-600 flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
-                  <Bot className="w-4 h-4" />
+                  <PersonAvatar className="w-6 h-6" />
                 </div>
               )}
 
@@ -1222,7 +1292,7 @@ export default function ChatPage() {
           {isGenerating && (
             <div className="flex gap-2 sm:gap-3 items-center text-xs text-slate-500">
               <div className="w-8 h-8 rounded-xl bg-cyan-600 flex items-center justify-center text-white shrink-0 shadow-xs">
-                <Bot className="w-4 h-4 animate-spin" />
+                <PersonAvatar className="w-6 h-6" talking />
               </div>
               <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce"></div>

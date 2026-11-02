@@ -29,9 +29,9 @@ def ensure_default_admin():
     try:
         admin_accounts = [
             {"username": "admin", "email": "admin@rsukt.go.id",
-             "full_name": "Administrator Medis Utama RSUKT"},
-            {"username": "admin1", "email": "admin1@rsukt.go.id",
-             "full_name": "Administrator Peneliti RSUKT 1"},
+             "full_name": "Admin Operasional RSUKT", "role": "ADMIN"},
+            {"username": "periset", "email": "periset@rsukt.go.id",
+             "full_name": "Admin Riset RSUKT (Superadmin)", "role": "RESEARCHER"},
         ]
 
         for acc in admin_accounts:
@@ -44,7 +44,7 @@ def ensure_default_admin():
                     email=acc["email"],
                     hashed_password=hash_password(password),
                     full_name=acc["full_name"],
-                    role="ADMIN",
+                    role=acc["role"],
                     is_active=True,
                 ))
                 db.commit()

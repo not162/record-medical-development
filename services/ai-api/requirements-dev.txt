@@ -1,3 +1,12 @@
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 
+
+# LoRA SFT (scripts/run_sft.py). Dev/training only; do not add to requirements.txt (serverless).
+transformers==5.18.0
+torch==2.11.0
+peft==0.21.2
+trl==1.17.1
+accelerate==1.15.0
+datasets==5.1.0
+tokenizers==0.23.2

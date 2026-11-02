@@ -5,9 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { History, MessageSquare, Trash2, ArrowRight, Loader2, AlertCircle, FileText, PlusCircle } from "lucide-react";
 import { api, SessionItem } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { isAdminRole } from "@/lib/roles";
 
 export default function ChatHistoryPage() {
   const router = useRouter();
+  const { role, isLoading: authLoading } = useAuth();
+  const blocked = isAdminRole(role);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -17,6 +21,8 @@ export default function ChatHistoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchInitialSessions = useCallback(async () => {
+    // Admin tidak pernah memanggil API riwayat percakapan pasien.
+    if (authLoading || blocked) return;
     setLoading(true);
     setError(null);
     try {
@@ -29,7 +35,7 @@ export default function ChatHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authLoading, blocked]);
 
   useEffect(() => {
     void Promise.resolve().then(() => {

@@ -1,246 +1,176 @@
-# Sistem Asisten AI Klinis & Workspace Riset Medis Terpadu (RSUKT)
+# Web Klinik RSUKT
 
-[![Next.js 16 (Turbopack)](https://img.shields.io/badge/Frontend-Next.js%2016-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![FastAPI Python 3.11](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.11-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Regulasi UU PDP](https://img.shields.io/badge/Kepatuhan-UU%20PDP%20No.%2027%2F2022-blue?style=flat-square)](https://peraturan.bpk.go.id/Details/229798/uu-no-27-tahun-2022)
-[![Standar Permenkes](https://img.shields.io/badge/Standar-Permenkes%20No.%2012%2F2025-emerald?style=flat-square)](https://kemkes.go.id/)
-[![ISO 27001](https://img.shields.io/badge/Keamanan-ISO%2FIEC%2027001%20ISMS-red?style=flat-square)](https://www.iso.org/isoiec-27001-information-security.html)
+Asisten kesehatan berbasis AI untuk pasien, ditambah ruang kerja untuk admin dan tim riset. Pasien bisa menceritakan keluhan dengan bahasa sehari-hari. Asisten menjawab dengan bahasa yang mudah dipahami, mengingatkan kalau ada tanda bahaya, dan menyarankan poli yang cocok.
 
-Aplikasi *Clinical Decision Support System* (CDSS) dan Asisten Edukasi Pasien Terintegrasi berbasis **Retrieval-Augmented Generation (RAG)**, **Penalaran Dual-Mode Llama**, **Scanning Deteksi Bahasa (Awam ➔ Medis Klinis)**, serta **Human-in-the-Loop RLHF Contextual Correction** yang dirancang untuk Rumah Sakit Umum Kota Terpadu (RSUKT).
+> Asisten ini hanya memberi informasi dan saran awal. Ia bukan dokter dan tidak memberi resep. Untuk keadaan darurat, hubungi 119 atau datang ke IGD.
 
----
+## Isi
 
-## 📑 Daftar Isi
+1. [Apa saja yang ada di dalamnya](#apa-saja-yang-ada-di-dalamnya)
+2. [Siapa boleh apa](#siapa-boleh-apa)
+3. [Cara kerja jawaban](#cara-kerja-jawaban)
+4. [Menjalankan di komputer sendiri](#menjalankan-di-komputer-sendiri)
+5. [Menambah data dan melatih model](#menambah-data-dan-melatih-model)
+6. [Folder penting](#folder-penting)
+7. [Menjalankan tes](#menjalankan-tes)
+8. [Memasang ke internet](#memasang-ke-internet)
+9. [Catatan keamanan](#catatan-keamanan)
 
-1. [Kredensial Default Sistem](#-kredensial-default-sistem)
-2. [Fitur Utama & Arsitektur](#-fitur-utama--arsitektur)
-3. [Alur Autentikasi & Pemulihan Akun](#-alur-autentikasi--pemulihan-akun)
-4. [Dual-Mode Reasoning & Pengetahuan Medis](#-dual-mode-reasoning--pengetahuan-medis)
-5. [Batas Kuota Keselamatan Pasien (Clinic Health Reset)](#-batas-kuota-keselamatan-pasien-clinic-health-reset)
-6. [Sistem RLHF (Reinforcement Learning)](#-sistem-rlhf-reinforcement-learning)
-7. [Kepatuhan Hukum & Standar Keamanan Data](#-kepatuhan-hukum--standar-keamanan-data)
-8. [Struktur Proyek](#-struktur-proyek)
-9. [Panduan Menjalankan Sistem](#-panduan-menjalankan-sistem)
-10. [Dokumentasi Audit Sprint](#-dokumentasi-audit-sprint)
+## Apa saja yang ada di dalamnya
 
----
+- **Chat untuk pasien.** Tanya keluhan, baca jawaban, simpan riwayat. Tamu tanpa akun juga bisa mencoba. Jawaban bisa berisi tabel kalau ada hal yang perlu dibandingkan.
+- **Dua cara menjawab.** *Thinking Mode* lebih teliti dan memakai lebih banyak sumber. *Fast Mode* lebih singkat dan cepat. Kalau keluhan mengandung tanda bahaya, sistem selalu memakai cara yang teliti.
+- **Batas harian.** Satu pasien mendapat 7 jawaban AI dalam 24 jam. Setelah itu chat ditutup sementara dan pasien diarahkan ke IGD 119 atau poli rumah sakit.
+- **Masukan dari pengguna.** Tombol "membantu" dan "kurang tepat" (dengan alasan) dipakai untuk memperbaiki jawaban.
+- **Ruang kerja admin.** Ringkasan, masukan pengguna, catatan aktivitas, dan pengaturan.
+- **Ruang kerja riset.** Latih model, kelola data latih, uji kualitas, basis pengetahuan, dan peta hubungan penyakit-gejala-obat.
+- **Penyesuaian model otomatis.** Saat data baru masuk, model pengatur jalur jawaban menyesuaikan diri sendiri secara bertahap.
 
-## 🔑 Kredensial Default Sistem
+## Siapa boleh apa
 
-Sistem dilengkapi akun administrator terverifikasi untuk evaluasi klinis dan pengawasan model:
+Ada tiga peran. Aturan ini dijaga di server, bukan hanya disembunyikan di tampilan.
 
-| Username | Peran Sistem | Alamat Email | Kata Sandi | Lingkup Hak Akses |
-| :--- | :--- | :--- | :--- | :--- |
-| `admin` | **ADMIN** | `admin@rsukt.go.id` | `admin123_` | Full Superuser, Neural Pipeline Inspector, Audit Trail, Knowledge Base Management |
-| `admin1` | **ADMIN** | `admin1@rsukt.go.id` | `admin123_` | Clinical Operator, Anotasi Verifikasi Medis, Knowledge Graph Inspector |
-| *Pendaftaran Mandiri* | **USER** | Sesuai pendaftaran | Ditetapkan pengguna | Konsultasi Edukasi Medis, Resume RME, Feedback RLHF |
+| Peran | Nama di aplikasi | Boleh | Tidak boleh |
+| :--- | :--- | :--- | :--- |
+| Pasien (`USER`) | Pasien | Bertanya ke asisten, menyimpan riwayat, mengisi profil kesehatan, memberi masukan | Membuka halaman admin |
+| `ADMIN` | **Admin Operasional** | Melihat ringkasan, meninjau masukan pengguna (isi chat disamarkan), melihat catatan aktivitas, melihat status sistem | Latih model, kelola data, ubah basis pengetahuan, kelola pengguna, membuka chat pasien |
+| `RESEARCHER` | **Admin Riset (Superadmin)** | Semua yang bisa dilakukan Admin Operasional, ditambah latih model, kelola data latih, uji kualitas, label data, basis pengetahuan, peta penyakit, dan **Kelola Pengguna** (ubah peran, aktifkan atau nonaktifkan akun) | Membuka chat pasien |
 
-> **Catatan Keamanan:** Tombol placeholder otomatis (*"Isi Kredensial"*) telah dihilangkan dari antarmuka login publik demi mematuhi prinsip *Zero-Trust Credential Security* ISO 27001.
+Hal yang perlu diingat:
 
----
+- Pendaftaran di `/register` selalu menghasilkan akun pasien. Peran admin hanya bisa diberikan oleh Admin Riset lewat halaman **Kelola Pengguna**.
+- Admin Riset tidak bisa mengubah akunnya sendiri, dan Admin Riset aktif yang terakhir tidak bisa dicabut.
+- Admin Operasional dan Admin Riset **tidak bisa** membuka atau menulis di chat pasien.
+- Kalau Admin Operasional membuka halaman riset lewat alamat langsung, yang muncul hanya pesan bahwa halaman itu khusus Admin Riset.
 
-## 🌟 Fitur Utama & Arsitektur
+### Akun awal untuk pengembangan
 
-- **Scanning Deteksi Bahasa (Awam ➔ Medis Klinis):** Mengonversi keluhan bahasa awam sehari-hari pasien menjadi terminologi standar medis klinis dan kode diagnosa ICD-10 secara instan (<2 ms) dengan token steering neural.
-- **Abstraksi UI Pasien (Hospital Native UX):** Menghindari tampilan "terlalu kaku/AI-slop". Pasien menikmati antarmuka rumah sakit yang tenang, bersih (*Light Theme*), ramah, dan bebas dari variabel internal ML (token BPE, ms latency, atau persentase bobot reward).
-- **Inspeksi Neural Administrator:** Khusus akun `ADMIN`, tersedia panel pengawasan mendalam mencakup token BPE, Beam Search Top Candidates, serta grafik relasi Knowledge Graph.
-- **RAG Multi-Turn Terverifikasi:** Menghubungkan setiap klaim medis dengan dokumen protokol rumah sakit terakreditasi dan kutipan sitasi ber-checksum SHA-256.
+Di komputer sendiri (bukan produksi), backend membuat dua akun saat pertama jalan kalau belum ada:
 
----
+| Username | Peran | Email |
+| :--- | :--- | :--- |
+| `admin` | Admin Operasional | `admin@rsukt.go.id` |
+| `periset` | Admin Riset | `periset@rsukt.go.id` |
 
-## 🔐 Alur Autentikasi & Pemulihan Akun
+Kata sandinya diatur lewat `ADMIN_BOOTSTRAP_PASSWORD` di file `.env` (lihat `services/ai-api/.env.example`). Di server produksi, akun ini tidak dibuat kalau variabel itu kosong. Ganti kata sandi awal sebelum dipakai sungguhan.
 
-1. **Halaman Masuk (`/login`):** Gerbang tunggal aman yang memvalidasi username/email dan kata sandi dengan pengalihan otomatis berdasarkan peran (Admin ke `/admin/dashboard`, Pasien ke `/chat`).
-2. **Pendaftaran Pasien Baru (`/register`):** Pendaftaran mandiri yang menetapkan peran `USER` secara ketat dan memblokir pencadangan nama administratif sistem.
-3. **Lupa Kata Sandi (`/forgot-password`):** Alur verifikasi identitas medis 2 tahap:
-   - *Tahap 1:* Input username/email terdaftar untuk menerbitkan kode pemulihan verifikasi (`RSUKT-XXXXXX`).
-   - *Tahap 2:* Input kode pemulihan dan penetapan kata sandi baru (minimal 8 karakter) dengan pencatatan audit log lengkap.
+## Cara kerja jawaban
 
----
+1. Pasien menulis keluhan.
+2. Data pribadi seperti NIK, nomor telepon, dan email disamarkan dulu sebelum diproses.
+3. Sistem memilih cara menjawab (Thinking atau Fast).
+4. Sistem mencari pedoman yang cocok di basis pengetahuan, lalu AI menyusun jawaban berdasarkan pedoman itu.
+5. Jawaban ditampilkan dengan bahasa sehari-hari, lengkap dengan sumber dan saran poli.
 
-## 🧠 Dual-Mode Reasoning & Pengetahuan Medis
+Jawaban AI bisa salah. Sistem sengaja tidak memberi diagnosis pasti dan tidak memberi resep.
 
-Pengguna dapat memilih mode penalaran sesuai kompleksitas kasus klinis:
+## Menjalankan di komputer sendiri
 
-```
-                          ┌───────────────────────────────┐
-                          │     Keluhan Klinis Pasien     │
-                          └───────────────┬───────────────┘
-                                          │
-                  ┌───────────────────────┴───────────────────────┐
-                  ▼                                               ▼
-       [ Thinking Mode (70B) ]                          [ Fast Mode (8B) ]
-       Llama Gold Standard                             Llama Fast Response
-       ├── 17 Algoritma Machine Learning               ├── 5 Algoritma Machine Learning
-       │   (Random Forest, XGBoost, SVM, CatBoost,      │   (Logistic Regression, Naive Bayes,
-       │    LightGBM, GBDT, AdaBoost, Decision Tree,   │    KNN, Random Forest, Decision Tree)
-       │    KNN, Naive Bayes, Logistic Regression,     └── 2 Algoritma Deep Learning
-       │    ElasticNet, Ridge, Lasso, PCA, ICA, t-SNE)      (BiLSTM, MLP Classifier)
-       └── 8 Algoritma Deep Learning
-           (Transformer, CNN-1D, ResNet-1D, LSTM,
-            BiLSTM, GRU, Autoencoder, MLP)
-```
+Yang dibutuhkan: Python 3.11 atau lebih baru, Node.js 20 atau lebih baru, dan Git.
 
----
+### Backend
 
-## 🛡️ Batas Kuota Keselamatan Pasien (Clinic Health Reset)
-
-Sesuai regulasi rekam medis **Permenkes No. 12 Tahun 2025** demi keselamatan klinis pasien:
-- **Batas 7 Keluaran AI per Hari:** Pasien dibatasi maksimal 7 respon edukasi AI dalam jendela siklus 24 jam penuh.
-- **Looping ke Clinic Health Reset:** Setelah 7 respon tercapai, komposer input dikunci otomatis dan dialihkan ke kartu *Clinic Health Reset* dengan jam hitung mundur *live* (24:00:00).
-- **Rujukan Fisik Langsung:**
-  - Tombol darurat langsung telepon **IGD 119**.
-  - Tombol penjadwalan kunjungan fisik ke **Poliklinik Rawat Jalan RSUKT**.
-  - Tombol **Unduh Resume RME** digital untuk dibawa saat konsultasi tatap muka dokter.
-- **Mode Uji Coba Admin:** Khusus akun `ADMIN`, tersedia tombol pengujian untuk mereset siklus 24 jam secara instan.
-
----
-
-## 🔄 Sistem RLHF (Reinforcement Learning)
-
-Mekanisme umpan balik terstruktur untuk penyempurnaan dataset fine-tuning model secara berkelanjutan:
-
-- **Tombol Like (Membantu):** Pasien/dokter mengonfirmasi jawaban jelas dan akurat. Sistem mencatat sinyal positif PPO (+1.0) dan menampilkan label tenang *"Membantu"*.
-- **Tombol Unlike (Koreksi Klinis):** Membuka modal interaktif rumah sakit dengan 6 opsi evaluasi spesifik:
-  1. *Bahasa terlalu rumit / teknis* (Sulit dipahami masyarakat awam)
-  2. *Informasi klinis kurang lengkap* (Penjelasan gejala/tindakan minim)
-  3. *Rujukan poliklinik kurang tepat* (Departemen spesialisasi meleset)
-  4. *Kurang relevan dengan keluhan* (Menjawab di luar inti pertanyaan)
-  5. *Penyampaian kurang empatik* (Gaya bahasa terkesan kaku/robotik)
-  6. *Lainnya / Masukan kustom* (Catatan teks bebas)
-- **Penyimpanan:** Seluruh data dikompilasi ke `FeedbackRecord` dan `AuditLog` sebagai dataset pasangan preferensi DPO/PPO.
-
----
-
-## ⚖️ Kepatuhan Hukum & Standar Keamanan Data
-
-Aplikasi ini dibangun dengan landasan regulasi medis dan siber tertinggi:
-
-1. **UU No. 27 Tahun 2022 (Pelindungan Data Pribadi / UU PDP):**
-   - Klasifikasi data medis sebagai *Data Pribadi Bersifat Spesifik* (Pasal 4).
-   - Dasar pemrosesan persetujuan eksplisit / *Explicit Consent* (Pasal 20).
-   - Hak subjek data termasuk penghapusan data / *Right to Erasure* (Pasal 8 & 10).
-2. **ISO/IEC 27001 ISMS:**
-   - Kontrol akses berbasis peran (RBAC).
-   - Jejak audit (*immutable audit logs*) untuk seluruh aksi sensitif.
-3. **HIPAA & GDPR:**
-   - De-identifikasi otomatis data keluhan pasien (PII removal) sebelum diproses oleh model.
-4. **Permenkes No. 12 Tahun 2025:**
-   - Standar Penyelenggaraan Rekam Medis Elektronik (RME).
-   - Asisten AI berstatus sebagai *Clinical Decision Support System* (CDSS) non-preskriptif; diagnosa definitif tetap berada di tangan dokter ber-SIP.
-
----
-
-## 📁 Struktur Proyek
-
-```
-RAG-model-record/
-├── apps/
-│   └── web/                     # Frontend Next.js 16 (Turbopack, PWA/MWA, Tailwind)
-│       ├── src/
-│       │   ├── app/
-│       │   │   ├── admin/       # Workspace Riset & Graph Knowledge Administrator
-│       │   │   ├── chat/        # Asisten AI Klinis Pasien (Hospital Native Light UX)
-│       │   │   ├── forgot-password/ # Alur Pemulihan Kata Sandi 2-Tahap
-│       │   │   ├── login/       # Gerbang Autentikasi Tunggal (No-Placeholder)
-│       │   │   ├── register/    # Pendaftaran Pasien Mandiri (Role: USER)
-│       │   │   └── layout.tsx   # Light Theme Foundation & Metadata PWA
-│       │   └── lib/             # AuthContext, API Utilities & Local State
-├── services/
-│   └── ai-api/                  # Backend FastAPI (Python 3.11)
-│       ├── app/
-│       │   ├── agents/          # Clinical Agent, Scanner Bahasa, Triase Medis
-│       │   ├── models/          # SQLAlchemy Database Models (User, Chat, AuditLog)
-│       │   ├── routes/          # API Endpoints (Auth, Chat, Admin, Datasets, RLHF)
-│       │   └── main.py          # App Initialization & Default Admin Auto-Seeding
-├── datasets/                    # Dataset Ground-Truth Medis Terverifikasi (CSV & JSONL)
-├── docs/                        # Dokumentasi Sprint & Laporan Audit Lengkap
-│   ├── SPRINT_00_REFERENCE_AUDIT.md
-│   ├── ...
-│   ├── SPRINT_17_FINAL_DEVELOPMENT_RULES.md
-│   └── SPRINT_18_AUTH_RLHF_AUDIT.md
-├── docker-compose.yml           # Orkestrasi Kontainer Lokal
-└── README.md                    # Dokumentasi Utama Repository
-```
-
----
-
-## 🚀 Panduan Menjalankan Sistem
-
-### Prasyarat
-- Python 3.10+ / 3.11
-- Node.js 18+ / 20+
-- Git
-
-### 1. Menjalankan Backend (FastAPI)
 ```bash
 cd services/ai-api
 python -m venv .venv
 # Windows
 .\.venv\Scripts\activate
-# Linux/macOS
+# Linux atau macOS
 source .venv/bin/activate
 
 pip install -r requirements.txt
+cp .env.example .env
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-*Backend akan otomatis menyinkronkan akun default admin (`admin` & `admin1` dengan password `admin123_`) pada saat startup.*
 
-### 2. Menjalankan Frontend (Next.js)
+Di Windows, ganti `cp` dengan `copy`. Isi `.env`: minimal `JWT_SECRET_KEY` (kunci rahasia yang kuat), `GROQ_API_KEY` (untuk jawaban AI), dan `ADMIN_BOOTSTRAP_PASSWORD`.
+
+### Tampilan web
+
 ```bash
 cd apps/web
 npm install
 npm run dev
 ```
-Akses antarmuka web pada: `http://localhost:3000`
 
-### 3. Validasi Build Produksi & Panduan Deployment
+Buka `http://localhost:3000`.
+
+## Menambah data dan melatih model
+
+### Data baru langsung disesuaikan
+
+Saat Admin Riset mengunggah, menyetujui, atau mengindeks dataset, model pengatur jalur jawaban (Thinking atau Fast) dan model pengarah poli menyesuaikan diri otomatis di latar belakang:
+
+- Prosesnya bertahap, dengan target total **10 sampai 25 detik** (makin banyak data, makin dekat ke 25 detik).
+- Data baru masuk sedikit demi sedikit, dari 20% sampai 100%.
+- Data lama tetap ikut dilatih ulang (minimal separuh) supaya model tidak lupa. Kalau ketepatan pada data lama turun terlalu jauh, tahap itu dibatalkan dan model lama dipertahankan.
+- Di akhir, sistem memilih algoritma sederhana yang paling baik (pohon keputusan, regresi logistik, atau SVM linear).
+- Model baru ditolak kalau gagal mengenali contoh tanda bahaya.
+- Statusnya bisa dilihat Admin Riset di `GET /api/v1/admin/adaptation/status`.
+
+Catatan: batas waktu berlaku untuk jadwal tahapan, bukan memotong proses di tengah. Data yang sangat besar bisa melewati 25 detik sedikit. Penjelasan lengkap ada di [docs/ADAPTIVE_UPDATE.md](docs/ADAPTIVE_UPDATE.md).
+
+### Data latih untuk fine-tuning (SFT)
+
+- Data siap pakai ada di `datasets/sft/` (mode Fast dan Thinking, sudah dibagi untuk latih, validasi, dan uji). Jumlahnya masih kecil, sekitar 100 contoh per mode, jadi cocok untuk menguji alur, belum cukup untuk model yang andal. Detailnya ada di `datasets/sft/DATASET_CARD.md`.
+- Skrip pembuatnya: `python scripts/build_sft_dataset.py`.
+- Skrip pelatihan dengan peft dan trl (LoRA): `scripts/run_sft.py`. Panduannya ada di [docs/SFT_GUIDE.md](docs/SFT_GUIDE.md).
+- Pasang kebutuhan latih dulu: `pip install -r services/ai-api/requirements-dev.txt`.
+- Model dasar **tidak disertakan** di repo. Anda perlu menyiapkan sendiri model dasar yang kecil, lalu menjalankan misalnya:
 
 ```bash
-cd apps/web
+python scripts/run_sft.py --base-model D:/models/nama-model --mode both --epochs 3 --lora-r 8
+```
+
+- Uji alur tanpa model sungguhan: `python scripts/sft_smoke_test.py`. Tes ini memakai model acak yang sangat kecil, jadi hanya membuktikan alurnya jalan, bukan kualitas jawaban.
+
+### Hasil pelatihan yang sudah ada
+
+Angka lengkap dan keterbatasannya ada di [docs/TRAINING_REPORT_SFT_DECISION.md](docs/TRAINING_REPORT_SFT_DECISION.md). Singkatnya: model risiko jantung (158 ribu baris data) cukup baik, sedangkan model poli dan pemilih jalur jawaban dilatih dari data yang sangat kecil sehingga belum bisa diandalkan. Semua model ini belum diuji secara klinis.
+
+## Folder penting
+
+```
+apps/web/               Tampilan web (Next.js)
+  src/app/chat/         Chat pasien
+  src/app/admin/        Ruang kerja admin dan riset
+  src/lib/roles.ts      Aturan peran di sisi tampilan
+services/ai-api/        Server (FastAPI)
+  app/routes/           Alamat API: login, chat, admin, pengetahuan
+  app/security/         Login, peran, dan pembatas percobaan
+  app/ml/               Model keputusan, pengarah jalur, penyesuaian otomatis
+  tests/                Tes otomatis
+datasets/               Data mentah, data SFT, dan graf pengetahuan
+scripts/                Skrip pembuat data dan pelatihan
+docs/                   Laporan dan panduan
+```
+
+## Menjalankan tes
+
+```bash
+cd services/ai-api
+python -m pytest tests -q
+
+cd ../../apps/web
 npx tsc --noEmit
-npm run build
 ```
 
-#### Opsi A: Deployment Terpadu Monorepo di Vercel
-Repositori ini telah dikonfigurasi penuh dengan [`vercel.json`](file:///c:/Users/user/RAG-model-record/vercel.json), [*`api/index.py`*](file:///c:/Users/user/RAG-model-record/api/index.py), dan root [*`requirements.txt`*](file:///c:/Users/user/RAG-model-record/requirements.txt):
-1. Sambungkan repositori GitHub ini langsung ke Vercel.
-2. Tambahkan Environment Variable di Vercel Project Settings:
-   - `GROQ_API_KEY`: Kunci API Groq Llama Anda.
-   - `JWT_SECRET_KEY`: Kunci rahasia JWT Anda.
-3. Vercel akan otomatis mengompilasi frontend Next.js dan menjalankan FastAPI sebagai Serverless Function (`/api/index.py`) dengan dukungan streaming real-time (Server-Sent Events).
+Tes memakai database sementara, bukan database asli.
 
-#### Opsi B: Web di Vercel & FastAPI di Cloud Host (Render / Railway / VPS)
-Jika ingin memisahkan beban komputasi backend:
-1. **Deploy FastAPI (`services/ai-api`):**
-   - Di Render/Railway/Fly.io: Gunakan [*`services/ai-api/Dockerfile`*](file:///c:/Users/user/RAG-model-record/services/ai-api/Dockerfile) atau [*`services/ai-api/Procfile`*](file:///c:/Users/user/RAG-model-record/services/ai-api/Procfile).
-   - Set environment variables (`GROQ_API_KEY`, `JWT_SECRET_KEY`, dll).
-2. **Deploy Frontend (`apps/web` di Vercel):**
-   - Atur Environment Variable di Vercel:
-     `BACKEND_API_URL=https://alamat-backend-fastapi-anda.onrender.com`
-   - Gateway Streaming Route Handler ([*`apps/web/src/app/api/v1/[...path]/route.ts`*](file:///c:/Users/user/RAG-model-record/apps/web/src/app/api/v1/%5B...path%5D/route.ts)) akan secara otomatis menjembatani percakapan real-time tanpa kendala CORS.
+## Memasang ke internet
 
-#### Opsi C: Deployment Mandiri dengan Docker Compose
-```bash
-docker-compose up --build -d
-```
-Backend FastAPI berjalan di `http://localhost:8000` dan Web Next.js berjalan di `http://localhost:3000`.
+- **Vercel (satu repo)**: sambungkan repo ini ke Vercel, lalu isi `GROQ_API_KEY` dan `JWT_SECRET_KEY` di pengaturan proyek. Konfigurasinya sudah ada di `vercel.json` dan `api/index.py`.
+- **Web di Vercel, server di tempat lain** (Render, Railway, VPS): jalankan `services/ai-api` memakai `Dockerfile` atau `Procfile`, lalu isi `BACKEND_API_URL` di Vercel dengan alamat server itu.
+- **Docker Compose**: `docker-compose up --build -d`. Server di port 8000, web di port 3000.
 
----
+## Catatan keamanan
 
-## 🔬 Ekspor Dataset Pelatihan Google Colab
+- Kode pemulihan kata sandi berlaku 15 menit dan hanya bisa dipakai sekali. Di produksi kodenya belum dikirim lewat email (belum ada layanan email), jadi alur lupa kata sandi di produksi masih butuh pengiriman manual oleh petugas.
+- Login dan pemulihan kata sandi dibatasi jumlah percobaannya. Pembatas ini berjalan per proses server, jadi belum sempurna jika server dijalankan di banyak instance sekaligus.
+- Jangan pakai `JWT_SECRET_KEY` bawaan di server nyata. Di Vercel produksi, server menolak jalan kalau kunci masih nilai bawaan.
+- Repo ini publik. Jangan memasukkan data pasien asli, kata sandi, atau kunci API ke dalam repo.
+- Belum ada audit keamanan atau sertifikasi resmi dari pihak luar. Penyebutan aturan seperti UU PDP di dalam aplikasi adalah maksud rancangan, bukan jaminan kepatuhan.
 
-Administrator dapat mengekspor seluruh korpus percakapan tanya-jawab klinis langsung dari antarmuka Admin (`/admin/dashboard` atau `/admin/feedback`):
-- **Format CSV:** Siap diimpor ke pustaka `pandas`, `scikit-learn`, atau analisis statistik spreadsheet.
-- **Format JSONL (ChatML):** Terformat standar `{"messages": [{"role": "system"}, {"role": "user"}, {"role": "assistant"}], "colab_training_metadata": {...}}` yang kompatibel dengan pipeline fine-tuning Hugging Face TRL (SFT/DPO), Unsloth, dan PyTorch di Google Colab.
+## Dokumen lain
 
----
-
-## 📊 Dokumentasi Audit Sprint
-
-Seluruh riwayat pengembangan dan audit teknis dicatat secara terperinci dalam direktori `docs/`:
-- [`docs/SPRINT_17_FINAL_DEVELOPMENT_RULES.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_17_FINAL_DEVELOPMENT_RULES.md): Aturan pengembangan final, batas kuota, dan arsitektur model.
-- [`docs/SPRINT_18_AUTH_RLHF_AUDIT.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_18_AUTH_RLHF_AUDIT.md): Laporan audit sprint autentikasi, native RLHF reinforcement, dan pemulihan akun.
-- [`docs/SPRINT_19_VERCEL_REALTIME_COLAB_EXPORT.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_19_VERCEL_REALTIME_COLAB_EXPORT.md): Laporan audit integrasi Vercel Serverless, real-time chat streaming, abstraksi UI pengguna awam, dan ekspor dataset Google Colab.
-- [`docs/SPRINT_20_DATABASE_REDIS_LIGHTHOUSE_AUDIT.md`](file:///c:/Users/user/RAG-model-record/docs/SPRINT_20_DATABASE_REDIS_LIGHTHOUSE_AUDIT.md): Laporan audit performa database (SQLite WAL & Composite Indices), Redis caching layer dengan auto-fallback in-memory, Caddy static caching, serta optimasi Google Lighthouse PWA & SEO (100/100).
-
+Riwayat pengerjaan dan audit ada di folder [docs/](docs/). Beberapa dokumen lama di sana masih memakai istilah teknis dan nama akun lama.

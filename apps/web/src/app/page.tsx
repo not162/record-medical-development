@@ -1,6 +1,7 @@
 // TODO: VERIFY ALL PERFORMANCE, PRIVACY AND CERTIFICATION CLAIMS WITH RSUKT
 "use client";
 
+import PersonAvatar from "@/components/PersonAvatar";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -36,7 +37,7 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   {
     id: "cardio",
     category: "Nyeri Dada",
-    badge: "Tanda Bahaya (Red-Flag)",
+    badge: "Tanda Bahaya",
     query: "Dada saya nyeri sudah 30 menit, rasanya menjalar ke lengan kiri, disertai sesak napas dan keringat dingin.",
     mode: "Thinking Mode",
     analysis: "Nyeri dada yang menjalar ke lengan kiri dan disertai keringat dingin bisa menjadi tanda serangan jantung. Ini keadaan darurat dan perlu segera ditangani.",
@@ -214,7 +215,7 @@ export default function HomePage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-base sm:text-xl tracking-tight text-cyan-800">
-                  RSUKT Clinical AI
+                  RSUKT Asisten Kesehatan
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 hidden sm:block font-medium">
@@ -249,7 +250,7 @@ export default function HomePage() {
                     href="/chat"
                     className="px-4 py-2 sm:py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5"
                   >
-                    <Bot className="w-3.5 h-3.5" />
+                    <PersonAvatar className="w-4 h-4" />
                     <span>Mulai Bertanya</span>
                   </Link>
                 )}
@@ -296,14 +297,24 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
-            <Link
-              href="/chat"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm shadow-sm transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
-            >
-              <Bot className="w-4 h-4" />
-              <span>Mulai Bertanya</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {isAdminRole(role) ? (
+              <Link
+                href="/admin/dashboard"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              >
+                <span>{isSuperadmin(role) ? "Ruang Kerja Admin Riset" : "Ruang Kerja Admin Operasional"}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link
+                href="/chat"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm shadow-sm transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              >
+                <PersonAvatar className="w-5 h-5" />
+                <span>Mulai Bertanya</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
 
             <a
               href="#tutorial-demo"
@@ -438,14 +449,14 @@ export default function HomePage() {
                 {showResponse ? (
                   <div className="flex gap-3 items-start max-w-2xl animate-fade-in">
                     <div className="w-9 h-9 rounded-xl bg-cyan-500 flex items-center justify-center text-white shrink-0 shadow mt-1">
-                      <Stethoscope className="w-5 h-5" />
+                      <PersonAvatar className="w-6 h-6" />
                     </div>
                     <div className="bg-slate-900 border border-slate-700/80 p-5 rounded-2xl rounded-tl-xs text-xs sm:text-sm leading-relaxed text-slate-200 space-y-3.5 shadow-sm">
                       
                       {/* Response Header */}
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
                         <div className="font-bold text-white flex items-center gap-1.5">
-                          <Bot className="w-4 h-4 text-cyan-400" />
+                          <PersonAvatar className="w-5 h-5 text-cyan-400" />
                           <span>Jawaban Asisten</span>
                         </div>
                         <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
@@ -499,7 +510,7 @@ export default function HomePage() {
                       <div className="pt-1 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400 border-t border-slate-800">
                         <div className="flex items-center gap-1 text-slate-400">
                           <Bookmark className="w-3 h-3 text-cyan-400" />
-                          <span className="font-semibold text-slate-300">Protokol:</span>
+                          <span className="font-semibold text-slate-300">Sumber:</span>
                           <span className="italic truncate max-w-xs">{activeScenario.citation}</span>
                         </div>
 
@@ -539,7 +550,7 @@ export default function HomePage() {
                             {/* 3.4 WebVTT Accessible Captions Overlay */}
               {showCaptions && (
                 <div aria-live="polite" className="w-full text-center px-4 py-1.5 bg-slate-950/80 border-t border-slate-800 text-[11px] text-cyan-200 font-medium">
-                  [Takarir Demo Medis] {activeScenario.category} ({activeScenario.mode}): "{displayedText || activeScenario.query}"
+                  [Contoh] {activeScenario.category} ({activeScenario.mode}): "{displayedText || activeScenario.query}"
                 </div>
               )}
 
@@ -919,7 +930,7 @@ export default function HomePage() {
               Data Kesehatan Anda Dijaga Kerahasiaannya
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Setiap data yang Anda kirim dilindungi dan data pribadi Anda disamarkan. Anda juga berhak meminta data Anda dihapus, sesuai UU Perlindungan Data Pribadi (UU No. 27/2022). Administrator sistem secara ketat dilarang melihat sesi konsultasi pribadi pasien.
+              Setiap data yang Anda kirim dilindungi dan data pribadi Anda disamarkan. Anda juga berhak meminta data Anda dihapus, sesuai UU Perlindungan Data Pribadi (UU No. 27/2022). Admin tidak diizinkan membuka percakapan pribadi Anda.
             </p>
             <div className="pt-2 flex flex-wrap gap-3">
               <Link
@@ -946,7 +957,7 @@ export default function HomePage() {
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
             <div className="text-[11px] leading-relaxed">
-              <strong>DISCLAIMER MEDIS:</strong> Layanan AI Klinis ini beroperasi sebagai sarana edukasi dan panduan awal anamnesis. Sistem ini <strong>BUKAN pengganti pemeriksaan fisik atau diagnosis dokter profesional</strong>. Jika Anda atau keluarga mengalami kondisi gawat darurat (henti napas, nyeri dada menusuk, pingsan, kejang), segera hubungi IGD darurat <strong>119</strong> atau kunjungi rumah sakit terdekat.
+              <strong>PENTING:</strong> Asisten ini hanya memberi informasi dan saran awal. Asisten ini <strong>bukan pengganti pemeriksaan atau diagnosis dari dokter</strong>. Jika Anda atau keluarga mengalami keadaan darurat (sulit bernapas, nyeri dada, pingsan, kejang), segera hubungi <strong>119</strong> atau datang ke rumah sakit terdekat.
             </div>
           </div>
 
@@ -957,7 +968,7 @@ export default function HomePage() {
             <div className="flex items-center gap-4 text-slate-400">
               <Link href="/login" className="hover:text-white transition">Masuk Akun</Link>
               <Link href="/register" className="hover:text-white transition">Daftar</Link>
-              <Link href="/chat" className="hover:text-white transition">Chatbot Medis</Link>
+              <Link href="/chat" className="hover:text-white transition">Tanya Asisten</Link>
                             <Link href="/privacy" className="hover:text-white transition">Kebijakan Privasi</Link>
               <Link href="/terms" className="hover:text-white transition">Syarat & Ketentuan</Link>
               <span className="text-slate-600">|</span>

@@ -11,7 +11,7 @@ from sqlalchemy import func
 
 from app.database import get_db
 from app.models import User, ChatSession, ChatMessage, FeedbackRecord, AuditLog
-from app.security.auth import require_user, get_optional_user
+from app.security.auth import require_user, get_optional_user, normalize_role, ADMIN_ROLES
 from app.security.tiers import (
     is_chat_enabled, CHAT_DISABLED_MESSAGE, get_tier_for_user, check_rate_limit,
     check_medical_safety, check_prompt_injection, format_grounded_response,
@@ -49,6 +49,29 @@ class FeedbackRequest(BaseModel):
     feedback_type: str = Field(..., pattern="^(LIKE|DISLIKE)$", description="'LIKE' (Reward Positif) atau 'DISLIKE' (Penalti RLHF)")
     improvement_category: Optional[str] = Field(None, description="Kategori perbaikan: 'BAHASA_TERLALU_MEDIS', 'INFORMASI_KURANG_LENGKAP', 'RUJUKAN_TIDAK_TEPAT', 'PROTOKOL_KURANG_RELEVAN', 'KURANG_EMPATIK', atau 'LAINNYA'")
     notes: Optional[str] = Field(None, description="Catatan perbaikan klinis kontekstual dari pasien atau tenaga medis")
+
+ADMIN_CHAT_BLOCK_MESSAGE = (
+    "Akses ditolak: demi privasi pasien, akun admin tidak boleh membuka atau memakai "
+    "percakapan pasien. Silakan gunakan dashboard admin."
+)
+
+
+def _block_admin(user: Optional[User]) -> Optional[User]:
+    """Admin Operasional, Admin Riset, dan nama lama ADMIN_PERISET dilarang masuk sesi pasien."""
+    if user is not None and normalize_role(user.role) in ADMIN_ROLES:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ADMIN_CHAT_BLOCK_MESSAGE)
+    return user
+
+
+def require_patient(current_user: User = Depends(require_user)) -> User:
+    """Pengguna masuk (login) yang bukan admin. Dipakai semua endpoint sesi pasien."""
+    return _block_admin(current_user)
+
+
+def get_optional_patient(current_user: Optional[User] = Depends(get_optional_user)) -> Optional[User]:
+    """Tamu (None) atau pasien. Admin yang membawa token ditolak 403."""
+    return _block_admin(current_user)
+
 
 def get_user_quota_status(user: User, db: Session) -> Dict[str, Any]:
     """
@@ -129,14 +152,9 @@ class SessionDetailResponse(BaseModel):
 @router.post("/chat/sessions")
 def create_chat_session(
     req: CreateSessionRequest,
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
-    if current_user.role == "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses Ditolak (UU PDP No. 27/2022): Administrator dilarang keras membuat atau mengoperasikan sesi rekam konsultasi pasien."
-        )
     """Membuat sesi percakapan klinis baru untuk pengguna terautentikasi."""
     new_session = ChatSession(
         user_id=current_user.id,
@@ -157,7 +175,7 @@ def create_chat_session(
 def list_chat_sessions(
     limit: int = Query(20, ge=1, le=100, description="Jumlah sesi per halaman (default 20)"),
     cursor: Optional[str] = Query(None, description="Cursor timestamp ISO (updated_at) untuk keyset pagination"),
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
     """
@@ -223,7 +241,7 @@ def get_chat_session(
     session_id: str,
     limit: int = Query(20, ge=1, le=100, description="Maksimum pesan yang dimuat (default 20 pesan terbaru)"),
     before: Optional[str] = Query(None, description="Cursor timestamp ISO (created_at) untuk memuat pesan terdahulu"),
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
     """
@@ -317,7 +335,7 @@ def get_chat_session(
 @router.delete("/chat/sessions/{session_id}")
 def delete_chat_session(
     session_id: str,
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
     """Menghapus sesi percakapan klinis milik pengguna (soft-delete)."""
@@ -345,7 +363,7 @@ def send_chat_message(
     req: ChatMessageRequest,
     request: Request,
     response: Response,
-    current_user: Optional[User] = Depends(get_optional_user),
+    current_user: Optional[User] = Depends(get_optional_patient),
     db: Session = Depends(get_db)
 ):
     # Cost Control & Kill Switch (2.3)
@@ -458,11 +476,6 @@ def send_chat_message(
         }
 
     # Authenticated user flow (Persistent in Neon DB)
-    if current_user.role == "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses Ditolak (UU PDP No. 27/2022): Administrator dilarang keras mengirimkan pesan konsultasi pasien."
-        )
 
     session = db.query(ChatSession).filter(
         ChatSession.id == req.session_id,
@@ -483,7 +496,7 @@ def send_chat_message(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Akses ditolak.")
 
     quota = get_user_quota_status(current_user, db)
-    if quota["is_clinic_health_lock"] and current_user.role != "ADMIN":
+    if quota["is_clinic_health_lock"]:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
@@ -558,7 +571,7 @@ def stream_chat_message(
     req: ChatMessageRequest,
     request: Request,
     response: Response,
-    current_user: Optional[User] = Depends(get_optional_user),
+    current_user: Optional[User] = Depends(get_optional_patient),
     db: Session = Depends(get_db)
 ):
     if not is_chat_enabled():
@@ -658,7 +671,7 @@ def stream_chat_message(
         # Save to DB only if authenticated
         asst_id = f"asst-{int(time.time()*1000)}"
         updated_quota = None
-        if current_user and current_user.role != "ADMIN":
+        if current_user:
             try:
                 session = db.query(ChatSession).filter(
                     ChatSession.id == req.session_id,
@@ -719,7 +732,7 @@ def stream_chat_message(
 # 5b. Get User Quota Status (7 outputs / 24h reset)
 @router.get("/chat/quota")
 def get_chat_quota_endpoint(
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
     """Mengambil status kuota harian (maks 7 respon) dan status Clinic Health Reset 24 jam."""
@@ -728,7 +741,7 @@ def get_chat_quota_endpoint(
 # 5c. Reset User Quota (Admin & Testing Override)
 @router.post("/chat/quota/reset")
 def reset_chat_quota_endpoint(
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
     """
@@ -759,7 +772,7 @@ def reset_chat_quota_endpoint(
 @router.post("/chat/feedback")
 def submit_chat_feedback(
     req: FeedbackRequest,
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
     """
@@ -852,7 +865,7 @@ def submit_chat_feedback(
 @router.get("/chat/citations/{citation_id}")
 def get_citation_details(
     citation_id: str,
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
     """Mengambil metadata bukti terverifikasi untuk sitasi dokumen tertentu."""
@@ -882,14 +895,9 @@ def get_user_profile(
 @router.post("/chat/sessions/upgrade", response_model=UpgradeSessionResponse)
 def upgrade_guest_session(
     req: UpgradeSessionRequest,
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_patient),
     db: Session = Depends(get_db)
 ):
-    if current_user.role == "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses Ditolak: Administrator dilarang mengimpor riwayat rekam medis pasien."
-        )
 
     title = "Konsultasi Klinis (Riwayat Tamu)"
     if req.messages and req.messages[0].get("content"):

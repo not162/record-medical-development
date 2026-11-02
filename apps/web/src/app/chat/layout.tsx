@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { isAdminRole } from "@/lib/roles";
 import { 
   Bot, MessageSquarePlus, History, User, Settings, 
   LogOut, ShieldAlert, Stethoscope, ChevronRight,
@@ -20,11 +21,14 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     if (!isLoading) {
       if (!isAuthenticated) {
         router.push("/login");
-      } else if (role === "ADMIN") {
-        router.replace("/admin/dashboard");
       }
     }
-  }, [isLoading, isAuthenticated, role, router]);
+  }, [isLoading, isAuthenticated, router]);
+
+  // Admin (Operasional maupun Riset) tidak boleh membuka percakapan pasien.
+  const blockedAdmin = !isLoading && isAuthenticated && isAdminRole(role);
+  // Halaman anak baru boleh tampil setelah peran diketahui, supaya tidak ada panggilan API untuk admin.
+  const canShowChat = !isLoading && isAuthenticated && !isAdminRole(role);
 
   const navItems = [
     { href: "/chat", label: "Tanya Asisten", icon: Bot },
@@ -33,19 +37,19 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     { href: "/settings", label: "Pengaturan Akun", icon: Settings },
   ];
 
-  if (!isLoading && role === "ADMIN") {
+  if (blockedAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50 p-6">
         <div className="max-w-md w-full bg-white p-8 rounded-xl border border-red-200 text-center space-y-4 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center mx-auto shadow-sm">
             <ShieldAlert className="w-7 h-7" />
           </div>
-          <h3 className="font-bold text-lg text-slate-900">Akses Ditolak (UU PDP No. 27/2022)</h3>
+          <h3 className="font-bold text-lg text-slate-900">Halaman ini khusus pasien</h3>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Demi menjaga privasi pengguna, akun Administrator tidak boleh membuka ruang chat dan data kesehatan pribadi pengguna.
+            Demi menjaga privasi pasien, akun admin tidak boleh membuka percakapan atau data kesehatan pasien. Silakan kembali ke dashboard admin.
           </p>
           <Link href="/admin/dashboard" className="inline-block py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md">
-            Buka Dashboard Administrator
+            Kembali ke Dashboard Admin
           </Link>
         </div>
       </div>
@@ -300,7 +304,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 w-full overflow-hidden bg-slate-50 pb-16 lg:pb-0">
-        {children}
+        {canShowChat ? children : null}
       </main>
 
       {/* Mobile Bottom Navigation Bar (PWA / MWA standard) */}
