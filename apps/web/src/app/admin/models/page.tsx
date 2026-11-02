@@ -274,8 +274,8 @@ export default function AdminModelsPage() {
 
       {/* Model Card Modal */}
       {selectedModelCard && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl max-h-[85vh] rounded-2xl border border-slate-200 p-6 space-y-4 bg-white shadow-xl flex flex-col">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl max-h-[85vh] rounded-2xl border border-slate-200 p-6 space-y-4 bg-white shadow-sm flex flex-col">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-emerald-600" />

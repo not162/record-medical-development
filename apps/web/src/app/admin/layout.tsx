@@ -36,8 +36,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isAuthenticated || (role !== "ADMIN" && role !== "RESEARCHER")) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-md w-full bg-white p-8 rounded-2xl text-center space-y-5 border border-red-200 shadow-xl">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 mx-auto shadow-md shadow-red-500/10">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl text-center space-y-5 border border-red-200 shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 mx-auto shadow-sm">
             <AlertTriangle className="w-7 h-7" />
           </div>
           <div>
@@ -90,7 +90,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="overflow-y-auto">
           {/* Header */}
           <div className="p-4 border-b border-slate-200 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/20">
+            <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
@@ -197,7 +197,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Admin Viewport */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-100">
         {/* Top Navbar */}
-        <header className="h-14 border-b border-slate-200 bg-white/90 backdrop-blur-md px-6 flex items-center justify-between shrink-0 shadow-sm">
+        <header className="h-14 border-b border-slate-200 bg-white px-6 flex items-center justify-between shrink-0 shadow-sm">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span>Admin</span>
             <span>/</span>

@@ -1009,7 +1009,7 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto space-y-4 pr-1 mb-3">
           {messages.length === 0 && (
             <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-center space-y-4 max-w-xl mx-auto my-auto animate-in fade-in duration-200">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-600 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-cyan-600/20">
+              <div className="w-14 h-14 rounded-2xl bg-cyan-600 flex items-center justify-center text-white shadow-sm">
                 <Stethoscope className="w-7 h-7" />
               </div>
               <div className="space-y-1">
@@ -1107,7 +1107,7 @@ export default function ChatPage() {
               className={`flex gap-2 sm:gap-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.sender === "assistant" && (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-600 flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
+                <div className="w-8 h-8 rounded-xl bg-cyan-600 flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
@@ -1117,7 +1117,7 @@ export default function ChatPage() {
                 <div
                   className={`p-3.5 sm:p-4 rounded-2xl text-sm leading-relaxed ${
                     msg.sender === "user"
-                      ? "bg-gradient-to-r from-cyan-600 to-cyan-700 text-white shadow-sm rounded-tr-xs ml-auto max-w-xl"
+                      ? "bg-cyan-600 text-white shadow-sm rounded-tr-xs ml-auto max-w-xl"
                       : msg.safetyAlert
                       ? "bg-red-50 border border-red-200 text-red-900 rounded-tl-xs shadow-xs"
                       : "bg-white text-slate-800 rounded-tl-xs border border-slate-200 shadow-xs"
@@ -1221,7 +1221,7 @@ export default function ChatPage() {
 
           {isGenerating && (
             <div className="flex gap-2 sm:gap-3 items-center text-xs text-slate-500">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-600 flex items-center justify-center text-white shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-cyan-600 flex items-center justify-center text-white shrink-0 shadow-xs">
                 <Bot className="w-4 h-4 animate-spin" />
               </div>
               <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-2">
@@ -1231,9 +1231,6 @@ export default function ChatPage() {
                 <span className="ml-1 text-slate-700 font-medium text-xs">
                   AI sedang merumuskan penjelasan edukasi medis terverifikasi...
                 </span>
-                <span className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold hidden sm:inline">
-                  LIVE STREAM
-                </span>
               </div>
             </div>
           )}
@@ -1241,7 +1238,7 @@ export default function ChatPage() {
 
         {/* Clinic Health Reset Looping Card (Maksimal 7 Keluaran AI / 24 Jam Penuh) */}
         {quotaStatus?.is_clinic_health_lock && (
-          <div className="mb-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-red-50 via-white to-amber-50 border-2 border-red-300 shadow-md space-y-4">
+          <div className="mb-3 p-4 sm:p-5 rounded-2xl bg-red-50 border-2 border-red-300 shadow-md space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600 shrink-0 mt-0.5">
@@ -1393,7 +1390,7 @@ export default function ChatPage() {
               <button
                 type="submit"
                 disabled={!inputQuery.trim() || isGenerating || Boolean(quotaStatus?.is_clinic_health_lock)}
-                className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-700 hover:to-emerald-700 disabled:opacity-40 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 ml-auto"
+                className="py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-40 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 ml-auto"
               >
                 {quotaStatus?.is_clinic_health_lock ? (
                   <>
@@ -1415,8 +1412,8 @@ export default function ChatPage() {
 
             {/* 2.2 Upgrade Session Modal */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900">Simpan Riwayat Konsultasi ke Akun</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
               {user
@@ -1481,8 +1478,8 @@ export default function ChatPage() {
 
       {/* Citation Metadata Modal */}
       {selectedCitation && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-xl">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-emerald-600" />
@@ -1543,8 +1540,8 @@ export default function ChatPage() {
 
       {/* Informed Consent & Compliance Modal (ISO 27001, GDPR, HIPAA, Permenkes No. 12 Tahun 2025) */}
       {showConsentModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-xl w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-xl max-w-xl w-full p-5 sm:p-6 space-y-4 shadow-sm max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-700 shadow-2xs">
@@ -1665,8 +1662,8 @@ export default function ChatPage() {
 
       {/* Modal Koreksi Kualitas Penjelasan Klinis (RLHF Reinforcement Loop) */}
       {feedbackModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
@@ -1745,7 +1742,7 @@ export default function ChatPage() {
                 type="button"
                 disabled={isSubmittingFeedback}
                 onClick={handleSubmitDislikeModal}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50"
               >
                 {isSubmittingFeedback ? "Menyimpan Masukan..." : "Kirim Masukan Klinis"}
               </button>

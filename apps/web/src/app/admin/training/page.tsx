@@ -798,8 +798,8 @@ export default function AdminTrainingPage() {
 
       {/* Launch Job Modal */}
       {showLaunchModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 p-6 space-y-4 bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 p-6 space-y-4 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Play className="w-4 h-4 text-emerald-600 fill-emerald-600" />
@@ -889,8 +889,8 @@ export default function AdminTrainingPage() {
 
       {/* Log Viewer Modal */}
       {selectedJobLogs && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl max-h-[85vh] rounded-2xl border border-slate-200 p-6 space-y-4 bg-white shadow-xl flex flex-col">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl max-h-[85vh] rounded-2xl border border-slate-200 p-6 space-y-4 bg-white shadow-sm flex flex-col">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-emerald-600" />

@@ -502,7 +502,7 @@ export default function AdminGraphPage() {
           <button
             onClick={handleRunOptimize15}
             disabled={optimizeLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-semibold text-xs transition shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-xs transition shadow-xs"
             title="Jalankan Optimalisasi 15% Code of Product (Prune Noise & Index Hubs)"
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -532,7 +532,7 @@ export default function AdminGraphPage() {
 
       {/* 15% Code of Product Optimization Results Banner */}
       {optimizeResult && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border border-emerald-200 shadow-xs space-y-3">
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-xs space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-emerald-200/60">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-700" />
@@ -637,7 +637,7 @@ export default function AdminGraphPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Cytoscape Canvas Container */}
         <div className="lg:col-span-3 bg-slate-50 rounded-2xl border border-slate-200 p-2 relative min-h-[550px] overflow-hidden shadow-sm flex flex-col">
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 text-[11px] text-slate-700 shadow-sm">
+          <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-[11px] text-slate-700 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Cytoscape.js Interactive Graph Engine</span>
           </div>
@@ -645,21 +645,21 @@ export default function AdminGraphPage() {
           <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
             <button
               onClick={() => cyRef.current?.zoom(cyRef.current.zoom() * 1.2)}
-              className="p-1.5 rounded-lg bg-white/90 hover:bg-white border border-slate-200 text-slate-700 transition shadow-sm"
+              className="p-1.5 rounded-lg bg-white hover:bg-white border border-slate-200 text-slate-700 transition shadow-sm"
               title="Perbesar"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => cyRef.current?.zoom(cyRef.current.zoom() * 0.8)}
-              className="p-1.5 rounded-lg bg-white/90 hover:bg-white border border-slate-200 text-slate-700 transition shadow-sm"
+              className="p-1.5 rounded-lg bg-white hover:bg-white border border-slate-200 text-slate-700 transition shadow-sm"
               title="Perkecil"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => cyRef.current?.fit()}
-              className="p-1.5 rounded-lg bg-white/90 hover:bg-white border border-slate-200 text-slate-700 transition shadow-sm"
+              className="p-1.5 rounded-lg bg-white hover:bg-white border border-slate-200 text-slate-700 transition shadow-sm"
               title="Paskan ke Layar"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -673,7 +673,7 @@ export default function AdminGraphPage() {
           />
 
           {loading && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-20">
+            <div className="absolute inset-0 bg-white flex items-center justify-center z-20">
               <div className="flex flex-col items-center gap-2">
                 <RefreshCw className="w-6 h-6 text-emerald-600 animate-spin" />
                 <span className="text-xs text-slate-600">Menghitung topologi graf pengetahuan...</span>
@@ -791,7 +791,7 @@ export default function AdminGraphPage() {
 
       {nodeForm && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-          <form onSubmit={handleSaveNode} className="w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-xl text-xs">
+          <form onSubmit={handleSaveNode} className="w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-sm text-xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">{nodeForm.mode === "create" ? "Tambah Simpul" : "Ubah Simpul"}</h3>
               <button type="button" onClick={() => setNodeForm(null)} className="text-slate-400 hover:text-slate-600 p-1"><X className="w-4 h-4" /></button>
@@ -827,7 +827,7 @@ export default function AdminGraphPage() {
 
       {edgeForm && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-          <form onSubmit={handleSaveEdge} className="w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-xl text-xs">
+          <form onSubmit={handleSaveEdge} className="w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-sm text-xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">Tambah Relasi</h3>
               <button type="button" onClick={() => setEdgeForm(null)} className="text-slate-400 hover:text-slate-600 p-1"><X className="w-4 h-4" /></button>

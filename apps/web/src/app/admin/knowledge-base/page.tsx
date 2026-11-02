@@ -446,7 +446,7 @@ export default function AdminKnowledgeBasePage() {
         <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
           <form
             onSubmit={handleSave}
-            className="w-full max-w-lg rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-xl text-xs max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-lg rounded-2xl border border-slate-200 p-6 space-y-3 bg-white shadow-sm text-xs max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">

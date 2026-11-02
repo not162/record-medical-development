@@ -60,12 +60,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-slate-50">
-      <div className="w-full max-w-md space-y-8 bg-white border border-slate-200 p-8 rounded-2xl shadow-xl shadow-slate-200/50 relative overflow-hidden">
-        {/* Subtle accent glow */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="w-full max-w-md space-y-8 bg-white border border-slate-200 p-8 rounded-2xl shadow-sm relative overflow-hidden">
 
         <div className="text-center space-y-2">
-          <div className="inline-flex w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-600 items-center justify-center shadow-md shadow-cyan-600/20 mb-2">
+          <div className="inline-flex w-12 h-12 rounded-xl bg-cyan-600 items-center justify-center shadow-sm mb-2">
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -188,7 +186,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading || success}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-semibold text-sm shadow-md shadow-cyan-600/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
               <span>Mendaftarkan Subjek Klinis ke Basis Data...</span>

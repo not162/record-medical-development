@@ -262,8 +262,8 @@ export default function AdminAnnotationsPage() {
 
       {/* Edit Annotation Modal */}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 p-6 space-y-5 bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 p-6 space-y-5 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Tag className="w-4 h-4 text-emerald-600" />

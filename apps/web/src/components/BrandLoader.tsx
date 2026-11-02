@@ -64,10 +64,9 @@ export default function BrandLoader() {
     >
       <div className="relative flex flex-col items-center space-y-6 max-w-sm px-6 text-center">
         {/* Glow behind icon */}
-        <div className="absolute -inset-4 bg-[#0891b2]/20 rounded-full blur-2xl pointer-events-none"></div>
 
         {/* Stethoscope Icon with Pulse */}
-        <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#0891b2] to-emerald-500 flex items-center justify-center shadow-lg shadow-[#0891b2]/30 animate-pulse">
+        <div className="relative w-20 h-20 rounded-2xl bg-[#0891b2] flex items-center justify-center shadow-lg shadow-[#0891b2]/30 animate-pulse">
           <Stethoscope className="w-10 h-10 text-white" />
         </div>
 
@@ -84,7 +83,7 @@ export default function BrandLoader() {
         {/* Progress Bar (4 seconds) */}
         <div className="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/60">
           <div
-            className="h-full bg-gradient-to-r from-[#0891b2] to-emerald-400 transition-all duration-75 ease-linear rounded-full"
+            className="h-full bg-[#0891b2] transition-all duration-75 ease-linear rounded-full"
             style={{ width: `${progress}%` }}
           />
         </div>

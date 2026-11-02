@@ -204,19 +204,16 @@ export default function HomePage() {
   return (
     <div className="flex-1 flex flex-col justify-between bg-slate-50 min-h-screen selection:bg-cyan-500 selection:text-white">
       {/* Top Header Navigation */}
-      <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-50 transition-all">
+      <header className="border-b border-slate-200/80 bg-white sticky top-0 z-50 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-600 flex items-center justify-center shadow-md shadow-cyan-600/20 text-white">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-cyan-600 flex items-center justify-center shadow-sm text-white">
               <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base sm:text-xl tracking-tight bg-gradient-to-r from-cyan-800 to-teal-800 bg-clip-text text-transparent">
+                <span className="font-extrabold text-base sm:text-xl tracking-tight text-cyan-800">
                   RSUKT Clinical AI
-                </span>
-                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 tracking-wider">
-                  Live
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 hidden sm:block font-medium">
@@ -241,7 +238,7 @@ export default function HomePage() {
                 {role === "ADMIN" ? (
                   <Link
                     href="/admin/dashboard"
-                    className="px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-md shadow-emerald-600/20 flex items-center gap-1.5"
+                    className="px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5"
                   >
                     <span>Workspace Riset</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -249,7 +246,7 @@ export default function HomePage() {
                 ) : (
                   <Link
                     href="/chat"
-                    className="px-4 py-2 sm:py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-md shadow-cyan-600/20 flex items-center gap-1.5"
+                    className="px-4 py-2 sm:py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5"
                   >
                     <Bot className="w-3.5 h-3.5" />
                     <span>Konsultasi Klinis</span>
@@ -266,7 +263,7 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/register"
-                  className="px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white font-semibold text-xs shadow-md shadow-cyan-600/20 transition flex items-center gap-1"
+                  className="px-3.5 sm:px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1"
                 >
                   <span>Daftar Pasien</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -279,7 +276,6 @@ export default function HomePage() {
 
       {/* Main Hero Section */}
       <section className="relative overflow-hidden pt-8 pb-14 sm:py-20 px-4 sm:px-6">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] sm:w-[45rem] h-[25rem] bg-gradient-to-tr from-cyan-400/20 via-teal-300/20 to-emerald-400/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
 
         <div className="max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-50 border border-cyan-200/80 text-cyan-800 text-xs font-semibold shadow-xs">
@@ -289,7 +285,7 @@ export default function HomePage() {
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
             Anamnesis Cerdas & Penapisan Bahaya{" "}
-            <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
+            <span className="block mt-1 sm:mt-2 text-cyan-600">
               Cepat, Tepat, dan Berbasis Bukti
             </span>
           </h1>
@@ -301,7 +297,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
             <Link
               href="/chat"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600 hover:from-cyan-700 hover:to-emerald-700 text-white font-bold text-sm shadow-xl shadow-cyan-600/25 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm shadow-sm transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               <Bot className="w-4 h-4" />
               <span>Mulai Konsultasi Chatbot</span>
@@ -402,7 +398,7 @@ export default function HomePage() {
           </div>
 
           {/* Simulated Video Player Container (Mockup Layar 1080p) */}
-          <div ref={videoContainerRef} role="region" aria-label="Pemutar Simulasi Video Demo Chatbot RSUKT" className="rounded-3xl border-2 border-slate-800 bg-slate-950 text-slate-100 shadow-2xl overflow-hidden aspect-video min-h-[420px] flex flex-col justify-between relative">
+          <div ref={videoContainerRef} role="region" aria-label="Pemutar Simulasi Video Demo Chatbot RSUKT" className="rounded-xl border-2 border-slate-800 bg-slate-950 text-slate-100 shadow-sm overflow-hidden aspect-video min-h-[420px] flex flex-col justify-between relative">
             {/* Player Top Bar */}
             <div className="px-4 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
@@ -417,15 +413,11 @@ export default function HomePage() {
                 <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold text-[10px]">
                   Mode: {activeScenario.mode}
                 </span>
-                <span className="text-[11px] text-emerald-400 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  Live AI Engine
-                </span>
               </div>
             </div>
 
             {/* Video Screen Body (Simulasi Percakapan Chatbot) */}
-            <div className="p-5 sm:p-8 bg-gradient-to-b from-slate-950 to-slate-900 min-h-[380px] flex flex-col justify-between space-y-6">
+            <div className="p-5 sm:p-8 bg-slate-950 min-h-[380px] flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 {/* User Message Bubble */}
                 <div className="flex justify-end">
@@ -444,10 +436,10 @@ export default function HomePage() {
                 {/* Assistant Response Bubble */}
                 {showResponse ? (
                   <div className="flex gap-3 items-start max-w-2xl animate-fade-in">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-teal-500 flex items-center justify-center text-white shrink-0 shadow mt-1">
+                    <div className="w-9 h-9 rounded-xl bg-cyan-500 flex items-center justify-center text-white shrink-0 shadow mt-1">
                       <Stethoscope className="w-5 h-5" />
                     </div>
-                    <div className="bg-slate-900 border border-slate-700/80 p-5 rounded-2xl rounded-tl-xs text-xs sm:text-sm leading-relaxed text-slate-200 space-y-3.5 shadow-xl">
+                    <div className="bg-slate-900 border border-slate-700/80 p-5 rounded-2xl rounded-tl-xs text-xs sm:text-sm leading-relaxed text-slate-200 space-y-3.5 shadow-sm">
                       
                       {/* Response Header */}
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
@@ -545,7 +537,7 @@ export default function HomePage() {
 
                             {/* 3.4 WebVTT Accessible Captions Overlay */}
               {showCaptions && (
-                <div aria-live="polite" className="w-full text-center px-4 py-1.5 bg-slate-950/80 backdrop-blur-xs border-t border-slate-800 text-[11px] text-cyan-200 font-medium">
+                <div aria-live="polite" className="w-full text-center px-4 py-1.5 bg-slate-950/80 border-t border-slate-800 text-[11px] text-cyan-200 font-medium">
                   [Takarir Demo Medis] {activeScenario.category} ({activeScenario.mode}): "{displayedText || activeScenario.query}"
                 </div>
               )}
@@ -555,7 +547,7 @@ export default function HomePage() {
                 {/* Scrubber Progress Bar */}
                 <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-cyan-500 to-teal-400 h-full transition-all duration-300"
+                    className="bg-cyan-500 h-full transition-all duration-300"
                     style={{ width: `${playbackProgress}%` }}
                   ></div>
                 </div>
@@ -723,7 +715,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
             
             {/* KARTU HIJAU: YANG DAPAT DIPROSES (IN-SCOPE) */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/80 shadow-lg space-y-6 flex flex-col justify-between">
+            <div className="bg-white rounded-xl p-6 sm:p-8 border-2 border-emerald-500/80 shadow-lg space-y-6 flex flex-col justify-between">
               <div className="space-y-5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
@@ -770,7 +762,7 @@ export default function HomePage() {
             </div>
 
             {/* KARTU MERAH: YANG TIDAK DAPAT DIPROSES (OUT-OF-SCOPE / PROHIBITED) */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-rose-500/80 shadow-lg space-y-6 flex flex-col justify-between">
+            <div className="bg-white rounded-xl p-6 sm:p-8 border-2 border-rose-500/80 shadow-lg space-y-6 flex flex-col justify-between">
               <div className="space-y-5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
@@ -839,38 +831,38 @@ export default function HomePage() {
                 icon: Bot,
                 title: "Anamnesis AI 24/7",
                 desc: "Konsultasi keluhan kesehatan kapan saja dengan penjelasan ramah awam, akurat, dan tanpa jargon teknis membingungkan.",
-                color: "from-cyan-500 to-teal-500",
+                color: "bg-cyan-600",
                 badge: "Thinking & Fast"
               },
               {
                 icon: HeartPulse,
                 title: "Deteksi Red Flags",
                 desc: "Penapisan tanda bahaya dini otomatis untuk mendeteksi kegawatan klinis sebelum terjadi komplikasi lebih lanjut.",
-                color: "from-red-500 to-rose-500",
+                color: "bg-red-600",
                 badge: "Keselamatan Prioritas"
               },
               {
                 icon: CalendarCheck,
                 title: "Rujukan Spesialis",
                 desc: "Rekomendasi poliklinik spesialis yang sesuai dengan pola gejala pasien untuk mempermudah kunjungan rumah sakit.",
-                color: "from-teal-500 to-emerald-500",
+                color: "bg-teal-600",
                 badge: "Terarah & Tepat"
               },
               {
                 icon: ShieldCheck,
                 title: "Privasi Rekam Medis",
                 desc: "Data kesehatan bersifat spesifik dilindungi enkripsi penuh. Hak penghapusan permanen sesuai UU PDP No. 27/2022.",
-                color: "from-indigo-500 to-cyan-500",
+                color: "bg-indigo-600",
                 badge: "Enkripsi AES-256"
               }
             ].map((card, idx) => (
               <div 
                 key={idx}
-                className="p-6 rounded-3xl bg-slate-50 hover:bg-white border border-slate-200 hover:border-cyan-300 hover:shadow-xl hover:shadow-cyan-500/5 transition-all flex flex-col justify-between space-y-4 group"
+                className="p-6 rounded-xl bg-slate-50 hover:bg-white border border-slate-200 hover:border-cyan-300 hover:shadow-sm hover:shadow-cyan-500/5 transition-all flex flex-col justify-between space-y-4 group"
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${card.color} flex items-center justify-center text-white shadow-md shadow-slate-300 group-hover:scale-105 transition-transform`}>
+                    <div className={`w-12 h-12 rounded-2xl ${card.color} flex items-center justify-center text-white shadow-md shadow-slate-300 group-hover:scale-105 transition-transform`}>
                       <card.icon className="w-6 h-6" />
                     </div>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 shadow-2xs">
@@ -893,7 +885,7 @@ export default function HomePage() {
       </section>
 
       {/* Metrics Banner */}
-      <section className="py-12 bg-gradient-to-r from-cyan-800 via-teal-800 to-slate-900 text-white px-4 sm:px-6">
+      <section className="py-12 bg-cyan-800 text-white px-4 sm:px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
           <div>
             <div className="text-3xl sm:text-4xl font-extrabold text-cyan-300">99.4%</div>
@@ -916,7 +908,7 @@ export default function HomePage() {
 
       {/* Security & UU PDP Compliance Callout */}
       <section id="keamanan" className="py-16 bg-white border-t border-slate-200 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-tr from-cyan-900 via-teal-900 to-slate-900 text-white p-8 sm:p-12 shadow-xl relative overflow-hidden">
+        <div className="max-w-5xl mx-auto rounded-xl bg-cyan-900 text-white p-8 sm:p-12 shadow-sm relative overflow-hidden">
           <div className="max-w-2xl space-y-5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-400/30">
               <Lock className="w-3.5 h-3.5" />

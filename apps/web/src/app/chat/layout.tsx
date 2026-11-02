@@ -36,7 +36,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   if (!isLoading && role === "ADMIN") {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-red-200 text-center space-y-4 shadow-xl">
+        <div className="max-w-md w-full bg-white p-8 rounded-xl border border-red-200 text-center space-y-4 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center mx-auto shadow-sm">
             <ShieldAlert className="w-7 h-7" />
           </div>
@@ -83,7 +83,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-600 to-emerald-600 flex items-center justify-center text-white shadow-xs">
+            <div className="w-7 h-7 rounded-lg bg-cyan-600 flex items-center justify-center text-white shadow-xs">
               <Stethoscope className="w-4 h-4" />
             </div>
             <div>
@@ -105,18 +105,18 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       {/* Mobile Slide-over Drawer Backdrop */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-50 bg-slate-900/40 lg:hidden transition-opacity"
           onClick={() => setMobileMenuOpen(false)}
         >
           <div 
-            className="w-72 max-w-[85%] h-full bg-white shadow-2xl flex flex-col justify-between"
+            className="w-72 max-w-[85%] h-full bg-white shadow-sm flex flex-col justify-between"
             onClick={(e) => e.stopPropagation()}
           >
             <div>
               {/* Drawer header */}
               <div className="p-4 border-b border-slate-200 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-600 flex items-center justify-center text-white shadow-xs">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-600 flex items-center justify-center text-white shadow-xs">
                     <Stethoscope className="w-4 h-4" />
                   </div>
                   <div>
@@ -212,7 +212,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         <div>
           {/* Brand header */}
           <div className="p-4 border-b border-slate-200 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-cyan-600/20">
+            <div className="w-9 h-9 rounded-xl bg-cyan-600 flex items-center justify-center text-white shadow-sm">
               <Stethoscope className="w-5 h-5" />
             </div>
             <div>
@@ -225,7 +225,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           <div className="p-3">
             <Link
               href="/chat"
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-md shadow-cyan-600/20"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm"
             >
               <MessageSquarePlus className="w-4 h-4" />
               <span>Percakapan Baru</span>
@@ -304,7 +304,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       </main>
 
       {/* Mobile Bottom Navigation Bar (PWA / MWA standard) */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-2 px-1 z-40 shadow-lg">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 flex items-center justify-around py-2 px-1 z-40 shadow-lg">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

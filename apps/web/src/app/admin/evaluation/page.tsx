@@ -571,7 +571,7 @@ export default function AdminEvaluationPage() {
           {stressData && (
             <div className="space-y-6">
               {/* Robustness Banner */}
-              <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200 flex items-center justify-between">
+              <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-between">
                 <div>
                   <span className="text-xs font-semibold text-indigo-700">Skor Ketahanan Klinis Global</span>
                   <h3 className="text-3xl font-black text-indigo-950 font-mono mt-0.5">
