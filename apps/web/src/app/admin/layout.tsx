@@ -66,21 +66,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const operationalNavItems = [
-    { href: "/admin/dashboard", label: "Dashboard Operasional", icon: LayoutDashboard },
-    { href: "/admin/feedback", label: "Feedback Pasien", icon: ThumbsUp },
-    { href: "/admin/audit-logs", label: "Log Audit Sistem", icon: ShieldAlert },
-    { href: "/admin/settings", label: "Pengaturan Sistem", icon: Settings },
+    { href: "/admin/dashboard", label: "Ringkasan", icon: LayoutDashboard },
+    { href: "/admin/feedback", label: "Masukan Pengguna", icon: ThumbsUp },
+    { href: "/admin/audit-logs", label: "Catatan Aktivitas", icon: ShieldAlert },
+    { href: "/admin/settings", label: "Pengaturan", icon: Settings },
   ];
 
   const researchNavItems = [
-    { href: "/admin/training", label: "Model Training & Simulasi", icon: Activity },
-    { href: "/admin/models", label: "Model Registry", icon: Cpu },
-    { href: "/admin/evaluation", label: "Evaluasi & Benchmark", icon: BarChart3 },
-    { href: "/admin/datasets", label: "Manajemen Dataset", icon: Database },
-    { href: "/admin/datasets/imports", label: "Import Manifests", icon: FileText },
-    { href: "/admin/annotations", label: "Annotation Studio", icon: CheckSquare },
-    { href: "/admin/knowledge-base", label: "Knowledge Index (RAG)", icon: BookOpen },
-    { href: "/admin/graph", label: "GraphRAG Visualizer", icon: GitFork },
+    { href: "/admin/training", label: "Latih Model AI", icon: Activity },
+    { href: "/admin/models", label: "Daftar Model AI", icon: Cpu },
+    { href: "/admin/evaluation", label: "Uji Kualitas Model", icon: BarChart3 },
+    { href: "/admin/datasets", label: "Kelola Data Latih", icon: Database },
+    { href: "/admin/datasets/imports", label: "Riwayat Impor Data", icon: FileText },
+    { href: "/admin/annotations", label: "Pemberian Label Data", icon: CheckSquare },
+    { href: "/admin/knowledge-base", label: "Basis Pengetahuan", icon: BookOpen },
+    { href: "/admin/graph", label: "Peta Hubungan Penyakit", icon: GitFork },
   ];
 
   return (
@@ -95,16 +95,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <div>
               <h2 className="font-bold text-sm tracking-tight text-slate-900">RSUKT Admin AI</h2>
-              <span className="text-[10px] text-emerald-700 font-semibold tracking-wide uppercase">Research Workspace</span>
+              <span className="text-[10px] text-emerald-700 font-semibold tracking-wide uppercase">Ruang Kerja Admin</span>
             </div>
           </div>
 
           {/* Nav Items Grouped by Role Category */}
           <nav className="p-3 space-y-4">
-            {/* Kategori 1: Operasional Klinik */}
+            {/* Kategori 1: Menu Admin */}
             <div>
               <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                <span>Operasional Klinik</span>
+                <span>Menu Admin</span>
                 {role === "ADMIN" && (
                   <span className="text-[9px] px-1.5 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">Aktif</span>
                 )}

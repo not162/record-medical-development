@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
       <div className="flex-1 flex items-center justify-center p-12 text-slate-500">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs">Memuat Metrik Operasional Real-time...</span>
+          <span className="text-xs">Memuat ringkasan...</span>
         </div>
       </div>
     );
@@ -133,10 +133,10 @@ export default function AdminDashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Pusat Komando Riset & Operasional AI
+            Ringkasan Sistem
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Status real-time database SQLite, model terlatih, audit keamanan, dan kurasi dataset klinis.
+            Gambaran terbaru tentang data, model AI, keamanan, dan data latih.
           </p>
         </div>
 

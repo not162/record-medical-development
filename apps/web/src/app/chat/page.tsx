@@ -280,8 +280,8 @@ export default function ChatPage() {
   };
 
   const handleDownloadSummary = () => {
-    let summaryText = `RESUME KONSULTASI KLINIS ELEKTRONIK (RME) - RSUKT\n`;
-    summaryText += `Standar Regulasi: Permenkes No. 12 Tahun 2025 | UU PDP No. 27 Tahun 2022 | ISO 27001\n`;
+    let summaryText = `RINGKASAN PERCAKAPAN - RSUKT\n`;
+    summaryText += `Data ini bersifat rahasia dan hanya untuk Anda.\n`;
     summaryText += `Tanggal Unduh: ${new Date().toLocaleString("id-ID")}\n`;
     summaryText += `ID Sesi: ${currentSessionId || "N/A"}\n`;
     summaryText += `Mode Penalaran: ${reasoningMode.toUpperCase()}\n`;
@@ -292,11 +292,11 @@ export default function ChatPage() {
       summaryText += `${m.content}\n\n`;
       if (m.scanningDeteksiBahasa?.scanning_result) {
         const sr = m.scanningDeteksiBahasa.scanning_result;
-        summaryText += `   Triase Klinis: ${sr.urgensi_triase} | ICD-10: ${sr.icd10_code || "-"} | Spesialisasi: ${sr.departemen_rekomendasi}\n\n`;
+        summaryText += `   Tingkat Urgensi: ${sr.urgensi_triase} | ICD-10: ${sr.icd10_code || "-"} | Spesialisasi: ${sr.departemen_rekomendasi}\n\n`;
       }
     });
     summaryText += `============================================================\n`;
-    summaryText += `CATATAN RUJUKAN KLINIS:\n`;
+    summaryText += `CATATAN SARAN:\n`;
     summaryText += `Hasil konsultasi AI di atas adalah Clinical Decision Support System (CDSS) dan bukan diagnosis definitif. Pasien wajib menjalani evaluasi tatap muka oleh dokter ber-SIP di poliklinik rawat jalan RSUKT atau IGD 119.\n`;
 
     const blob = new Blob([summaryText], { type: "text/plain;charset=utf-8" });
@@ -1548,9 +1548,9 @@ export default function ChatPage() {
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Informed Consent & Kepatuhan Regulasi</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Persetujuan & Perlindungan Data</h3>
                   <span className="text-[10px] text-slate-500 font-medium">
-                    Standar Keamanan Informasi & Pelindungan Data Medis Pasien
+                    Bagaimana data Anda dijaga
                   </span>
                 </div>
               </div>
@@ -1568,14 +1568,14 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-cyan-600" />
-                    1. ISO/IEC 27001:2022 (Sistem Manajemen Keamanan Informasi / ISMS)
+                    1. Data dikirim dan disimpan dengan aman
                   </span>
                   <span className="px-1.5 py-0.2 rounded bg-cyan-100 text-cyan-800 text-[9px] font-mono font-bold">
-                    ISMS Annex A.9
+                    Keamanan
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-600">
-                  Data konsultasi Anda dienkripsi penuh secara transmisi (TLS 1.3) dan penyimpanan basis data (AES-256). Akses data diatur berdasarkan prinsip hak akses terendah (*Role-Based Access Control* / RBAC) dengan pencatatan audit log tak terhapuskan.
+                  Percakapan Anda dienkripsi saat dikirim dan saat disimpan. Hanya orang yang berhak yang bisa mengakses data, dan setiap akses dicatat.
                 </p>
               </div>
 
@@ -1584,14 +1584,14 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                    2. HIPAA Safe Harbor § 164.514 (De-identifikasi PHI)
+                    2. Identitas Anda disamarkan
                   </span>
                   <span className="px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 text-[9px] font-mono font-bold">
-                    18 Identifiers Safe
+                    Anonim
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-600">
-                  Sistem secara otomatis menyamarkan data identitas pribadi (NIK 16 digit, No. Rekam Medis, No. BPJS, No. Telepon, Tanggal Lahir, dan Email) sebelum keluhan Anda diproses oleh modul penalaran klinis LLM.
+                  Sebelum keluhan Anda diproses AI, data pribadi (NIK, nomor rekam medis, nomor BPJS, nomor telepon, tanggal lahir, dan email) otomatis disamarkan.
                 </p>
               </div>
 
@@ -1600,14 +1600,14 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
                     <FileCheck className="w-3.5 h-3.5 text-amber-600" />
-                    3. GDPR (General Data Protection Regulation)
+                    3. Anda berhak memilih dan menghapus
                   </span>
                   <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 text-[9px] font-mono font-bold">
-                    Art. 9 & 17 Rights
+                    Hak Anda
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-600">
-                  Pemrosesan data kesehatan dilakukan atas persetujuan sadar (*Informed Consent*). Anda memiliki hak penuh untuk meminta penghapusan riwayat sesi (*Right to Erasure*) melalui tombol hapus pada panel riwayat sesi.
+                  Data kesehatan Anda hanya diproses jika Anda setuju. Anda bisa menghapus riwayat percakapan kapan saja lewat tombol hapus di daftar riwayat.
                 </p>
               </div>
 
@@ -1616,10 +1616,10 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-cyan-950 text-xs flex items-center gap-1.5">
                     <Stethoscope className="w-3.5 h-3.5 text-cyan-700" />
-                    4. Permenkes No. 12 Tahun 2025 (Penyelenggaraan RME & Keamanan Data Medis)
+                    4. Asisten ini bukan pengganti dokter
                   </span>
                   <span className="px-1.5 py-0.2 rounded bg-cyan-100 text-cyan-800 text-[9px] font-mono font-bold">
-                    Kemenkes Standar
+                    Penting
                   </span>
                 </div>
                 <p className="text-[11px] text-cyan-900 leading-relaxed">
@@ -1632,28 +1632,28 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-emerald-950 text-xs flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-                    5. UU No. 27 Tahun 2022 (Pelindungan Data Pribadi / UU PDP)
+                    5. Sesuai Undang-Undang Perlindungan Data Pribadi
                   </span>
                   <span className="px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 text-[9px] font-mono font-bold">
-                    Data Spesifik Legal
+                    Aturan Hukum
                   </span>
                 </div>
                 <p className="text-[11px] text-emerald-900 leading-relaxed">
-                  Data kesehatan diklasifikasikan sebagai <strong>Data Pribadi yang Bersifat Spesifik</strong> (Pasal 4 UU PDP). Seluruh keluhan diproses atas dasar persetujuan eksplisit (Pasal 20 UU PDP), dienkripsi penuh (Pasal 35 UU PDP), dan menjamin hak subjek data termasuk hak penghapusan data / <em>Right to Erasure</em> (Pasal 8 &amp; 10 UU PDP).
+                  Data kesehatan termasuk <strong>data pribadi yang sensitif</strong>. Data Anda hanya diproses dengan persetujuan Anda, dienkripsi, dan Anda berhak meminta data Anda dihapus (UU No. 27 Tahun 2022).
                 </p>
               </div>
             </div>
 
             <div className="pt-2 border-t border-slate-200 flex items-center justify-between gap-3">
               <span className="text-[10px] text-slate-500 font-medium">
-                Persetujuan digital Anda tersimpan secara aman.
+                Persetujuan Anda tersimpan dengan aman.
               </span>
               <button
                 type="button"
                 onClick={() => setShowConsentModal(false)}
                 className="py-2.5 px-5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-semibold shadow-xs transition"
               >
-                Saya Memahami & Menyetujui
+                Saya Mengerti & Setuju
               </button>
             </div>
           </div>
