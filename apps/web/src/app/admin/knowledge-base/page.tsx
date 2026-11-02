@@ -275,10 +275,10 @@ export default function AdminKnowledgeBasePage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-emerald-600" />
-            <span>Indeks Pengetahuan Medis (RAG Engine)</span>
+            <span>Basis Pengetahuan</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Mesin pencarian semantik hibrida FTS5 (BM25) + sqlite-vec (Dense 384-d) dengan fusi Reciprocal Rank Fusion (RRF).
+            Kumpulan dokumen pedoman yang dipakai asisten untuk menjawab, lengkap dengan pencarian berdasarkan kata dan makna.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -535,7 +535,7 @@ export default function AdminKnowledgeBasePage() {
           <div>
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
               <BarChart2 className="w-4 h-4 text-emerald-600" />
-              <span>Evaluasi Kualitas Pencarian (Retrieval Benchmark)</span>
+              <span>Uji Kualitas Pencarian</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">Uji coba terstandarisasi menghitung Recall@3, Precision@3, MRR, dan nDCG@3.</p>
           </div>
@@ -575,9 +575,9 @@ export default function AdminKnowledgeBasePage() {
         <div>
           <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Search className="w-4 h-4 text-cyan-600" />
-            <span>Uji Coba Sandbox Pencarian Semantik</span>
+            <span>Coba Pencarian</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">Uji pengambilan potongan bukti (evidence chunks) secara real-time.</p>
+          <p className="text-xs text-slate-500 mt-0.5">Coba cari dan lihat potongan dokumen yang ditemukan.</p>
         </div>
 
         <form onSubmit={handleSearch} className="flex gap-2">

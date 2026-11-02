@@ -257,10 +257,10 @@ export default function AdminTrainingPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <Activity className="w-6 h-6 text-emerald-600" />
-            <span>Worker Pelatihan Klinis & Mode Pemrosesan Data</span>
+            <span>Latih Model AI</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Mendukung antrean pelatihan worker terisolasi dan simulasi mode pemrosesan data (Python, CSV, JSONL) berbasis LCD, Neural Translation, dan Post-Pretraining Loop.
+            Jalankan dan pantau pelatihan model AI, serta coba simulasi pemrosesan data (Python, CSV, JSONL).
           </p>
         </div>
 

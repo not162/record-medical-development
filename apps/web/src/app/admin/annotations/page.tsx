@@ -139,10 +139,10 @@ export default function AdminAnnotationsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <CheckSquare className="w-6 h-6 text-emerald-600" />
-            <span>Annotation Studio | Kurasi Label Terawasi (Supervised ML)</span>
+            <span>Pemberian Label Data</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Studio pelabelan ground-truth untuk mendeteksi reasoning error, kontraindikasi obat, dan klasifikasi risiko klinis sebelum training model (Sprint 06).
+            Beri label pada jawaban AI (benar atau salah, obat tidak cocok, tingkat risiko) sebelum dipakai melatih model.
           </p>
         </div>
 

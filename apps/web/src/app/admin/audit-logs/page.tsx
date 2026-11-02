@@ -74,10 +74,10 @@ export default function AdminAuditLogsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <ShieldAlert className="w-6 h-6 text-emerald-600" />
-            <span>Audit Trail & Log Keamanan Sistem</span>
+            <span>Catatan Aktivitas</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Catatan permanen transaksi, otentikasi, perizinan, dan aktivitas administratif untuk kepatuhan ISO 27001, GDPR, HIPAA, dan Permenkes No. 12 Tahun 2025.
+            Catatan permanen siapa yang masuk, mengakses, dan mengubah data di sistem ini.
           </p>
         </div>
 

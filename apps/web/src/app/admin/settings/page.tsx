@@ -133,10 +133,10 @@ export default function AdminSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <Settings className="w-6 h-6 text-emerald-600" />
-            <span>Pengaturan Sistem & Diagnostik Infrastruktur AI</span>
+            <span>Pengaturan Sistem</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Konfigurasi penyedia model Groq API, status database SQLite WAL, indeks vektor RAG, dan postur keamanan klinis.
+            Status layanan AI, database, pencarian dokumen, dan keamanan sistem.
           </p>
         </div>
 

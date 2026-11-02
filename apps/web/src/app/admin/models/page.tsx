@@ -132,10 +132,10 @@ export default function AdminModelsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <Cpu className="w-6 h-6 text-emerald-600" />
-            <span>Admin Model Registry & Versioning</span>
+            <span>Daftar Model AI</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Katalog model klasifikasi terawasi terverifikasi, metrik performa klinis (F1, ROC-AUC, Sensitivitas), dan pemilihan model aktif produksi.
+            Daftar model AI yang tersedia, skor kualitasnya (F1, ROC-AUC, Sensitivitas), dan pilihan model yang sedang dipakai.
           </p>
         </div>
 

@@ -225,10 +225,10 @@ export default function AdminFeedbackPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <ThumbsUp className="w-6 h-6 text-emerald-600" />
-            <span>Tinjauan Umpan Balik Dokter & Reward Scoring</span>
+            <span>Masukan Pengguna</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Pengawasan kurasi kualitas klinis: formula reward Like (+1.75%) & Dislike (-0.74%) untuk pipeline preferensi offline (RLHF / DPO).
+            Tinjau penilaian suka dan tidak suka dari pengguna. Penilaian ini dipakai untuk memperbaiki jawaban AI (Like +1,75%, Dislike -0,74%).
           </p>
         </div>
 

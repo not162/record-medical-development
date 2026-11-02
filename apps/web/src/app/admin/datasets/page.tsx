@@ -204,10 +204,10 @@ export default function AdminDatasetsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <Database className="w-6 h-6 text-emerald-600" />
-            <span>Manajemen Dataset Klinis & Pipeline RAG</span>
+            <span>Kelola Data Latih</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Data ditarik real-time dari CSV/TXT, diekspor ke kanonikal JSONL, dan diindeks ke Knowledge Graph serta Database Vektor (sqlite-vec + FTS5).
+            Data dari berkas CSV/TXT diubah ke format JSONL lalu dimasukkan ke basis pengetahuan agar bisa dicari asisten.
           </p>
         </div>
 

@@ -467,10 +467,10 @@ export default function AdminGraphPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <GitFork className="w-6 h-6 text-emerald-600" />
-            <span>GraphRAG | Graf Pengetahuan Medis Terstruktur</span>
+            <span>Peta Hubungan Penyakit</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Penalaran relasional (Disease, Symptom, Drug, Guideline, Department) yang diinjeksikan secara real-time ke Qwen 3.8-27b untuk pencegahan kontraindikasi.
+            Hubungan antara penyakit, gejala, obat, pedoman, dan poli, dipakai asisten agar tidak menyarankan obat yang tidak cocok.
           </p>
         </div>
 

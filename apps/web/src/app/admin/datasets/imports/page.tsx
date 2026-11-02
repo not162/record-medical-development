@@ -9,10 +9,10 @@ export default function AdminDatasetImportsPage() {
       <div className="pb-4 border-b border-slate-200">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
           <FileText className="w-6 h-6 text-emerald-600" />
-          <span>Manifes Ingesti & Laporan Baris Tertolak (Quarantine)</span>
+          <span>Riwayat Impor Data</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Laporan validasi parsial, checksum integritas berkas, dan baris data yang ditolak oleh skema klinis.
+          Hasil pemeriksaan data yang diimpor, termasuk baris yang ditolak karena formatnya salah.
         </p>
       </div>
 

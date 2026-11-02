@@ -274,10 +274,10 @@ export default function AdminEvaluationPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <Scale className="h-6 w-6 text-indigo-600" />
-            Evaluasi Model & Analisis Ketahanan Noise (Sprint 07)
+            Uji Kualitas Model AI
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Metrik matematika presisi, Cohen's Kappa, Shannon Entropy, kalibrasi reliabilitas, dan 8 kondisi perturbasi teks klinis.
+            Seberapa akurat dan konsisten model menjawab, termasuk saat teks keluhan berisi salah ketik, singkatan, atau bahasa sehari-hari (8 kondisi uji).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -545,7 +545,7 @@ export default function AdminEvaluationPage() {
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Flame className="h-5 w-5 text-rose-500" />
-                Benchmark Ketahanan Model terhadap Perturbasi Teks Klinis
+                Uji Ketahanan Model terhadap Teks yang Berantakan
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 Menguji penurunan kinerja (Δ F1) dan pergeseran entropi di bawah 8 kondisi noise nyata (akronim medis, typo OCR, istilah percakapan, variasi satuan).
@@ -635,7 +635,7 @@ export default function AdminEvaluationPage() {
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <BrainCircuit className="h-5 w-5 text-indigo-600" />
-                Evaluasi Konsensus Multi-Model & Matriks Cohen's Kappa
+                Perbandingan Kesepakatan Antar Model
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 Mengukur tingkat kesepakatan antar-rater (Pakar Klinis, Classifier ML, Penjaga Graf Pengetahuan, dan Ensembel) pada 13 kasus rekam medis master terverifikasi.
@@ -772,7 +772,7 @@ export default function AdminEvaluationPage() {
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Download className="h-5 w-5 text-indigo-600" />
-                Pusat Unduhan Artefak Riset & Publikasi Ilmiah
+                Unduh Hasil Penelitian
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 Eksportir otomatis menghasilkan data tabular CSV, manifest JSONL untuk audit gate, dan grafik publikasi PNG resolusi tinggi (DPI 200).
@@ -927,7 +927,7 @@ export default function AdminEvaluationPage() {
           <div className="lg:col-span-2 p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
             <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
               <HeartPulse className="h-5 w-5 text-rose-500" />
-              Simulator Risiko Kardiovaskular Real-time
+              Simulator Risiko Penyakit Jantung
             </h2>
             <p className="text-xs text-slate-500 mb-5">
               Simulasi scoring risiko serangan jantung menggunakan model Random Forest aktif (terlatih pada 15,000 pasien Indonesia).
