@@ -1,0 +1,300 @@
+{
+  "seed": 42,
+  "department": {
+    "n_samples": 81,
+    "class_counts": {
+      "Kardiologi": 15,
+      "Pulmonologi": 15,
+      "Endokrinologi": 15,
+      "Trauma/Bedah": 12,
+      "Gastroenterologi": 12,
+      "Psikiatri": 12
+    },
+    "classes_dropped_lt5": {
+      "Kebidanan": 3,
+      "Neurologi": 2,
+      "Penyakit Dalam": 1,
+      "Bedah": 1
+    },
+    "cv": "4-fold x5 repeated stratified",
+    "candidates": {
+      "tfidf_logreg": {
+        "acc_mean": 0.5839,
+        "acc_std": 0.1323,
+        "f1_macro_mean": 0.5768,
+        "f1_macro_std": 0.1353
+      },
+      "tfidf_linearsvc": {
+        "acc_mean": 0.5963,
+        "acc_std": 0.1271,
+        "f1_macro_mean": 0.5919,
+        "f1_macro_std": 0.1284
+      },
+      "tfidf_tree": {
+        "acc_mean": 0.2989,
+        "acc_std": 0.0749,
+        "f1_macro_mean": 0.2514,
+        "f1_macro_std": 0.0837
+      }
+    },
+    "best": "tfidf_linearsvc",
+    "per_class_report_oof": {
+      "Endokrinologi": {
+        "precision": 0.5,
+        "recall": 0.4,
+        "f1-score": 0.4444444444444444,
+        "support": 15.0
+      },
+      "Gastroenterologi": {
+        "precision": 0.6428571428571429,
+        "recall": 0.75,
+        "f1-score": 0.6923076923076923,
+        "support": 12.0
+      },
+      "Kardiologi": {
+        "precision": 0.42105263157894735,
+        "recall": 0.5333333333333333,
+        "f1-score": 0.47058823529411764,
+        "support": 15.0
+      },
+      "Psikiatri": {
+        "precision": 0.875,
+        "recall": 0.5833333333333334,
+        "f1-score": 0.7,
+        "support": 12.0
+      },
+      "Pulmonologi": {
+        "precision": 0.5555555555555556,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.6060606060606061,
+        "support": 15.0
+      },
+      "Trauma/Bedah": {
+        "precision": 0.6,
+        "recall": 0.5,
+        "f1-score": 0.5454545454545454,
+        "support": 12.0
+      },
+      "accuracy": 0.5679012345679012,
+      "macro avg": {
+        "precision": 0.5990775549986076,
+        "recall": 0.5722222222222222,
+        "f1-score": 0.5764759205935676,
+        "support": 81.0
+      },
+      "weighted avg": {
+        "precision": 0.5872025743370772,
+        "recall": 0.5679012345679012,
+        "f1-score": 0.5687598288905479,
+        "support": 81.0
+      }
+    },
+    "confusion_matrix_labels": [
+      "Endokrinologi",
+      "Gastroenterologi",
+      "Kardiologi",
+      "Psikiatri",
+      "Pulmonologi",
+      "Trauma/Bedah"
+    ],
+    "confusion_matrix": [
+      [
+        6,
+        1,
+        2,
+        1,
+        4,
+        1
+      ],
+      [
+        0,
+        9,
+        1,
+        0,
+        0,
+        2
+      ],
+      [
+        2,
+        1,
+        8,
+        0,
+        3,
+        1
+      ],
+      [
+        1,
+        0,
+        3,
+        7,
+        1,
+        0
+      ],
+      [
+        2,
+        0,
+        3,
+        0,
+        10,
+        0
+      ],
+      [
+        1,
+        3,
+        2,
+        0,
+        0,
+        6
+      ]
+    ],
+    "note": "tiny data; paraphrase near-duplicates may inflate CV; not a clinical validation"
+  },
+  "cardio": {
+    "rows": 158355,
+    "positive_rate": 0.401,
+    "exact_duplicate_rows": 0,
+    "duplicate_feature_rows": 0,
+    "top_single_feature_auc": [
+      [
+        "hypertension",
+        0.6258
+      ],
+      [
+        "previous_heart_disease",
+        0.6123
+      ],
+      [
+        "diabetes",
+        0.5793
+      ],
+      [
+        "obesity",
+        0.5758
+      ],
+      [
+        "smoking_status",
+        0.5758
+      ],
+      [
+        "age",
+        0.5654
+      ]
+    ],
+    "split": "80/20 stratified seed 42",
+    "imbalance": "class_weight=balanced (sample_weight for GB)",
+    "results": {
+      "decision_tree_d4": {
+        "roc_auc": 0.7611,
+        "sensitivity": 0.7801,
+        "specificity": 0.5998,
+        "accuracy": 0.6721
+      },
+      "decision_tree_d8": {
+        "roc_auc": 0.8033,
+        "sensitivity": 0.7186,
+        "specificity": 0.7202,
+        "accuracy": 0.7195
+      },
+      "random_forest": {
+        "roc_auc": 0.8106,
+        "sensitivity": 0.7269,
+        "specificity": 0.7216,
+        "accuracy": 0.7238
+      },
+      "gradient_boosting": {
+        "roc_auc": 0.8139,
+        "sensitivity": 0.7201,
+        "specificity": 0.7335,
+        "accuracy": 0.7281
+      }
+    },
+    "tree_rules_file": "services/ai-api/models/decision/cardio_tree_rules.txt"
+  },
+  "mode_router": {
+    "n": 100,
+    "label_counts": {
+      "fast": 36,
+      "thinking": 64
+    },
+    "labeling": "risk==tinggi OR task in {recommendation,contraindication,procedure,guideline_qa,reasoning_audit} OR >=3 symptom hits => thinking, else fast. Labels are rule-derived, so metrics show how well a tree recovers the rules, not real routing quality.",
+    "cv5_train_val_acc": 0.6667,
+    "cv5_train_val_f1_macro": 0.664,
+    "test_n": 10,
+    "test_acc": 0.9,
+    "test_f1_macro": 0.899,
+    "no_redflag_subset_n": 69,
+    "no_redflag_subset_cv3_acc": 0.5362,
+    "redflag_lexicon_recall_on_meta_risk_tinggi": 0.4694,
+    "rules_file": "services/ai-api/models/decision/mode_router_rules.txt"
+  },
+  "unit_checks": [
+    [
+      "redflag->thinking",
+      true
+    ],
+    [
+      "redflag conf 1.0",
+      true
+    ],
+    [
+      "output keys",
+      true
+    ],
+    [
+      "empty text safe",
+      true
+    ],
+    [
+      "redflag overrides model on all SFT prompts",
+      true
+    ],
+    [
+      "fallback works",
+      true
+    ],
+    [
+      "artifact loads",
+      true
+    ]
+  ],
+  "sft_validation": {
+    "fast": {
+      "counts": {
+        "train": 80,
+        "val": 10,
+        "test": 10
+      },
+      "schema_ok": true,
+      "cross_split_prompt_overlap": 0,
+      "chars_per_example": {
+        "min": 560,
+        "median": 649,
+        "max": 808
+      }
+    },
+    "thinking": {
+      "counts": {
+        "train": 80,
+        "val": 10,
+        "test": 10
+      },
+      "schema_ok": true,
+      "cross_split_prompt_overlap": 0,
+      "chars_per_example": {
+        "min": 785,
+        "median": 1339,
+        "max": 1809
+      }
+    }
+  },
+  "sft_base_model_check": {
+    "hf_cache_models": [
+      "models--Systran--faster-whisper-small",
+      "models--dslim--bert-base-NER",
+      "models--indobenchmark--indobert-base-p1",
+      "models--sentence-transformers--all-MiniLM-L6-v2"
+    ],
+    "causal_lm_found": false,
+    "real_sft_run": false
+  }
+}

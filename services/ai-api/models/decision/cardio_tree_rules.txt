@@ -1,0 +1,46 @@
+|--- previous_heart_disease <= 0.50
+|   |--- hypertension <= 0.50
+|   |   |--- diabetes <= 0.50
+|   |   |   |--- obesity <= 0.50
+|   |   |   |   |--- weights: [30438.52, 7565.98] class: 0
+|   |   |   |--- obesity >  0.50
+|   |   |   |   |--- weights: [7752.99, 6113.38] class: 0
+|   |   |--- diabetes >  0.50
+|   |   |   |--- obesity <= 0.50
+|   |   |   |   |--- weights: [5312.24, 5324.11] class: 1
+|   |   |   |--- obesity >  0.50
+|   |   |   |   |--- weights: [1203.68, 2602.21] class: 1
+|   |--- hypertension >  0.50
+|   |   |--- diabetes <= 0.50
+|   |   |   |--- obesity <= 0.50
+|   |   |   |   |--- weights: [8525.12, 10087.14] class: 1
+|   |   |   |--- obesity >  0.50
+|   |   |   |   |--- weights: [1769.63, 4913.90] class: 1
+|   |   |--- diabetes >  0.50
+|   |   |   |--- obesity <= 0.50
+|   |   |   |   |--- weights: [1219.54, 3824.14] class: 1
+|   |   |   |--- obesity >  0.50
+|   |   |   |   |--- weights: [153.59, 1723.17] class: 1
+|--- previous_heart_disease >  0.50
+|   |--- hypertension <= 0.50
+|   |   |--- diabetes <= 0.50
+|   |   |   |--- obesity <= 0.50
+|   |   |   |   |--- weights: [4445.78, 6642.05] class: 1
+|   |   |   |--- obesity >  0.50
+|   |   |   |   |--- weights: [933.23, 3090.98] class: 1
+|   |   |--- diabetes >  0.50
+|   |   |   |--- obesity <= 0.50
+|   |   |   |   |--- weights: [630.22, 2488.74] class: 1
+|   |   |   |--- obesity >  0.50
+|   |   |   |   |--- weights: [77.63, 982.53] class: 1
+|   |--- hypertension >  0.50
+|   |   |--- diabetes <= 0.50
+|   |   |   |--- obesity <= 0.50
+|   |   |   |   |--- weights: [768.79, 4488.71] class: 1
+|   |   |   |--- obesity >  0.50
+|   |   |   |   |--- weights: [72.62, 1735.64] class: 1
+|   |   |--- diabetes >  0.50
+|   |   |   |--- age <= 60.50
+|   |   |   |   |--- weights: [38.40, 1205.72] class: 1
+|   |   |   |--- age >  60.50
+|   |   |   |   |--- weights: [0.00, 553.61] class: 1

@@ -1,0 +1,13 @@
+|--- redflag_hits <= 0.50
+|   |--- graph_hits <= 0.50
+|   |   |--- n_words <= 24.50
+|   |   |   |--- class: fast
+|   |   |--- n_words >  24.50
+|   |   |   |--- class: thinking
+|   |--- graph_hits >  0.50
+|   |   |--- n_words <= 19.50
+|   |   |   |--- class: thinking
+|   |   |--- n_words >  19.50
+|   |   |   |--- class: thinking
+|--- redflag_hits >  0.50
+|   |--- class: thinking
