@@ -44,8 +44,66 @@ EMERGENCY_PATTERNS: List[EmergencyPattern] = [
         "category": "Bedah / Trauma - Perdarahan Hebat",
         "keywords": ["darah memancar", "perdarahan tidak berhenti", "patah tulang terbuka", "hilang kesadaran pasca kecelakaan"],
         "min_matches": 1
-    }
+    },
+    # --- Lay-language (bahasa awam) red flags: how ordinary people actually describe emergencies ---
+    {
+        "category": "Kardiologi - Curiga Serangan Jantung",
+        "keywords": ["dada seperti ditindih", "dada seperti diremas", "dada terasa berat", "dada sakit sampai keringetan", "nyeri dada sampai lengan"],
+        "min_matches": 1
+    },
+    {
+        "category": "Neurologi - Curiga Stroke",
+        "keywords": ["mulut mencong", "muka mencong", "senyum miring", "tangan lemas sebelah", "kaki lemas sebelah", "ngomong pelo", "bicara cadel tiba-tiba", "tiba-tiba tidak bisa bicara"],
+        "min_matches": 1
+    },
+    {
+        "category": "Neurologi - Kejang / Penurunan Kesadaran",
+        "keywords": ["kejang", "anak step", "lagi step", "tidak sadarkan diri", "pingsan tidak bangun", "susah dibangunkan", "tidak bisa dibangunkan"],
+        "min_matches": 1
+    },
+    {
+        "category": "Infeksi - Tanda Bahaya Demam Berdarah",
+        "keywords": ["gusi berdarah", "mimisan terus", "muntah terus", "muntah darah", "bab hitam", "perut sakit hebat", "tangan kaki dingin", "lemas sekali"],
+        "min_matches": 2
+    },
+    {
+        "category": "Anak - Dehidrasi Berat / Bayi Sakit Berat",
+        "keywords": ["tidak pipis", "tidak kencing seharian", "mata cekung", "ubun-ubun cekung", "tidak mau menyusu", "tidak mau minum sama sekali", "bayi baru lahir demam", "bayi 2 bulan demam", "bayi 1 bulan demam", "bayi kejang", "bayi biru"],
+        "min_matches": 1
+    },
+    {
+        "category": "Kehamilan - Tanda Bahaya Ibu Hamil",
+        "keywords": ["hamil pendarahan", "hamil keluar darah", "ketuban pecah", "gerakan janin berkurang", "bayi tidak bergerak", "hamil sakit kepala hebat", "hamil pandangan kabur", "hamil kejang"],
+        "min_matches": 1
+    },
+    {
+        "category": "Keracunan / Gigitan Hewan Berbisa",
+        "keywords": ["keracunan", "minum racun", "minum obat nyamuk", "minum pembersih lantai", "overdosis", "digigit ular", "tersengat lebah lalu sesak"],
+        "min_matches": 1
+    },
+    {
+        "category": "Pulmonologi - Sesak Napas Berat",
+        "keywords": ["sesak sampai tidak bisa bicara", "napas tersengal", "napas ngos-ngosan saat diam", "dada anak tertarik ke dalam", "napas berbunyi ngik"],
+        "min_matches": 1
+    },
 ]
+
+# Suicide / self-harm gets its own, warmer response (not the generic IGD template).
+SELF_HARM_KEYWORDS: List[str] = [
+    "bunuh diri", "ingin mati", "pengen mati", "mau mati saja", "mengakhiri hidup", "akhiri hidup",
+    "menyakiti diri", "melukai diri", "sayat tangan", "tidak ingin hidup", "tidak mau hidup lagi",
+]
+
+SELF_HARM_RESPONSE = (
+    "Terima kasih sudah mau cerita. Yang Anda rasakan sekarang itu berat, dan Anda tidak harus menanggungnya sendirian.\n\n"
+    "**Kalau Anda sedang dalam bahaya atau berpikir untuk menyakiti diri sekarang:**\n"
+    "1. Hubungi **119 ekstensi 8** (layanan kesehatan jiwa Kemenkes, gratis) atau datang ke **IGD** terdekat.\n"
+    "2. Jauhkan benda atau obat yang bisa membahayakan diri Anda.\n"
+    "3. Hubungi satu orang yang Anda percaya (keluarga, teman, tokoh agama) dan minta ditemani.\n\n"
+    "Perasaan seperti ini bisa membaik dengan bantuan yang tepat. Kalau mau, Anda boleh cerita lagi di sini apa yang sedang terjadi.\n\n"
+    "---\n"
+    "*{disclaimer}*"
+)
 
 # Absolute clinical contraindication patterns
 CONTRAINDICATION_PATTERNS: List[ContraindicationPattern] = [
@@ -125,7 +183,10 @@ def evaluate_clinical_safety(query: str) -> Tuple[bool, str, str]:
         (is_emergency: bool, category: str, response_text: str)
     """
     q_low = query.lower()
-    
+
+    if any(kw in q_low for kw in SELF_HARM_KEYWORDS):
+        return True, "Kesehatan Jiwa - Risiko Bunuh Diri", SELF_HARM_RESPONSE.format(disclaimer=CLINICAL_DISCLAIMER)
+
     for pat in EMERGENCY_PATTERNS:
         matches = [kw for kw in pat["keywords"] if kw in q_low]
         if len(matches) >= pat["min_matches"]:

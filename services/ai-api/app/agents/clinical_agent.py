@@ -280,19 +280,14 @@ class ClinicalAgent:
                     active_model = self.default_model # Llama 3.3 70B Gold Standard / Qwen 27B
                     active_temp = 0.7 # Varied dynamic sampling
                     mode_prompt_instruction = (
-                        f"MODE PENALARAN: THINKING (Llama Gold Standard). "
-                        f"Gunakan penalaran mendalam mengintegrasikan seluruh {algo_framework['ml_count']} Algoritma Machine Learning "
-                        f"(Logistic Regression, Random Forest, XGBoost, CatBoost, AdaBoost, SVM, Hebbian/Perceptron, dll.) "
-                        f"dan {algo_framework['dl_count']} Algoritma Deep Learning (IndoBERT 768-d, BiLSTM, GCN, 1D-CNN, Transformer Self-Attention, dll.) "
-                        f"yang telah dipelajari dari raw dataset klinis."
+                        "MODE: PENJELASAN LENGKAP. Pikirkan kemungkinan penyebab dengan teliti, "
+                        "tetapi tampilkan ke pasien hanya kesimpulan yang sederhana dan berguna."
                     )
                 else:
                     active_model = "llama-3.1-8b-instant" if "llama" in self.default_model.lower() else self.default_model
                     active_temp = 0.3
                     mode_prompt_instruction = (
-                        f"MODE PENALARAN: FAST (Llama Fast Triage). "
-                        f"Batasi penalaran graf pengetahuan ke {algo_framework['ml_count']} Algoritma Machine Learning "
-                        f"dan {algo_framework['dl_count']} Algoritma Deep Learning untuk latensi respons kilat."
+                        "MODE: JAWABAN SINGKAT. Jawab ringkas (maksimal sekitar 150 kata) dan langsung ke inti."
                     )
 
                 system_prompt = (
@@ -306,7 +301,18 @@ class ClinicalAgent:
                     f"5. {CLINICAL_DISCLAIMER}\n"
                     "6. BAHASA AWAM: Tulis dengan bahasa sehari-hari yang mudah dipahami pasien. Hindari istilah medis; "
                     "jika terpaksa dipakai, jelaskan artinya dengan kata sederhana.\n"
-                    "7. TABEL: Jika membandingkan beberapa hal (misalnya tanda bahaya vs tanda ringan, atau jadwal minum obat), "
+                    "7. STRUKTUR JAWABAN UNTUK MASYARAKAT UMUM (pakai judul pendek ini bila relevan):\n"
+                    "   - **Kemungkinan penyebab** (sebut 1-3 kemungkinan umum, pakai kata 'mungkin', bukan diagnosis pasti)\n"
+                    "   - **Yang bisa dilakukan di rumah** (perawatan sederhana yang aman: minum cukup, istirahat, kompres)\n"
+                    "   - **Kapan perlu ke Puskesmas/dokter** (misalnya keluhan lebih dari 3 hari atau makin berat)\n"
+                    "   - **Segera ke IGD jika** (tanda bahaya yang spesifik untuk keluhan ini)\n"
+                    "8. GAYA: kalimat pendek, satu ide per kalimat, setara bacaan lulusan SMP. Sapa dengan 'Anda'. "
+                    "Jangan menyebut nama algoritma, model AI, skor, atau istilah teknis sistem. "
+                    "Jangan menyebut dosis obat resep atau antibiotik; untuk obat bebas cukup sebut 'sesuai aturan pakai di kemasan'.\n"
+                    "9. JIKA KELUHAN KURANG JELAS: ajukan paling banyak 2 pertanyaan singkat (sejak kapan, usia, sedang hamil atau tidak, "
+                    "penyakit yang sudah ada) sebelum memberi saran panjang.\n"
+                    "10. Arahkan ke layanan yang terjangkau bila cocok: Puskesmas, BPJS Kesehatan, bidan, atau apotek untuk keluhan ringan.\n"
+                    "11. TABEL: Jika membandingkan beberapa hal (misalnya tanda bahaya vs tanda ringan, atau jadwal minum obat), "
                     "sajikan dalam tabel markdown singkat (maksimal 4 kolom, baris pertama judul kolom). "
                     "Jangan memakai garis atau simbol hias di luar tabel.\n"
                 )
