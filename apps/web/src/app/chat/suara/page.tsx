@@ -3,9 +3,12 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Video, VideoOff, Mic, ShieldCheck, Loader2, Send, AlertCircle, Smile, Activity, Timer, Waves, Cpu,
+  Video, VideoOff, Mic, ShieldCheck, Loader2, Send, AlertCircle, Smile, Activity, Timer, Waves, Cpu, Volume2, VolumeX, Gauge,
 } from "lucide-react";
 import { ProsodyAnalyzer, type ProsodySnapshot } from "@/lib/voice/prosody";
+import {
+  SentenceSpeaker, networkHint, preferredAsrTier, resetVoiceSession, streamReply,
+} from "@/lib/voice/assistant";
 import { FaceAnalyzer, createFaceLandmarker, type FaceSnapshot } from "@/lib/vision/face";
 import {
   checkMediaPermissions, openMedia, permissionHelp, watchMediaPermissions, type MediaPermissions, type PermState,
@@ -48,6 +51,20 @@ function PermissionPanel({ perms, useCamera }: { perms: MediaPermissions | null;
 
 type AsrState = { status: "idle" | "loading" | "ready" | "error"; pct?: number; info?: string };
 interface Line { id: number; text: string; pending: boolean }
+interface Turn { id: string; role: "user" | "assistant"; text: string; pending?: boolean; error?: boolean; safety?: boolean }
+interface Latency {
+  asrMs: number | null; // akhir ucapan -> teks
+  firstByteMs: number | null; // kirim -> byte pertama server
+  firstTokenMs: number | null; // kirim -> token jawaban pertama
+  totalMs: number | null; // kirim -> jawaban lengkap
+  e2eMs: number | null; // akhir ucapan -> suara asisten pertama
+  kbps: number | null; // throughput terukur
+}
+const NO_LAT: Latency = { asrMs: null, firstByteMs: null, firstTokenMs: null, totalMs: null, e2eMs: null, kbps: null };
+
+// Whisper sering "berhalusinasi" teks pendek pada hening/derau -> jangan dikirim ke asisten
+const isNoise = (t: string) =>
+  t.length < 3 || /^(\(.*\)|\[.*\]|\.+|terima kasih\.?|thank you\.?|you)$/i.test(t.trim());
 
 function Metric({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
   return (
@@ -82,6 +99,84 @@ export default function VoiceCameraPage() {
   const [lines, setLines] = useState<Line[]>([]);
   const [attachSummary, setAttachSummary] = useState(true);
   const [perms, setPerms] = useState<MediaPermissions | null>(null);
+  const [cameraLive, setCameraLive] = useState(false);
+  const [faceStatus, setFaceStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [turns, setTurns] = useState<Turn[]>([]);
+  const [thinking, setThinking] = useState(false);
+  const [ttsSpeaking, setTtsSpeaking] = useState(false);
+  const [voiceReply, setVoiceReply] = useState(true);
+  const [lat, setLat] = useState<Latency>(NO_LAT);
+  const [net, setNet] = useState<ReturnType<typeof networkHint> | null>(null);
+
+  // loop percakapan (ref agar callback worker selalu memakai versi terbaru)
+  const segEndAt = useRef(new Map<number, number>());
+  const queueRef = useRef<{ text: string; endAt: number }[]>([]);
+  const busyRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const speakerRef = useRef<SentenceSpeaker | null>(null);
+  const respondRef = useRef<() => void>(() => undefined);
+
+  const speaker = useCallback(() => {
+    if (!speakerRef.current) {
+      speakerRef.current = new SentenceSpeaker((on) => {
+        setTtsSpeaking(on);
+        // mic dijeda saat asisten bicara agar suara speaker tidak ditranskrip balik
+        prosodyRef.current?.setPaused(on);
+        if (!on) {
+          prosodyRef.current?.markPrompt();
+          respondRef.current();
+        }
+      });
+    }
+    return speakerRef.current;
+  }, []);
+
+  respondRef.current = async () => {
+    if (busyRef.current || speakerRef.current?.speaking || !queueRef.current.length) return;
+    const batch = queueRef.current.splice(0);
+    const text = batch.map((b) => b.text).join(" ");
+    const endAt = batch[batch.length - 1].endAt;
+    busyRef.current = true;
+    setThinking(true);
+    const uid = `u-${Date.now()}`;
+    const aid = `a-${Date.now()}`;
+    setTurns((t) => [...t, { id: uid, role: "user", text }, { id: aid, role: "assistant", text: "", pending: true }]);
+    const sp = speaker();
+    sp.enabled = voiceReply;
+    sp.reset();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    try {
+      const out = await streamReply(
+        text,
+        (acc) => {
+          setTurns((t) => t.map((x) => (x.id === aid ? { ...x, text: acc } : x)));
+          sp.push(acc);
+        },
+        ctrl.signal,
+      );
+      sp.push(out.content, true);
+      setTurns((t) => t.map((x) => (x.id === aid ? { ...x, text: out.content || "(jawaban kosong)", pending: false, safety: out.safetyAlert } : x)));
+      setLat((l) => ({ ...l, ...out.timing, e2eMs: null }));
+      // latency end-to-end diisi saat suara pertama benar-benar keluar
+      const t0 = endAt;
+      const poll = (n: number) => {
+        const v = sp.firstAudioMs(t0);
+        if (v !== null) setLat((l) => ({ ...l, e2eMs: v }));
+        else if (n > 0) setTimeout(() => poll(n - 1), 150);
+      };
+      if (voiceReply) poll(60);
+    } catch (e) {
+      if ((e as DOMException)?.name !== "AbortError") {
+        setTurns((t) => t.map((x) => (x.id === aid ? { ...x, text: `Asisten tidak dapat menjawab: ${(e as Error).message}`, pending: false, error: true } : x)));
+      }
+    } finally {
+      busyRef.current = false;
+      abortRef.current = null;
+      setThinking(false);
+      if (!speakerRef.current?.speaking) respondRef.current();
+    }
+  };
 
   const refreshPerms = useCallback(() => {
     checkMediaPermissions().then(setPerms).catch(() => undefined);
@@ -104,12 +199,22 @@ export default function VoiceCameraPage() {
           status: "ready",
           info: `${m.model.split("/")[1]} · ${m.device} · RTF ${m.rtf} · batch ${m.maxBatch}${m.kvCache ? " · KV cache" : ""}`,
         });
-      if (m.type === "result")
-        setLines((ls) => ls.map((l) => (l.id === m.id ? { ...l, text: m.text || "(tidak terdengar jelas)", pending: false } : l)));
+      if (m.type === "result") {
+        const endAt = segEndAt.current.get(m.id) ?? performance.now();
+        segEndAt.current.delete(m.id);
+        setLat((l) => ({ ...l, asrMs: Math.round(performance.now() - endAt) }));
+        const text = (m.text || "").trim();
+        setLines((ls) => ls.map((l) => (l.id === m.id ? { ...l, text: text || "(tidak terdengar jelas)", pending: false } : l)));
+        if (!isNoise(text)) {
+          queueRef.current.push({ text, endAt });
+          respondRef.current();
+        }
+      }
       if (m.type === "error") setAsr({ status: "error", info: m.message });
     };
     setAsr({ status: "loading", pct: 0 });
-    w.postMessage({ type: "load" });
+    // bandwidth rendah / hemat data -> model kecil agar unduhan & inferensi cepat
+    w.postMessage({ type: "load", prefer: preferredAsrTier() });
     workerRef.current = w;
     return w;
   }, []);
@@ -124,13 +229,22 @@ export default function VoiceCameraPage() {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
+    abortRef.current?.abort();
+    speakerRef.current?.cancel();
+    queueRef.current = [];
+    setCameraLive(false);
+    setFaceStatus("idle");
     setRunning(false);
   }, []);
 
   useEffect(() => () => {
     stop();
     workerRef.current?.terminate();
+    resetVoiceSession();
   }, [stop]);
+
+  const [ttsSupported, setTtsSupported] = useState(true);
+  useEffect(() => setTtsSupported(SentenceSpeaker.supported()), []);
 
   const start = async () => {
     setError(null);
@@ -143,8 +257,11 @@ export default function VoiceCameraPage() {
       refreshPerms();
       streamRef.current = stream;
       const worker = ensureWorker();
+      setNet(networkHint());
+      speaker(); // dibuat dari klik pengguna -> speechSynthesis diizinkan berbunyi
       const pa = new ProsodyAnalyzer((audio) => {
         const id = ++segId.current;
+        segEndAt.current.set(id, performance.now());
         setLines((ls) => [...ls, { id, text: "", pending: true }]);
         worker.postMessage({ type: "segment", id, audio }, [audio.buffer]);
       });
@@ -154,11 +271,20 @@ export default function VoiceCameraPage() {
       if (media.video && videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        try {
-          faceRef.current = new FaceAnalyzer(await createFaceLandmarker());
-        } catch {
-          setError("Analisis wajah tidak dapat dimuat di perangkat ini. Analisis suara tetap berjalan.");
-        }
+        setCameraLive(true);
+        stream.getVideoTracks()[0]?.addEventListener("ended", () => setCameraLive(false));
+        // model wajah (~4 MB) dimuat di latar: video & analisis suara tidak menunggu unduhan selesai
+        setFaceStatus("loading");
+        createFaceLandmarker()
+          .then((lm) => {
+            if (!streamRef.current) return lm.close();
+            faceRef.current = new FaceAnalyzer(lm);
+            setFaceStatus("ready");
+          })
+          .catch(() => {
+            setFaceStatus("error");
+            setError("Analisis wajah tidak dapat dimuat di perangkat ini. Analisis suara tetap berjalan.");
+          });
       }
       setRunning(true);
       let lastUi = 0;
@@ -229,7 +355,7 @@ export default function VoiceCameraPage() {
           </p>
           <ul className="text-[13px] text-slate-600 space-y-2">
             <li className="flex gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />Semua proses berjalan di perangkat Anda. Video dan rekaman suara <b>tidak dikirim atau disimpan</b> di server.</li>
-            <li className="flex gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />Yang dikirim ke asisten hanya teks yang Anda setujui sendiri sebelum menekan Kirim.</li>
+            <li className="flex gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />Yang dikirim ke asisten hanya <b>teks hasil pengenalan ucapan</b> Anda, secara otomatis setiap Anda selesai bicara, agar asisten bisa langsung menjawab dengan suara. Catatan nada/raut wajah hanya dikirim bila Anda menekan “Lanjutkan ke chat”.</li>
             <li className="flex gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />Hasil analisis wajah dan suara hanya indikasi, bukan diagnosis.</li>
             <li className="flex gap-2"><Cpu className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />Pada pemakaian pertama, model pengenal suara (±40–75 MB) diunduh sekali ke perangkat Anda.</li>
           </ul>
@@ -238,7 +364,13 @@ export default function VoiceCameraPage() {
             Aktifkan kamera untuk analisis raut wajah (opsional)
           </label>
           <PermissionPanel perms={perms} useCamera={useCamera} />
-          <button onClick={() => setConsent(true)} className="btn-primary w-full h-11 text-sm font-bold">
+          <button
+            onClick={() => {
+              setConsent(true);
+              ensureWorker(); // mulai unduh model suara sekarang agar siap saat pasien mulai bicara
+            }}
+            className="btn-primary w-full h-11 text-sm font-bold"
+          >
             Saya mengerti dan setuju
           </button>
           <p className="text-[11px] text-slate-500">
@@ -288,15 +420,22 @@ export default function VoiceCameraPage() {
           <div className="space-y-3">
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 border border-slate-200">
               <video ref={videoRef} muted playsInline className="w-full h-full object-cover -scale-x-100" />
-              {!running && (
-                <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
-                  {useCamera ? "Kamera mati" : "Mode suara saja"}
+              {/* overlay hanya saat video benar-benar tidak tampil */}
+              {!cameraLive && (
+                <div className="absolute inset-0 flex items-center justify-center gap-2 text-slate-400 text-sm">
+                  {starting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {starting ? "Menyalakan kamera..." : running || !useCamera ? "Mode suara saja" : "Kamera mati"}
                 </div>
               )}
               {running && (
                 <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white">
-                  <span className={`h-2 w-2 rounded-full ${prosody?.speaking ? "bg-emerald-400" : "bg-slate-400"}`} />
-                  {prosody?.speaking ? "Mendengarkan..." : "Menunggu suara"}
+                  <span className={`h-2 w-2 rounded-full ${ttsSpeaking ? "bg-cyan-400" : thinking ? "bg-amber-400" : prosody?.speaking ? "bg-emerald-400" : "bg-slate-400"}`} />
+                  {ttsSpeaking ? "Asisten berbicara..." : thinking ? "Asisten menyiapkan jawaban..." : prosody?.speaking ? "Mendengarkan..." : "Silakan bicara"}
+                </span>
+              )}
+              {cameraLive && faceStatus === "loading" && (
+                <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Memuat analisis wajah...
                 </span>
               )}
             </div>
@@ -304,10 +443,51 @@ export default function VoiceCameraPage() {
               <Cpu className="w-3.5 h-3.5" />
               Pengenal suara: {asr.status === "loading" ? `memuat model ${asr.pct ?? 0}%` : asr.status === "ready" ? asr.info : asr.status === "error" ? `gagal (${asr.info})` : "belum dimuat"}
             </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5 mb-2">
+                <Gauge className="w-3.5 h-3.5" /> Latency real-time
+                {net && (
+                  <span className="ml-auto font-normal text-slate-500">
+                    jaringan {net.type ?? "?"}
+                    {net.downlinkMbps != null ? ` · ${net.downlinkMbps} Mbps` : ""}
+                    {net.rttMs != null ? ` · RTT ${net.rttMs} ms` : ""}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
+                {[
+                  ["Kenali suara", ms(lat.asrMs)],
+                  ["Respons server", ms(lat.firstByteMs)],
+                  ["Kata pertama", ms(lat.firstTokenMs)],
+                  ["Suara asisten", ms(lat.e2eMs)],
+                  ["Bandwidth", lat.kbps != null ? `${lat.kbps} kbps` : "-"],
+                ].map(([k, v]) => (
+                  <div key={k} className="rounded-lg bg-slate-50 px-1.5 py-1.5">
+                    <div className="text-[10px] text-slate-500">{k}</div>
+                    <div className="text-xs font-bold text-slate-900 tabular-nums">{v}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1.5">
+                &quot;Suara asisten&quot; = dari Anda selesai bicara sampai asisten mulai menjawab dengan suara.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 content-start">
-            <Metric label="Raut wajah" value={face?.faceFound ? face.expression : "-"} hint={face?.faceFound ? `senyum ${face.scores.senyum} · alis turun ${face.scores.alisTurun}` : "wajah belum terdeteksi"} />
+            <Metric
+              label="Raut wajah"
+              value={face?.faceFound ? face.expression : "-"}
+              hint={
+                face?.faceFound
+                  ? `senyum ${face.scores.senyum} · alis turun ${face.scores.alisTurun} · ${face.fps} fps`
+                  : faceStatus === "loading"
+                    ? "memuat model wajah..."
+                    : faceStatus === "ready"
+                      ? "arahkan wajah ke kamera"
+                      : cameraLive || !useCamera ? "analisis wajah tidak aktif" : "wajah belum terdeteksi"
+              }
+            />
             <Metric label="Kedipan / menit" value={face?.faceFound ? face.blinkPerMin : "-"} hint={face ? `gerak kepala ${face.movement}°/frame` : undefined} />
             <Metric label="Latency respons" value={ms(prosody?.responseLatencyMs)} hint="dari mulai sampai Anda bicara" />
             <Metric label="Jeda bicara" value={prosody ? `${prosody.pauses.count}×` : "-"} hint={prosody ? `rata ${ms(prosody.pauses.meanMs)} · terlama ${ms(prosody.pauses.maxMs)}` : undefined} />
@@ -315,6 +495,58 @@ export default function VoiceCameraPage() {
             <Metric label="Tone up (energi)" value={prosody?.toneUpDb != null ? `${prosody.toneUpDb > 0 ? "+" : ""}${prosody.toneUpDb} dB` : "-"} hint={prosody ? `level ${prosody.levelDb} dB · derau ${prosody.noiseFloorDb} dB` : undefined} />
             <Metric label="Laju bicara" value={prosody?.speechRate ?? "-"} hint="segmen bersuara per detik" />
             <Metric label="Durasi bicara" value={ms(prosody?.speechMs)} />
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <Mic className="w-4 h-4 text-blue-600" /> Percakapan dengan asisten
+            </h2>
+            <button
+              onClick={() => {
+                const next = !voiceReply;
+                setVoiceReply(next);
+                if (speakerRef.current) {
+                  speakerRef.current.enabled = next;
+                  if (!next) speakerRef.current.cancel();
+                }
+              }}
+              aria-pressed={voiceReply}
+              className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              {voiceReply ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+              {voiceReply ? "Jawaban bersuara" : "Suara dimatikan"}
+            </button>
+          </div>
+          {!ttsSupported && (
+            <p className="text-[11px] text-amber-700">Browser ini tidak mendukung pembacaan suara; jawaban tampil sebagai teks.</p>
+          )}
+          <div className="space-y-2 max-h-80 overflow-y-auto" aria-live="polite">
+            {turns.length === 0 && (
+              <p className="text-slate-500 text-xs">Setelah Anda selesai bicara (jeda ±1 detik), asisten akan langsung menjawab dengan suara.</p>
+            )}
+            {turns.map((t) => (
+              <div key={t.id} className={`flex ${t.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${
+                    t.role === "user"
+                      ? "bg-cyan-600 text-white rounded-tr-sm"
+                      : t.error
+                        ? "bg-red-50 text-red-800 border border-red-200"
+                        : t.safety
+                          ? "bg-rose-50 text-rose-900 border border-rose-200"
+                          : "bg-slate-100 text-slate-800 rounded-tl-sm"
+                  }`}
+                >
+                  {t.pending && !t.text ? (
+                    <span className="inline-flex items-center gap-1.5 text-slate-500 text-xs"><Loader2 className="w-3 h-3 animate-spin" /> menyiapkan jawaban...</span>
+                  ) : (
+                    t.text
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

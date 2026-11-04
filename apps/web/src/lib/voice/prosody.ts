@@ -113,6 +113,21 @@ export class ProsodyAnalyzer {
     this.markPrompt();
   }
 
+  private paused = false;
+
+  /**
+   * Jeda pengambilan segmen (mis. saat asisten sedang membacakan jawaban) agar suara speaker
+   * tidak ikut ditranskrip. Metrik level/derau tetap berjalan.
+   */
+  setPaused(p: boolean) {
+    this.paused = p;
+    if (p) {
+      this.segment = [];
+      this.speaking = false;
+      this.utterancePitch = [];
+    }
+  }
+
   /** Dipanggil saat pasien diminta bicara (mulai hitung latency respons). */
   markPrompt() {
     this.promptAt = this.elapsedMs;
@@ -148,6 +163,10 @@ export class ProsodyAnalyzer {
       this.calib.push(db);
       this.noiseFloorDb = mean(this.calib);
       this.threshDb = Math.max(this.noiseFloorDb + 10, -55);
+      this.last = { db, pitch: null };
+      return;
+    }
+    if (this.paused) {
       this.last = { db, pitch: null };
       return;
     }

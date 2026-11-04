@@ -129,6 +129,9 @@ class Settings(BaseSettings):
     GROQ_MODEL: str = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
     GROQ_DEFAULT_MODEL: str = os.getenv("GROQ_DEFAULT_MODEL", "qwen/qwen3.8-27b")
     GROQ_FALLBACK_MODEL: str = os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-120b")
+    # Mode "fast" (dipakai konsultasi suara): model decoder-only bergaya GPT-3.5 yang ringan
+    # dan ber-latency rendah di Groq. GPT-3.5 sendiri tidak tersedia di Groq.
+    GROQ_FAST_MODEL: str = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
     
     # CORS
     # Dapat diperluas lewat env CORS_ORIGINS (koma-separated atau JSON array)
