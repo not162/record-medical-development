@@ -54,6 +54,32 @@ Di komputer sendiri (bukan produksi), backend membuat dua akun saat pertama jala
 
 Kata sandinya diatur lewat `ADMIN_BOOTSTRAP_PASSWORD` di file `.env` (lihat `services/ai-api/.env.example`). Di server produksi, akun ini tidak dibuat kalau variabel itu kosong. Ganti kata sandi awal sebelum dipakai sungguhan.
 
+### Cara masuk sebagai admin
+
+Kedua peran admin masuk lewat halaman yang sama dengan pasien. Tidak ada alamat login terpisah.
+
+1. Buka `/login` (lokal: `http://localhost:3000/login`).
+2. Isi **username atau email** dan kata sandi akun admin.
+3. Setelah berhasil, aplikasi otomatis membuka **`/admin/dashboard`**. Akun pasien diarahkan ke `/chat`.
+
+Menu yang muncul di sidebar `/admin` tergantung peran:
+
+| Peran | Halaman pertama | Halaman yang bisa dibuka |
+| :--- | :--- | :--- |
+| Admin Operasional (`ADMIN`) | `/admin/dashboard` | `/admin/dashboard` (Ringkasan), `/admin/feedback` (Masukan Pengguna), `/admin/audit-logs` (Catatan Aktivitas), `/admin/settings` (Pengaturan, hanya lihat) |
+| Admin Riset (`RESEARCHER`) | `/admin/dashboard` | Semua halaman Admin Operasional, ditambah `/admin/users` (Kelola Pengguna), `/admin/training`, `/admin/models`, `/admin/evaluation`, `/admin/datasets`, `/admin/datasets/imports`, `/admin/annotations`, `/admin/knowledge-base`, `/admin/graph`, `/admin/insights` |
+
+Kalau akun admin belum ada atau kata sandinya lupa, buat atau setel ulang lewat skrip CLI (tidak ada endpoint publik untuk ini). Skrip ini selalu membuat peran **Admin Operasional**:
+
+```bash
+cd services/ai-api
+python -m app.security.provision_admin --username admin --email admin@rsukt.go.id --password "<kata-sandi-kuat>"
+```
+
+Skrip menulis ke database yang ditunjuk `DATABASE_URL` di `.env`. Periksa dulu apakah itu database lokal atau produksi sebelum menjalankannya.
+
+Untuk menjadikan akun itu **Admin Riset**, masuk dengan akun Admin Riset yang sudah ada, lalu ubah perannya di **Kelola Pengguna** (`/admin/users`).
+
 ## Cara kerja jawaban
 
 1. Pasien menulis keluhan.
