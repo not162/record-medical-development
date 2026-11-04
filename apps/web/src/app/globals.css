@@ -18,7 +18,7 @@
   --card: #ffffff;
   --card-border: #e2e8f0;
   --input: #f8fafc;
-  --muted: #64748b;
+  --muted: #53647e;
   --primary: #2563eb;
   --primary-2: #06b6d4;
   --primary-hover: #1d4ed8;
@@ -27,6 +27,19 @@
   --accent-warning: #d97706;
   --glow: rgba(37, 99, 235, 0.14);
   --brand-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+
+  /* Kalibrasi kontras (WCAG AA) — teks abu tipis & tombol solid.
+     slate-400: 2.6:1 -> 4.8:1 pada putih; slate-500: 4.4:1 -> 6:1 pada latar halaman.
+     -600 (cyan/emerald/sky/amber/rose/red): teks putih di atasnya, teks di atas putih,
+     dan chip "text-X-600 bg-X-100" semuanya >= 4.5:1. */
+  --color-slate-400: oklch(55% 0.04 256.8);
+  --color-slate-500: oklch(50% 0.046 257.4);
+  --color-cyan-600: oklch(53% 0.12 222);
+  --color-emerald-600: oklch(51% 0.13 163.2);
+  --color-sky-600: oklch(53% 0.15 242);
+  --color-amber-600: oklch(53% 0.155 50);
+  --color-rose-600: oklch(53% 0.23 17.6);
+  --color-red-600: oklch(53% 0.225 27.3);
 }
 
 html.dark {
@@ -43,20 +56,19 @@ html.dark {
   --color-slate-100: #131f38;
   --color-slate-200: #1f2c4a;
   --color-slate-300: #2b3a5c;
-  --color-slate-400: #6b7a99;
+  --color-slate-400: #8291b0;
   --color-slate-500: #8b9bb8;
   --color-slate-600: #a5b3cc;
   --color-slate-700: #c3cee0;
   --color-slate-800: #dbe3ef;
   --color-slate-900: #eef2f8;
-  --color-slate-950: #f8fafc;
+  /* slate-950 sengaja tidak dibalik: dipakai untuk teks gelap di atas tombol cyan & panel demo */
   --color-gray-50: #0b1222;
   --color-gray-100: #131f38;
   --color-gray-200: #1f2c4a;
   --color-gray-500: #8b9bb8;
   --color-gray-700: #c3cee0;
   --color-gray-900: #eef2f8;
-  --color-blue-600: #60a5fa;
   --color-red-50: color-mix(in oklab, var(--color-red-500) 12%, transparent);
   --color-red-100: color-mix(in oklab, var(--color-red-500) 18%, transparent);
   --color-red-200: color-mix(in oklab, var(--color-red-500) 32%, transparent);
@@ -170,20 +182,116 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Permukaan kartu putih -> kartu navy pada tema gelap */
-html.dark .bg-white { background-color: var(--card); }
-html.dark [class*="bg-white/"] { background-color: color-mix(in oklab, var(--card) 85%, transparent); }
-/* Panel gelap tetap gelap (bukan ikut terbalik) */
-html.dark .bg-slate-900,
-html.dark .bg-slate-950 { background-color: #050912; }
-html.dark .bg-slate-800 { background-color: #17233f; }
-html.dark .bg-slate-900\/40 { background-color: rgba(2, 6, 18, 0.65); }
-html.dark .border-slate-800 { border-color: #1f2c4a; }
-html.dark .bg-slate-900.text-white,
-html.dark .bg-slate-900 .text-white { color: #f8fafc; }
+/* ==========================================================================
+   "Pulau gelap": panel yang SUDAH gelap di tema terang (demo chatbot, footer,
+   banner CTA, tombol solid) memakai palet asli Tailwind, sehingga teks terangnya
+   (text-slate-300, text-cyan-200, text-rose-100, ...) tidak ikut terbalik
+   menjadi gelap di dark mode. Selektor ~= mencocokkan nama kelas utuh.
+   ========================================================================== */
+:is(.bg-slate-800, .bg-slate-900, .bg-slate-950, [class~="bg-slate-950/60"], [class~="bg-slate-950/80"], .bg-cyan-900) {
+  --color-slate-400: oklch(70.4% 0.04 256.788);
+  --color-slate-500: oklch(55.4% 0.046 257.417);
+}
+html.dark :is(.bg-slate-800, .bg-slate-900, .bg-slate-950, [class~="bg-slate-950/60"], [class~="bg-slate-950/80"],
+  .bg-cyan-700, .bg-cyan-900, [class~="hover:bg-cyan-800"], [class~="hover:bg-emerald-700"],
+  [class~="hover:bg-indigo-700"], [class~="hover:bg-rose-700"], [class~="hover:bg-red-700"]) {
+  --color-slate-50: oklch(98.4% 0.003 247.858);
+  --color-slate-100: oklch(96.8% 0.007 247.896);
+  --color-slate-200: oklch(92.9% 0.013 255.508);
+  --color-slate-300: oklch(86.9% 0.022 252.894);
+  --color-slate-400: oklch(70.4% 0.04 256.788);
+  --color-slate-500: oklch(55.4% 0.046 257.417);
+  --color-slate-600: oklch(44.6% 0.043 257.281);
+  --color-slate-700: oklch(37.2% 0.044 257.287);
+  --color-slate-800: oklch(27.9% 0.041 260.031);
+  --color-slate-900: oklch(20.8% 0.042 265.755);
+  --color-gray-50: oklch(98.5% 0.002 247.839);
+  --color-gray-100: oklch(96.7% 0.003 264.542);
+  --color-gray-200: oklch(92.8% 0.006 264.531);
+  --color-gray-500: oklch(55.1% 0.027 264.364);
+  --color-gray-700: oklch(37.3% 0.034 259.733);
+  --color-gray-900: oklch(21% 0.034 264.665);
+  --color-red-50: oklch(97.1% 0.013 17.38);
+  --color-red-100: oklch(93.6% 0.032 17.717);
+  --color-red-200: oklch(88.5% 0.062 18.334);
+  --color-red-700: oklch(50.5% 0.213 27.518);
+  --color-red-800: oklch(44.4% 0.177 26.899);
+  --color-red-900: oklch(39.6% 0.141 25.723);
+  --color-rose-50: oklch(96.9% 0.015 12.422);
+  --color-rose-100: oklch(94.1% 0.03 12.58);
+  --color-rose-200: oklch(89.2% 0.058 10.001);
+  --color-rose-700: oklch(51.4% 0.222 16.935);
+  --color-rose-800: oklch(45.5% 0.188 13.697);
+  --color-rose-900: oklch(41% 0.159 10.272);
+  --color-amber-50: oklch(98.7% 0.022 95.277);
+  --color-amber-100: oklch(96.2% 0.059 95.617);
+  --color-amber-200: oklch(92.4% 0.12 95.746);
+  --color-amber-700: oklch(55.5% 0.163 48.998);
+  --color-amber-800: oklch(47.3% 0.137 46.201);
+  --color-amber-900: oklch(41.4% 0.112 45.904);
+  --color-emerald-50: oklch(97.9% 0.021 166.113);
+  --color-emerald-100: oklch(95% 0.052 163.051);
+  --color-emerald-200: oklch(90.5% 0.093 164.15);
+  --color-emerald-700: oklch(50.8% 0.118 165.612);
+  --color-emerald-800: oklch(43.2% 0.095 166.913);
+  --color-emerald-900: oklch(37.8% 0.077 168.94);
+  --color-cyan-50: oklch(98.4% 0.019 200.873);
+  --color-cyan-100: oklch(95.6% 0.045 203.388);
+  --color-cyan-200: oklch(91.7% 0.08 205.041);
+  --color-cyan-700: oklch(52% 0.105 223.128);
+  --color-cyan-800: oklch(45% 0.085 224.283);
+  --color-cyan-900: oklch(39.8% 0.07 227.392);
+  --color-sky-100: oklch(95.1% 0.026 236.824);
+  --color-sky-200: oklch(90.1% 0.058 230.902);
+  --color-indigo-100: oklch(93% 0.034 272.788);
+  --color-indigo-200: oklch(87% 0.065 274.039);
+  --color-indigo-700: oklch(45.7% 0.24 277.023);
+  --color-purple-200: oklch(90.2% 0.063 306.703);
+}
+
 html.dark input, html.dark textarea, html.dark select { color-scheme: dark; }
-html.dark .shadow-sm, html.dark .shadow, html.dark .shadow-md {
-  --tw-shadow-color: rgba(0, 0, 0, 0.35);
+
+/* Override tema gelap ditaruh di layer utilities + spesifisitas rendah agar
+   varian hover:/focus: (mis. `bg-white hover:bg-slate-50`) tetap menang. */
+@layer utilities {
+  /* Permukaan kartu putih -> kartu navy */
+  :where(html.dark) body .bg-white { background-color: var(--card); }
+  :where(html.dark) body :is([class~="bg-white/80"], [class~="bg-white/60"]) {
+    background-color: color-mix(in oklab, var(--card) 85%, transparent);
+  }
+  /* focus:bg-white / hover:bg-white pada input -> tetap gelap (sebelumnya putih polos + teks terang) */
+  :where(html.dark) body .focus\:bg-white:focus,
+  :where(html.dark) body .hover\:bg-white:hover { background-color: var(--card); }
+
+  /* Panel gelap sedikit lebih pekat dari kartu agar tetap terbaca sebagai "panel" */
+  :where(html.dark) body :is(.bg-slate-900, .bg-slate-950) { background-color: #050912; }
+  :where(html.dark) body .bg-slate-800 { background-color: #17233f; }
+  :where(html.dark) body [class~="bg-slate-900/40"] { background-color: rgba(2, 6, 18, 0.65); }
+  :where(html.dark) body .border-slate-800 { border-color: #1f2c4a; }
+
+  /* Teks aksen -600/-500 terlalu gelap di atas navy (indigo 2.7:1, violet 2.9:1, red 3.6:1)
+     -> naikkan ke -400 (>= 6:1). Latar bg-*-600 untuk tombol tidak tersentuh. */
+  :where(html.dark) body :is(.text-emerald-600) { color: var(--color-emerald-400); }
+  :where(html.dark) body :is(.text-cyan-600) { color: var(--color-cyan-400); }
+  :where(html.dark) body :is(.text-teal-600) { color: var(--color-teal-400); }
+  :where(html.dark) body :is(.text-sky-600) { color: var(--color-sky-400); }
+  :where(html.dark) body :is(.text-blue-600, .text-blue-500) { color: var(--color-blue-400); }
+  :where(html.dark) body :is(.text-indigo-600, .text-indigo-500) { color: var(--color-indigo-300); }
+  :where(html.dark) body :is(.text-violet-600, .text-violet-500) { color: var(--color-violet-300); }
+  :where(html.dark) body :is(.text-purple-600, .text-purple-500) { color: var(--color-purple-300); }
+  :where(html.dark) body :is(.text-red-600, .text-red-500) { color: var(--color-red-400); }
+  :where(html.dark) body :is(.text-rose-600, .text-rose-500) { color: var(--color-rose-400); }
+  :where(html.dark) body :is(.text-amber-600) { color: var(--color-amber-400); }
+
+  /* Teks -950 (judul di atas kartu tint) tidak ikut skala terbalik -> tak terlihat di navy */
+  :where(html.dark) body .text-cyan-950 { color: color-mix(in oklab, var(--color-cyan-300) 45%, white); }
+  :where(html.dark) body .text-sky-950 { color: color-mix(in oklab, var(--color-sky-300) 45%, white); }
+  :where(html.dark) body .text-emerald-950 { color: color-mix(in oklab, var(--color-emerald-300) 45%, white); }
+  :where(html.dark) body .text-amber-950 { color: color-mix(in oklab, var(--color-amber-300) 45%, white); }
+  :where(html.dark) body .text-red-950 { color: color-mix(in oklab, var(--color-red-300) 45%, white); }
+  :where(html.dark) body .text-indigo-950 { color: color-mix(in oklab, var(--color-indigo-300) 45%, white); }
+
+  :where(html.dark) body :is(.shadow-sm, .shadow, .shadow-md) { --tw-shadow-color: rgba(0, 0, 0, 0.35); }
 }
 
 /* ==========================================================================

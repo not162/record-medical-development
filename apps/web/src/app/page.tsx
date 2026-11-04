@@ -438,12 +438,12 @@ export default function HomePage() {
                 {/* User Message Bubble */}
                 <div className="flex justify-end">
                   <div className="max-w-xl bg-cyan-600 text-white p-4 rounded-2xl rounded-tr-xs text-xs sm:text-sm leading-relaxed shadow-lg">
-                    <div className="text-[10px] font-bold text-cyan-200 mb-1 flex items-center justify-between">
+                    <div className="text-[10px] font-bold text-cyan-50 mb-1 flex items-center justify-between">
                       <span>Keluhan Anda</span>
                       <span>Baru saja</span>
                     </div>
                     <p className="font-medium">
-                      {displayedText || <span className="italic text-cyan-200">Sedang mengetik keluhan...</span>}
+                      {displayedText || <span className="italic text-cyan-100">Sedang mengetik keluhan...</span>}
                       {playbackProgress < 50 && <span className="inline-block w-1.5 h-4 ml-1 bg-white animate-pulse"></span>}
                     </p>
                   </div>
@@ -585,7 +585,7 @@ export default function HomePage() {
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Ulangi</span>
                     </button>
-                    <span className="text-[11px] font-mono text-slate-500 hidden sm:inline">
+                    <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
                       {playbackProgress === 100 ? "00:24 / 00:24" : "00:11 / 00:24"}
                     </span>
 
@@ -697,7 +697,7 @@ export default function HomePage() {
               ].map((item, idx) => (
                 <div key={idx} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-cyan-400 hover:bg-white transition-all space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-black text-cyan-600/40">{item.step}</span>
+                    <span className="text-2xl font-black text-cyan-600/80 dark:text-cyan-400/70">{item.step}</span>
                     <item.icon className="w-5 h-5 text-cyan-700" />
                   </div>
                   <h4 className="font-bold text-sm text-slate-900">{item.title}</h4>
