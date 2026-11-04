@@ -282,6 +282,20 @@ export default function ChatPage() {
     },
   ]);
   const [inputQuery, setInputQuery] = useState("");
+
+  // Teks dari halaman Konsultasi Suara & Kamera (ASR on-device) diisikan ke kotak pesan, tidak terkirim otomatis.
+  useEffect(() => {
+    try {
+      const prefill = sessionStorage.getItem("chat_prefill");
+      if (prefill) {
+        sessionStorage.removeItem("chat_prefill");
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sekali saat mount dari sessionStorage
+        setInputQuery(prefill);
+      }
+    } catch {
+      // storage diblokir
+    }
+  }, []);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [nextMessageCursor, setNextMessageCursor] = useState<string | null>(null);
   const [totalSessionMessages, setTotalSessionMessages] = useState<number>(0);

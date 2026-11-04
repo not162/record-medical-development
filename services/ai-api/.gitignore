@@ -1,1 +1,4 @@
 .vercel
+
+# artefak training lokal insights (dibuat ulang saat runtime)
+models/insights/

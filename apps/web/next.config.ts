@@ -59,7 +59,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+            value: "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()",
           },
           {
             // CSP minimal yang aman bagi skrip inline Next.js: cegah clickjacking, injeksi <base>, plugin.

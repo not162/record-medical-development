@@ -9,7 +9,8 @@ import { isAdminRole } from "@/lib/roles";
 import { 
   Bot, MessageSquarePlus, History, User, Settings, 
   LogOut, ShieldAlert, Stethoscope, ChevronRight,
-  Menu, X, Shield
+  Menu, X, Shield,
+  Video,
 } from "lucide-react";
 
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
@@ -34,6 +35,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const navItems = [
     { href: "/chat", label: "Tanya Asisten", icon: Bot },
     { href: "/chat/history", label: "Riwayat Sesi", icon: History },
+    { href: "/chat/suara", label: "Konsultasi Suara & Kamera", icon: Video },
     { href: "/profile", label: "Profil Saya", icon: User },
     { href: "/settings", label: "Pengaturan Akun", icon: Settings },
   ];
