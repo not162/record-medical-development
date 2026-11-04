@@ -6,7 +6,7 @@ import {
   Search, CheckCircle2, AlertCircle, Edit3, MessageSquare, Sparkles, X, User,
   FileSpreadsheet, FileCode
 } from "lucide-react";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getToken } from "@/lib/api";
 
 interface FeedbackItem {
   id: string;
@@ -57,7 +57,7 @@ export default function AdminFeedbackPage() {
   const fetchFeedbackData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
 
     try {
@@ -85,7 +85,7 @@ export default function AdminFeedbackPage() {
   useEffect(() => {
     let ignore = false;
     const run = async () => {
-      const token = localStorage.getItem("clinical_token");
+      const token = getToken();
       if (!token) return;
       try {
         const url = filterType === "ALL" 
@@ -112,7 +112,7 @@ export default function AdminFeedbackPage() {
 
   const handleExportDPO = async () => {
     setExporting(true);
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
 
     try {
@@ -154,7 +154,7 @@ export default function AdminFeedbackPage() {
   };
 
   const handleExportColab = async (format: "csv" | "jsonl") => {
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
 
     try {
@@ -182,7 +182,7 @@ export default function AdminFeedbackPage() {
   const handleSaveNotes = async () => {
     if (!selectedFeedback) return;
     setSavingNote(true);
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
 
     try {

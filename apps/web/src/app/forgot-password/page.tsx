@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowRight, AlertCircle, CheckCircle2, Shield, KeyRound, ArrowLeft } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -90,11 +91,11 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-slate-50">
-      <div className="w-full max-w-md space-y-6 bg-white border border-slate-200 p-8 rounded-2xl shadow-sm relative overflow-hidden">
+    <AuthShell>
+      <div className="space-y-6">
 
         <div className="text-center space-y-2">
-          <div className="inline-flex w-12 h-12 rounded-xl bg-cyan-600 items-center justify-center shadow-sm mb-2">
+          <div className="inline-flex w-12 h-12 rounded-xl items-center justify-center shadow-sm mb-2" style={{ backgroundImage: "var(--brand-gradient)" }}>
             <KeyRound className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -159,7 +160,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 px-4 rounded-xl btn-primary font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
                 <span>Memeriksa akun...</span>
@@ -242,7 +243,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="flex-1 py-2.5 px-4 rounded-xl btn-primary font-semibold text-xs shadow-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 {loading ? (
                   <span>Menyimpan...</span>
@@ -270,6 +271,6 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { isAdminRole, isSuperadmin, canAccess, roleLabel } from "@/lib/roles";
 import { 
   LayoutDashboard, Database, FileText, CheckSquare, 
@@ -46,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex flex-col gap-2 pt-2">
             <Link
               href="/chat"
-              className="py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm"
+              className="py-2.5 px-4 rounded-xl btn-primary font-semibold text-xs transition shadow-sm"
             >
               Kembali ke Asisten
             </Link>
@@ -208,6 +209,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Server terhubung
             </span>
+            <ThemeToggle small />
           </div>
         </header>
 

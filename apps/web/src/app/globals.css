@@ -1,48 +1,267 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Design tokens - Web Klinik (gaya PRISMA: navy, gradien biru -> cyan)
+   Tema: light (default) / dark via kelas `.dark` pada <html> (lihat ThemeToggle)
+   ========================================================================== */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: var(--font-jakarta), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
 :root {
   color-scheme: light;
-  --background: #f8fafc;
+  --background: #f4f7fc;
   --foreground: #0f172a;
   --card: #ffffff;
   --card-border: #e2e8f0;
-  --primary: #0284c7;
-  --primary-hover: #0369a1;
+  --input: #f8fafc;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-2: #06b6d4;
+  --primary-hover: #1d4ed8;
   --accent: #059669;
   --accent-danger: #dc2626;
   --accent-warning: #d97706;
+  --glow: rgba(37, 99, 235, 0.14);
+  --brand-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+}
+
+html.dark {
+  color-scheme: dark;
+  --background: #070b16;
+  --foreground: #e6ecf5;
+  --card: #101a30;
+  --card-border: #1f2c4a;
+  --input: #0b1222;
+  --muted: #8b9bb8;
+  --glow: rgba(37, 99, 235, 0.28);
+  /* Skala slate dibalik agar seluruh halaman (bg-white, text-slate-900, border-slate-200, ...) ikut gelap */
+  --color-slate-50: #0b1222;
+  --color-slate-100: #131f38;
+  --color-slate-200: #1f2c4a;
+  --color-slate-300: #2b3a5c;
+  --color-slate-400: #6b7a99;
+  --color-slate-500: #8b9bb8;
+  --color-slate-600: #a5b3cc;
+  --color-slate-700: #c3cee0;
+  --color-slate-800: #dbe3ef;
+  --color-slate-900: #eef2f8;
+  --color-slate-950: #f8fafc;
+  --color-gray-50: #0b1222;
+  --color-gray-100: #131f38;
+  --color-gray-200: #1f2c4a;
+  --color-gray-500: #8b9bb8;
+  --color-gray-700: #c3cee0;
+  --color-gray-900: #eef2f8;
+  --color-blue-600: #60a5fa;
+  --color-red-50: color-mix(in oklab, var(--color-red-500) 12%, transparent);
+  --color-red-100: color-mix(in oklab, var(--color-red-500) 18%, transparent);
+  --color-red-200: color-mix(in oklab, var(--color-red-500) 32%, transparent);
+  --color-red-700: color-mix(in oklab, var(--color-red-300) 85%, white);
+  --color-red-800: color-mix(in oklab, var(--color-red-300) 70%, white);
+  --color-red-900: color-mix(in oklab, var(--color-red-300) 55%, white);
+  --color-rose-50: color-mix(in oklab, var(--color-rose-500) 12%, transparent);
+  --color-rose-100: color-mix(in oklab, var(--color-rose-500) 18%, transparent);
+  --color-rose-200: color-mix(in oklab, var(--color-rose-500) 32%, transparent);
+  --color-rose-700: color-mix(in oklab, var(--color-rose-300) 85%, white);
+  --color-rose-800: color-mix(in oklab, var(--color-rose-300) 70%, white);
+  --color-rose-900: color-mix(in oklab, var(--color-rose-300) 55%, white);
+  --color-orange-50: color-mix(in oklab, var(--color-orange-500) 12%, transparent);
+  --color-orange-100: color-mix(in oklab, var(--color-orange-500) 18%, transparent);
+  --color-orange-200: color-mix(in oklab, var(--color-orange-500) 32%, transparent);
+  --color-orange-700: color-mix(in oklab, var(--color-orange-300) 85%, white);
+  --color-orange-800: color-mix(in oklab, var(--color-orange-300) 70%, white);
+  --color-orange-900: color-mix(in oklab, var(--color-orange-300) 55%, white);
+  --color-amber-50: color-mix(in oklab, var(--color-amber-500) 12%, transparent);
+  --color-amber-100: color-mix(in oklab, var(--color-amber-500) 18%, transparent);
+  --color-amber-200: color-mix(in oklab, var(--color-amber-500) 32%, transparent);
+  --color-amber-700: color-mix(in oklab, var(--color-amber-300) 85%, white);
+  --color-amber-800: color-mix(in oklab, var(--color-amber-300) 70%, white);
+  --color-amber-900: color-mix(in oklab, var(--color-amber-300) 55%, white);
+  --color-yellow-50: color-mix(in oklab, var(--color-yellow-500) 12%, transparent);
+  --color-yellow-100: color-mix(in oklab, var(--color-yellow-500) 18%, transparent);
+  --color-yellow-200: color-mix(in oklab, var(--color-yellow-500) 32%, transparent);
+  --color-yellow-700: color-mix(in oklab, var(--color-yellow-300) 85%, white);
+  --color-yellow-800: color-mix(in oklab, var(--color-yellow-300) 70%, white);
+  --color-yellow-900: color-mix(in oklab, var(--color-yellow-300) 55%, white);
+  --color-lime-50: color-mix(in oklab, var(--color-lime-500) 12%, transparent);
+  --color-lime-100: color-mix(in oklab, var(--color-lime-500) 18%, transparent);
+  --color-lime-200: color-mix(in oklab, var(--color-lime-500) 32%, transparent);
+  --color-lime-700: color-mix(in oklab, var(--color-lime-300) 85%, white);
+  --color-lime-800: color-mix(in oklab, var(--color-lime-300) 70%, white);
+  --color-lime-900: color-mix(in oklab, var(--color-lime-300) 55%, white);
+  --color-green-50: color-mix(in oklab, var(--color-green-500) 12%, transparent);
+  --color-green-100: color-mix(in oklab, var(--color-green-500) 18%, transparent);
+  --color-green-200: color-mix(in oklab, var(--color-green-500) 32%, transparent);
+  --color-green-700: color-mix(in oklab, var(--color-green-300) 85%, white);
+  --color-green-800: color-mix(in oklab, var(--color-green-300) 70%, white);
+  --color-green-900: color-mix(in oklab, var(--color-green-300) 55%, white);
+  --color-emerald-50: color-mix(in oklab, var(--color-emerald-500) 12%, transparent);
+  --color-emerald-100: color-mix(in oklab, var(--color-emerald-500) 18%, transparent);
+  --color-emerald-200: color-mix(in oklab, var(--color-emerald-500) 32%, transparent);
+  --color-emerald-700: color-mix(in oklab, var(--color-emerald-300) 85%, white);
+  --color-emerald-800: color-mix(in oklab, var(--color-emerald-300) 70%, white);
+  --color-emerald-900: color-mix(in oklab, var(--color-emerald-300) 55%, white);
+  --color-teal-50: color-mix(in oklab, var(--color-teal-500) 12%, transparent);
+  --color-teal-100: color-mix(in oklab, var(--color-teal-500) 18%, transparent);
+  --color-teal-200: color-mix(in oklab, var(--color-teal-500) 32%, transparent);
+  --color-teal-700: color-mix(in oklab, var(--color-teal-300) 85%, white);
+  --color-teal-800: color-mix(in oklab, var(--color-teal-300) 70%, white);
+  --color-teal-900: color-mix(in oklab, var(--color-teal-300) 55%, white);
+  --color-cyan-50: color-mix(in oklab, var(--color-cyan-500) 12%, transparent);
+  --color-cyan-100: color-mix(in oklab, var(--color-cyan-500) 18%, transparent);
+  --color-cyan-200: color-mix(in oklab, var(--color-cyan-500) 32%, transparent);
+  --color-cyan-700: color-mix(in oklab, var(--color-cyan-300) 85%, white);
+  --color-cyan-800: color-mix(in oklab, var(--color-cyan-300) 70%, white);
+  --color-cyan-900: color-mix(in oklab, var(--color-cyan-300) 55%, white);
+  --color-sky-50: color-mix(in oklab, var(--color-sky-500) 12%, transparent);
+  --color-sky-100: color-mix(in oklab, var(--color-sky-500) 18%, transparent);
+  --color-sky-200: color-mix(in oklab, var(--color-sky-500) 32%, transparent);
+  --color-sky-700: color-mix(in oklab, var(--color-sky-300) 85%, white);
+  --color-sky-800: color-mix(in oklab, var(--color-sky-300) 70%, white);
+  --color-sky-900: color-mix(in oklab, var(--color-sky-300) 55%, white);
+  --color-blue-50: color-mix(in oklab, var(--color-blue-500) 12%, transparent);
+  --color-blue-100: color-mix(in oklab, var(--color-blue-500) 18%, transparent);
+  --color-blue-200: color-mix(in oklab, var(--color-blue-500) 32%, transparent);
+  --color-blue-700: color-mix(in oklab, var(--color-blue-300) 85%, white);
+  --color-blue-800: color-mix(in oklab, var(--color-blue-300) 70%, white);
+  --color-blue-900: color-mix(in oklab, var(--color-blue-300) 55%, white);
+  --color-indigo-50: color-mix(in oklab, var(--color-indigo-500) 12%, transparent);
+  --color-indigo-100: color-mix(in oklab, var(--color-indigo-500) 18%, transparent);
+  --color-indigo-200: color-mix(in oklab, var(--color-indigo-500) 32%, transparent);
+  --color-indigo-700: color-mix(in oklab, var(--color-indigo-300) 85%, white);
+  --color-indigo-800: color-mix(in oklab, var(--color-indigo-300) 70%, white);
+  --color-indigo-900: color-mix(in oklab, var(--color-indigo-300) 55%, white);
+  --color-violet-50: color-mix(in oklab, var(--color-violet-500) 12%, transparent);
+  --color-violet-100: color-mix(in oklab, var(--color-violet-500) 18%, transparent);
+  --color-violet-200: color-mix(in oklab, var(--color-violet-500) 32%, transparent);
+  --color-violet-700: color-mix(in oklab, var(--color-violet-300) 85%, white);
+  --color-violet-800: color-mix(in oklab, var(--color-violet-300) 70%, white);
+  --color-violet-900: color-mix(in oklab, var(--color-violet-300) 55%, white);
+  --color-purple-50: color-mix(in oklab, var(--color-purple-500) 12%, transparent);
+  --color-purple-100: color-mix(in oklab, var(--color-purple-500) 18%, transparent);
+  --color-purple-200: color-mix(in oklab, var(--color-purple-500) 32%, transparent);
+  --color-purple-700: color-mix(in oklab, var(--color-purple-300) 85%, white);
+  --color-purple-800: color-mix(in oklab, var(--color-purple-300) 70%, white);
+  --color-purple-900: color-mix(in oklab, var(--color-purple-300) 55%, white);
+  --color-fuchsia-50: color-mix(in oklab, var(--color-fuchsia-500) 12%, transparent);
+  --color-fuchsia-100: color-mix(in oklab, var(--color-fuchsia-500) 18%, transparent);
+  --color-fuchsia-200: color-mix(in oklab, var(--color-fuchsia-500) 32%, transparent);
+  --color-fuchsia-700: color-mix(in oklab, var(--color-fuchsia-300) 85%, white);
+  --color-fuchsia-800: color-mix(in oklab, var(--color-fuchsia-300) 70%, white);
+  --color-fuchsia-900: color-mix(in oklab, var(--color-fuchsia-300) 55%, white);
+  --color-pink-50: color-mix(in oklab, var(--color-pink-500) 12%, transparent);
+  --color-pink-100: color-mix(in oklab, var(--color-pink-500) 18%, transparent);
+  --color-pink-200: color-mix(in oklab, var(--color-pink-500) 32%, transparent);
+  --color-pink-700: color-mix(in oklab, var(--color-pink-300) 85%, white);
+  --color-pink-800: color-mix(in oklab, var(--color-pink-300) 70%, white);
+  --color-pink-900: color-mix(in oklab, var(--color-pink-300) 55%, white);
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Clinical clean light-theme surfaces */
+/* Permukaan kartu putih -> kartu navy pada tema gelap */
+html.dark .bg-white { background-color: var(--card); }
+html.dark [class*="bg-white/"] { background-color: color-mix(in oklab, var(--card) 85%, transparent); }
+/* Panel gelap tetap gelap (bukan ikut terbalik) */
+html.dark .bg-slate-900,
+html.dark .bg-slate-950 { background-color: #050912; }
+html.dark .bg-slate-800 { background-color: #17233f; }
+html.dark .bg-slate-900\/40 { background-color: rgba(2, 6, 18, 0.65); }
+html.dark .border-slate-800 { border-color: #1f2c4a; }
+html.dark .bg-slate-900.text-white,
+html.dark .bg-slate-900 .text-white { color: #f8fafc; }
+html.dark input, html.dark textarea, html.dark select { color-scheme: dark; }
+html.dark .shadow-sm, html.dark .shadow, html.dark .shadow-md {
+  --tw-shadow-color: rgba(0, 0, 0, 0.35);
+}
+
+/* ==========================================================================
+   Komponen bersama
+   ========================================================================== */
+@layer components {
 .glass-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--card);
+  border: 1px solid var(--card-border);
   box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04);
 }
 
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.surface-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
+html.dark .surface-card { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+
+.btn-primary {
+  background-image: var(--brand-gradient);
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45); }
+.btn-primary:active:not(:disabled) { transform: translateY(1px); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.field {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  background: var(--input);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.field::placeholder { color: var(--muted); opacity: 0.8; }
+.field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 25%, transparent); }
+.field[aria-invalid="true"] { border-color: var(--accent-danger); }
+
+.brand-glow {
+  background:
+    radial-gradient(60% 45% at 50% 0%, var(--glow) 0%, transparent 70%),
+    var(--background);
+}
+
+}
+
+.text-gradient {
+  background-image: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Indikator live */
+.live-dot { position: relative; }
+.live-dot::after {
+  content: "";
+  position: absolute; inset: 0;
   border-radius: 9999px;
+  background: inherit;
+  animation: live-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+@keyframes live-ping { 75%, 100% { transform: scale(2.4); opacity: 0; } }
+
+/* Custom scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-slate-300); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-slate-400); }
 
 /* Avatar orang beranimasi */
 .person-head { transform-origin: 24px 30px; animation: person-bob 3.2s ease-in-out infinite; }
@@ -52,5 +271,5 @@ body {
 @keyframes person-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
 @keyframes person-talk { 0%, 100% { transform: scaleY(0.6); } 50% { transform: scaleY(1.3); } }
 @media (prefers-reduced-motion: reduce) {
-  .person-head, .person-eyes, .person-mouth { animation: none; }
+  .person-head, .person-eyes, .person-mouth, .live-dot::after { animation: none; }
 }

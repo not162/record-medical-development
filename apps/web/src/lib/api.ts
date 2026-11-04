@@ -68,19 +68,37 @@ export interface AuditLog {
   created_at: string;
 }
 
+const TOKEN_KEY = "clinical_token";
+
+/** Token dibaca dari localStorage ("Ingat saya") lalu sessionStorage (sesi tab saja). */
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("clinical_token");
+  try {
+    return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
 
-export function setToken(token: string): void {
+export function setToken(token: string, remember = true): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem("clinical_token", token);
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
+  } catch {
+    // storage diblokir (mode privat) - abaikan
+  }
 }
 
 export function removeToken(): void {
   if (typeof window === "undefined") return;
-  localStorage.removeItem("clinical_token");
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // abaikan
+  }
 }
 
 export async function apiRequest<T>(

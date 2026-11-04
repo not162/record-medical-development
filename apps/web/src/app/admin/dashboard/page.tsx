@@ -7,7 +7,7 @@ import {
   ThumbsUp, Activity, ShieldAlert, Cpu, ArrowUpRight,
   RefreshCw, FileSpreadsheet, FileCode
 } from "lucide-react";
-import { api, AuditLog, API_BASE_URL } from "@/lib/api";
+import { api, AuditLog, API_BASE_URL, getToken } from "@/lib/api";
 
 interface DashboardSummary {
   status: string;
@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
   const feedback = metrics.feedback_metrics;
 
   const handleExportColab = async (format: "csv" | "jsonl") => {
-    const token = localStorage.getItem("clinical_token") || localStorage.getItem("token");
+    const token = getToken();
     if (!token) return;
     setExportingFormat(format);
     try {

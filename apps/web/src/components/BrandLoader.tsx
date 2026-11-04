@@ -23,7 +23,7 @@ export default function BrandLoader() {
 
     const rId = requestAnimationFrame(() => setVisible(true));
 
-    const DURATION = 4000; // 4.0 seconds
+    const DURATION = 1200; // 1.2 detik agar tidak menghambat
     const FADEOUT = 400;   // 400ms transition
     const INTERVAL = 40;   // update every 40ms
 

@@ -5,7 +5,7 @@ import {
   Settings, Shield, Cpu, Database, 
   Activity, CheckCircle2, RefreshCw, Server, AlertTriangle
 } from "lucide-react";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getToken } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { isSuperadmin } from "@/lib/roles";
 
@@ -109,7 +109,7 @@ export default function AdminSettingsPage() {
     setAuditRunning(true);
     setAuditError(null);
     try {
-      const token = localStorage.getItem("clinical_token") || localStorage.getItem("token") || "";
+      const token = getToken() || "";
       const res = await fetch(`${API_BASE_URL}/admin/audit/run-periodic`, {
         method: "POST",
         headers: {

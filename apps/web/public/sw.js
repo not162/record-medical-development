@@ -1,82 +1,81 @@
-// Service Worker for RSUKT AI Clinical Suite (PWA & MWA)
-// Versi 2: Kepatuhan UU PDP No. 27/2022 & ISO 27001 - Nol Cache untuk Data Klinis/Chat Pasien
-const CACHE_NAME = 'rsukt-ai-v2';
-const STATIC_ASSETS = [
-  '/',
+// Service Worker - Web Klinik (PWA)
+// v3: offline fallback, cache-first untuk aset statis immutable,
+// dan NOL cache untuk data klinis/chat/auth (UU PDP No. 27/2022).
+const VERSION = 'klinik-v3';
+const STATIC_CACHE = `${VERSION}-static`;
+const OFFLINE_URL = '/offline.html';
+const PRECACHE = [
+  OFFLINE_URL,
   '/manifest.json',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/icons/icon-maskable-192.png',
+  '/icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  // Hanya proses GET
-  if (event.request.method !== 'GET') return;
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
 
-  const url = event.request.url;
-  const acceptHeader = event.request.headers.get('accept') || '';
-
-  // 1. Bypass Service Worker secara mutlak untuk SSE streams, chat endpoints, auth, dan data klinis pasien
-  // Kebijakan UU PDP: Data rekam medis dan dialog konsultasi dilarang disimpan di local HTTP cache storage
-  const isChatOrPrivateData =
-    url.includes('/api/v1/chat') ||
-    url.includes('/chat/sessions') ||
-    url.includes('/chat/messages') ||
-    url.includes('/chat/quota') ||
-    url.includes('/chat/feedback') ||
-    url.includes('/api/v1/auth') ||
-    url.includes('/stream') ||
-    url.includes('/realtime') ||
-    acceptHeader.includes('text/event-stream');
-
-  if (isChatOrPrivateData) {
-    // Selalu teruskan langsung ke network tanpa cache intercept
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // 2. API lainnya: Network-only tanpa menyimpan ke Cache Storage
-  if (url.includes('/api/')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // 3. Stale-while-revalidate khusus static app shell dan ikon (non-data)
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (
-          networkResponse &&
-          networkResponse.status === 200 &&
-          networkResponse.type === 'basic' &&
-          !url.includes('/chat')
-        ) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      }).catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
+function isStaticAsset(url) {
+  return (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/icons/') ||
+    /\.(?:woff2?|ttf|otf|png|jpg|jpeg|svg|webp|ico)$/.test(url.pathname)
   );
+}
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return; // POST/PUT/PATCH/DELETE selalu langsung ke jaringan
+
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  // API, SSE, dan data privat: jangan disentuh sama sekali (tidak pernah dicache)
+  if (
+    url.pathname.startsWith('/api/') ||
+    (req.headers.get('accept') || '').includes('text/event-stream')
+  ) {
+    return;
+  }
+
+  // Navigasi halaman: network-first, fallback ke halaman offline. HTML tidak dicache
+  // karena halaman chat/admin/profil dapat berisi data pribadi.
+  if (req.mode === 'navigate') {
+    event.respondWith(fetch(req).catch(() => caches.match(OFFLINE_URL)));
+    return;
+  }
+
+  // Aset statis ber-hash: cache-first
+  if (isStaticAsset(url)) {
+    event.respondWith(
+      caches.match(req).then(
+        (cached) =>
+          cached ||
+          fetch(req).then((res) => {
+            if (res && res.status === 200 && res.type === 'basic') {
+              const copy = res.clone();
+              caches.open(STATIC_CACHE).then((c) => c.put(req, copy));
+            }
+            return res;
+          })
+      )
+    );
+  }
 });

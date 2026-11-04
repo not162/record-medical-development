@@ -298,7 +298,7 @@ export default function AdminTrainingPage() {
             <button
               onClick={handleRunPipelineSimulation}
               disabled={simulating}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white font-semibold text-xs transition shadow-xs"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-primary disabled:opacity-50 text-white font-semibold text-xs transition shadow-xs"
             >
               <Zap className="w-4 h-4" />
               <span>{simulating ? "Menyimulasikan Pipeline..." : "Jalankan Simulasi Mode"}</span>
@@ -534,7 +534,7 @@ export default function AdminTrainingPage() {
               <button
                 onClick={handleRunPipelineSimulation}
                 disabled={simulating}
-                className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-xs transition"
+                className="px-4 py-2 rounded-xl btn-primary font-semibold text-xs shadow-xs transition"
               >
                 {simulating ? "Memproses..." : "Eksekusi Simulasi"}
               </button>

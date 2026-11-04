@@ -14,7 +14,7 @@ interface AuthContextType {
   role: UserRole | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: { username_or_email: string; password: string }) => Promise<User>;
+  login: (credentials: { username_or_email: string; password: string }, remember?: boolean) => Promise<User>;
   register: (data: { username: string; email: string; password: string; full_name?: string }) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -74,11 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const login = async (credentials: { username_or_email: string; password: string }) => {
+  const login = async (credentials: { username_or_email: string; password: string }, remember = true) => {
     setIsLoading(true);
     try {
       const res = await api.auth.login(credentials);
-      setToken(res.access_token);
+      setToken(res.access_token, remember);
       const currentUser: User = {
         id: res.user_id,
         username: res.username,

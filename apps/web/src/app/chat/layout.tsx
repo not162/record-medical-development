@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { isAdminRole } from "@/lib/roles";
 import { 
   Bot, MessageSquarePlus, History, User, Settings, 
@@ -87,7 +88,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-cyan-600 flex items-center justify-center text-white shadow-xs">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white shadow-xs" style={{ backgroundImage: "var(--brand-gradient)" }}>
               <Stethoscope className="w-4 h-4" />
             </div>
             <div>
@@ -97,13 +98,16 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           </div>
         </div>
 
+        <div className="flex items-center gap-2">
+        <ThemeToggle small />
         <Link
           href="/chat"
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-semibold shadow-xs"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg btn-primary text-[11px] font-semibold shadow-xs"
         >
           <MessageSquarePlus className="w-3.5 h-3.5" />
           <span>Sesi Baru</span>
         </Link>
+        </div>
       </header>
 
       {/* Mobile Slide-over Drawer Backdrop */}
@@ -141,7 +145,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 <Link
                   href="/chat"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl btn-primary font-semibold text-xs transition shadow-sm"
                 >
                   <MessageSquarePlus className="w-4 h-4" />
                   <span>Percakapan Baru</span>
@@ -229,7 +233,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           <div className="p-3">
             <Link
               href="/chat"
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl btn-primary font-semibold text-xs transition shadow-sm"
             >
               <MessageSquarePlus className="w-4 h-4" />
               <span>Percakapan Baru</span>
@@ -291,6 +295,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
 
+            <ThemeToggle small />
             <button
               onClick={logout}
               title="Keluar (Logout)"

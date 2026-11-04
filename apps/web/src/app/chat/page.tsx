@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminRole } from "@/lib/roles";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getToken } from "@/lib/api";
 import { getChatTier } from "@/lib/chat/tiers";
 
 export interface QuotaStatus {
@@ -309,7 +309,7 @@ export default function ChatPage() {
 
   const fetchQuota = useCallback(async () => {
     if (isAdminRole(userRole)) return;
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
     try {
       const res = await fetch(`${API_BASE_URL}/chat/quota`, {
@@ -328,7 +328,7 @@ export default function ChatPage() {
   }, [userRole]);
 
   const handleResetQuota = async () => {
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
     try {
       const res = await fetch(`${API_BASE_URL}/chat/quota/reset`, {
@@ -380,7 +380,7 @@ export default function ChatPage() {
     const initQuota = async () => {
       // Admin tidak pernah memanggil API percakapan pasien.
       if (authLoading || isAdminRole(userRole)) return;
-      const token = localStorage.getItem("clinical_token");
+      const token = getToken();
       if (!token || ignore) return;
       try {
         const res = await fetch(`${API_BASE_URL}/chat/quota`, {
@@ -419,7 +419,7 @@ export default function ChatPage() {
 
   const handleDeleteSession = async (sessId: string) => {
     if (!confirm("Hapus percakapan ini secara permanen?")) return;
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
     try {
       const res = await fetch(`${API_BASE_URL}/chat/sessions/${sessId}`, {
@@ -438,7 +438,7 @@ export default function ChatPage() {
   };
 
   const loadSession = useCallback(async (sessId: string) => {
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
     try {
       const res = await fetch(`${API_BASE_URL}/chat/sessions/${sessId}?limit=20`, {
@@ -474,7 +474,7 @@ export default function ChatPage() {
 
   const loadOlderMessages = async () => {
     if (!currentSessionId || !nextMessageCursor || loadingOlderMessages) return;
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
 
     setLoadingOlderMessages(true);
@@ -511,7 +511,7 @@ export default function ChatPage() {
 
   // Load user sessions on mount
   const fetchSessions = useCallback(async () => {
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
     try {
       const res = await fetch(`${API_BASE_URL}/chat/sessions?limit=20`, {
@@ -534,7 +534,7 @@ export default function ChatPage() {
     let ignore = false;
     const run = async () => {
       if (authLoading || isAdminRole(userRole)) return;
-      const token = localStorage.getItem("clinical_token");
+      const token = getToken();
       if (!token) return;
       try {
         const res = await fetch(`${API_BASE_URL}/chat/sessions`, {
@@ -559,7 +559,7 @@ export default function ChatPage() {
   }, [loadSession, authLoading, userRole]);
 
   const createNewSession = async () => {
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token) return;
     try {
       const res = await fetch(`${API_BASE_URL}/chat/sessions`, {
@@ -604,7 +604,7 @@ export default function ChatPage() {
     setInputQuery("");
 
     let activeSessId = currentSessionId;
-    const token = typeof window !== "undefined" ? localStorage.getItem("clinical_token") : null;
+    const token = getToken();
 
     if (!activeSessId && token) {
       try {
@@ -827,7 +827,7 @@ export default function ChatPage() {
     category?: string,
     notes?: string
   ) => {
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     if (!token || !currentSessionId) return;
 
     try {
@@ -880,7 +880,7 @@ export default function ChatPage() {
   };
 
   const handleViewCitation = async (chunkId: string) => {
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     try {
       const res = await fetch(`${API_BASE_URL}/chat/citations/${chunkId}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -921,7 +921,7 @@ export default function ChatPage() {
 
         <button
           onClick={createNewSession}
-          className="w-full py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm mb-3"
+          className="w-full py-2.5 px-3 rounded-xl btn-primary text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm mb-3"
         >
           <Plus className="w-4 h-4" />
           <span>Percakapan Baru</span>
@@ -1050,7 +1050,7 @@ export default function ChatPage() {
               <button
                 type="button"
                 onClick={() => setShowUpgradeModal(true)}
-                className="px-2.5 py-1 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs"
+                className="px-2.5 py-1 rounded-xl btn-primary text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs"
                 title="Simpan percakapan ke akun Anda"
               >
                 <span>Simpan ke Akun</span>
@@ -1460,7 +1460,7 @@ export default function ChatPage() {
               <button
                 type="submit"
                 disabled={!inputQuery.trim() || isGenerating || Boolean(quotaStatus?.is_clinic_health_lock)}
-                className="py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-40 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 ml-auto"
+                className="py-2.5 px-4 rounded-xl btn-primary disabled:opacity-40 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5 ml-auto"
               >
                 {quotaStatus?.is_clinic_health_lock ? (
                   <>
@@ -1505,7 +1505,7 @@ export default function ChatPage() {
                   onClick={async () => {
                     setIsUpgrading(true);
                     try {
-                      const token = localStorage.getItem("clinical_token");
+                      const token = getToken();
                       const res = await fetch(`${API_BASE_URL}/chat/sessions/upgrade`, {
                         method: "POST",
                         headers: {
@@ -1529,14 +1529,14 @@ export default function ChatPage() {
                       setIsUpgrading(false);
                     }
                   }}
-                  className="px-3.5 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition"
+                  className="px-3.5 py-1.5 text-xs btn-primary font-semibold rounded-lg transition"
                 >
                   {isUpgrading ? "Menyimpan..." : "Ya, Simpan ke Akun"}
                 </button>
               ) : (
                 <a
                   href="/login"
-                  className="px-3.5 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition inline-block"
+                  className="px-3.5 py-1.5 text-xs btn-primary font-semibold rounded-lg transition inline-block"
                 >
                   Masuk / Daftar
                 </a>
@@ -1721,7 +1721,7 @@ export default function ChatPage() {
               <button
                 type="button"
                 onClick={() => setShowConsentModal(false)}
-                className="py-2.5 px-5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-semibold shadow-xs transition"
+                className="py-2.5 px-5 btn-primary rounded-xl text-xs font-semibold shadow-xs transition"
               >
                 Saya Mengerti & Setuju
               </button>
@@ -1812,7 +1812,7 @@ export default function ChatPage() {
                 type="button"
                 disabled={isSubmittingFeedback}
                 onClick={handleSubmitDislikeModal}
-                className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50"
+                className="px-4 py-2 rounded-xl btn-primary text-xs font-semibold shadow-sm transition disabled:opacity-50"
               >
                 {isSubmittingFeedback ? "Menyimpan Masukan..." : "Kirim Masukan"}
               </button>

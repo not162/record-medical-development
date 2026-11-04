@@ -5,6 +5,8 @@ import PersonAvatar from "@/components/PersonAvatar";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { isAdminRole, isSuperadmin } from "@/lib/roles";
 import { 
   Stethoscope, Bot, ShieldCheck, ArrowRight, Activity, 
@@ -206,15 +208,15 @@ export default function HomePage() {
   return (
     <div className="flex-1 flex flex-col justify-between bg-slate-50 min-h-screen selection:bg-cyan-500 selection:text-white">
       {/* Top Header Navigation */}
-      <header className="border-b border-slate-200/80 bg-white sticky top-0 z-50 transition-all">
+      <header className="border-b border-slate-200/70 bg-white/80 backdrop-blur-md sticky top-0 z-50 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-cyan-600 flex items-center justify-center shadow-sm text-white">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shadow-sm text-white" style={{ backgroundImage: "var(--brand-gradient)" }}>
               <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base sm:text-xl tracking-tight text-cyan-800">
+                <span className="font-extrabold text-base sm:text-xl tracking-tight text-slate-900">
                   RSUKT Asisten Kesehatan
                 </span>
               </div>
@@ -232,6 +234,8 @@ export default function HomePage() {
           </nav>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
+            <InstallAppButton />
+            <ThemeToggle />
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <span className="text-xs text-slate-600 hidden sm:inline">
@@ -248,7 +252,7 @@ export default function HomePage() {
                 ) : (
                   <Link
                     href="/chat"
-                    className="px-4 py-2 sm:py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5"
+                    className="px-4 py-2 sm:py-2.5 rounded-xl btn-primary font-semibold text-xs transition shadow-sm flex items-center gap-1.5"
                   >
                     <PersonAvatar className="w-4 h-4" />
                     <span>Mulai Bertanya</span>
@@ -265,7 +269,7 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/register"
-                  className="px-3.5 sm:px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1"
+                  className="px-3.5 sm:px-4 py-2 rounded-xl btn-primary font-semibold text-xs shadow-sm transition flex items-center gap-1"
                 >
                   <span>Daftar</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -308,7 +312,7 @@ export default function HomePage() {
             ) : (
               <Link
                 href="/chat"
-                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm shadow-sm transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl btn-primary font-bold text-sm shadow-sm transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 <PersonAvatar className="w-5 h-5" />
                 <span>Mulai Bertanya</span>

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useLiveQuery, useLiveMutation, LiveIndicator } from "@/lib/realtime";
 import { BookOpen, Search, RefreshCw, BarChart2, ShieldCheck, Database, Layers, CheckCircle2, AlertCircle, Plus, Pencil, Trash2, X } from "lucide-react";
-import { API_BASE_URL, api, type KnowledgeDoc, type KnowledgeInput } from "@/lib/api";
+import { API_BASE_URL, api, type KnowledgeDoc, type KnowledgeInput, getToken } from "@/lib/api";
 
 interface RAGStatus {
   status: string;
@@ -34,6 +35,8 @@ interface EvalResult {
   benchmark_cases_evaluated: number;
 }
 
+const KNOWLEDGE_KEY = ["admin", "knowledge"] as const;
+
 const EMPTY_FORM: KnowledgeInput = {
   title: "",
   department: "",
@@ -43,13 +46,10 @@ const EMPTY_FORM: KnowledgeInput = {
 };
 
 export default function AdminKnowledgeBasePage() {
-  const [docs, setDocs] = useState<KnowledgeDoc[]>([]);
-  const [docsLoading, setDocsLoading] = useState(true);
   const [crudError, setCrudError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<KnowledgeInput>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
   const [reindexing, setReindexing] = useState(false);
   const [statusData, setStatusData] = useState<RAGStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
@@ -63,7 +63,7 @@ export default function AdminKnowledgeBasePage() {
 
   const fetchStatus = async () => {
     setLoadingStatus(true);
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     try {
       const res = await fetch(`${API_BASE_URL}/admin/rag/status`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -82,7 +82,7 @@ export default function AdminKnowledgeBasePage() {
   useEffect(() => {
     let ignore = false;
     const run = async () => {
-      const token = localStorage.getItem("clinical_token");
+      const token = getToken();
       try {
         const res = await fetch(`${API_BASE_URL}/admin/rag/status`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -101,36 +101,34 @@ export default function AdminKnowledgeBasePage() {
     };
   }, []);
 
-  const loadDocs = async () => {
-    setDocsLoading(true);
-    try {
-      const data = await api.admin.listKnowledge();
-      setDocs(Array.isArray(data) ? data : data.items || []);
-      setCrudError(null);
-    } catch (err: unknown) {
-      setCrudError(err instanceof Error ? err.message : "Gagal memuat dokumen pengetahuan.");
-    } finally {
-      setDocsLoading(false);
-    }
-  };
+  // ---- Real-time CRUD: GET (polling 5 dtk + sinkron antar-tab), POST / PUT / DELETE optimistik ----
+  const docsQuery = useLiveQuery<KnowledgeDoc[]>(KNOWLEDGE_KEY, async () => {
+    const data = await api.admin.listKnowledge();
+    return Array.isArray(data) ? data : data.items || [];
+  });
+  const docs = docsQuery.data ?? [];
+  const docsLoading = docsQuery.isLoading;
+  const docsError = docsQuery.error instanceof Error ? docsQuery.error.message : null;
 
-  useEffect(() => {
-    let ignore = false;
-    api.admin
-      .listKnowledge()
-      .then((data) => {
-        if (!ignore) setDocs(Array.isArray(data) ? data : data.items || []);
-      })
-      .catch((err: unknown) => {
-        if (!ignore) setCrudError(err instanceof Error ? err.message : "Gagal memuat dokumen pengetahuan.");
-      })
-      .finally(() => {
-        if (!ignore) setDocsLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const createDoc = useLiveMutation<KnowledgeDoc, KnowledgeInput, KnowledgeDoc>(
+    KNOWLEDGE_KEY,
+    (payload) => api.admin.createKnowledge(payload),
+    (list, payload) => [
+      { ...payload, id: `tmp-${Date.now()}`, source: payload.source ?? null, created_at: new Date().toISOString() } as KnowledgeDoc,
+      ...list,
+    ]
+  );
+  const updateDoc = useLiveMutation<KnowledgeDoc, { id: string; payload: KnowledgeInput }, KnowledgeDoc>(
+    KNOWLEDGE_KEY,
+    ({ id, payload }) => api.admin.updateKnowledge(id, payload),
+    (list, { id, payload }) => list.map((d) => (d.id === id ? ({ ...d, ...payload } as KnowledgeDoc) : d))
+  );
+  const deleteDoc = useLiveMutation<KnowledgeDoc, string>(
+    KNOWLEDGE_KEY,
+    (id) => api.admin.deleteKnowledge(id),
+    (list, id) => list.filter((d) => d.id !== id)
+  );
+  const saving = createDoc.isPending || updateDoc.isPending;
 
   const openCreate = () => {
     setEditingId(null);
@@ -154,24 +152,22 @@ export default function AdminKnowledgeBasePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setCrudError(null);
     try {
       const payload: KnowledgeInput = { ...form, source: form.source?.trim() || null };
       if (editingId) {
-        await api.admin.updateKnowledge(editingId, payload);
+        const p = updateDoc.mutateAsync({ id: editingId, payload });
+        setShowForm(false);
+        await p;
         setNotification("Dokumen pengetahuan berhasil diperbarui.");
       } else {
-        await api.admin.createKnowledge(payload);
+        await createDoc.mutateAsync(payload);
+        setShowForm(false);
         setNotification("Dokumen pengetahuan berhasil ditambahkan.");
       }
-      setShowForm(false);
-      await loadDocs();
       fetchStatus();
     } catch (err: unknown) {
       setCrudError(err instanceof Error ? err.message : "Gagal menyimpan dokumen.");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -179,9 +175,8 @@ export default function AdminKnowledgeBasePage() {
     if (!window.confirm(`Hapus dokumen "${d.title}"? Tindakan ini tidak dapat dibatalkan.`)) return;
     setCrudError(null);
     try {
-      await api.admin.deleteKnowledge(d.id);
+      await deleteDoc.mutateAsync(d.id);
       setNotification("Dokumen pengetahuan dihapus.");
-      await loadDocs();
       fetchStatus();
     } catch (err: unknown) {
       setCrudError(err instanceof Error ? err.message : "Gagal menghapus dokumen.");
@@ -205,7 +200,7 @@ export default function AdminKnowledgeBasePage() {
   const handleTriggerIndex = async () => {
     setIndexing(true);
     setNotification(null);
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     try {
       const res = await fetch(`${API_BASE_URL}/admin/rag/index`, {
         method: "POST",
@@ -227,7 +222,7 @@ export default function AdminKnowledgeBasePage() {
 
   const handleEvaluate = async () => {
     setEvaluating(true);
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     try {
       const res = await fetch(`${API_BASE_URL}/admin/rag/evaluate`, {
         method: "POST",
@@ -248,7 +243,7 @@ export default function AdminKnowledgeBasePage() {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     setSearching(true);
-    const token = localStorage.getItem("clinical_token");
+    const token = getToken();
     try {
       const res = await fetch(`${API_BASE_URL}/rag/search`, {
         method: "POST",
@@ -347,10 +342,10 @@ export default function AdminKnowledgeBasePage() {
         </div>
       </div>
 
-      {crudError && (
+      {(crudError || docsError) && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-          <span>{crudError}</span>
+          <span>{crudError || docsError}</span>
         </div>
       )}
 
@@ -363,6 +358,12 @@ export default function AdminKnowledgeBasePage() {
               <span>Dokumen Pengetahuan ({docs.length})</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">Tambah, ubah, atau hapus dokumen. Hanya status APPROVED yang diindeks.</p>
+            <LiveIndicator
+              className="mt-2"
+              updatedAt={docsQuery.dataUpdatedAt}
+              isFetching={docsQuery.isFetching}
+              isError={docsQuery.isError}
+            />
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -403,7 +404,7 @@ export default function AdminKnowledgeBasePage() {
                 </tr>
               ) : (
                 docs.map((d) => (
-                  <tr key={d.id} className="hover:bg-slate-50">
+                  <tr key={d.id} className={`hover:bg-slate-50 transition-opacity ${d.id.startsWith("tmp-") ? "opacity-50" : ""}`}>
                     <td className="py-2.5 font-medium text-slate-900 max-w-xs truncate">{d.title}</td>
                     <td className="py-2.5 text-slate-700">{d.department}</td>
                     <td className="py-2.5 text-slate-500">{d.source || "-"}</td>

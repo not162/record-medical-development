@@ -104,7 +104,7 @@ export default function ChatHistoryPage() {
 
         <Link
           href="/chat"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl btn-primary font-semibold text-xs transition shadow-sm"
         >
           <PlusCircle className="w-4 h-4" />
           <span>Mulai Konsultasi Baru</span>
@@ -155,7 +155,7 @@ export default function ChatHistoryPage() {
           <div className="pt-2">
             <Link
               href="/chat"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs transition"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl btn-primary font-medium text-xs transition"
             >
               Mulai Konsultasi Sekarang
             </Link>

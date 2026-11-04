@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useLiveQuery, useLiveMutation, LiveIndicator } from "@/lib/realtime";
 import { Users, RefreshCw, AlertTriangle, Search } from "lucide-react";
 import { api, ManagedUser, UserRole } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { roleLabel } from "@/lib/roles";
+
+const USERS_KEY = ["admin", "users"] as const;
 
 const ROLE_OPTIONS: UserRole[] = ["USER", "ADMIN", "RESEARCHER"];
 
@@ -24,50 +27,30 @@ function friendlyError(err: unknown, fallback: string): string {
 
 export default function ManageUsersPage() {
   const { user: me } = useAuth();
-  const [users, setUsers] = useState<ManagedUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setUsers(await api.admin.users.list());
-    } catch (err) {
-      setError(friendlyError(err, "Gagal memuat daftar pengguna."));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Real-time: daftar pengguna dipoll tiap 5 dtk + sinkron antar-tab; PATCH optimistik.
+  const usersQuery = useLiveQuery<ManagedUser[]>(USERS_KEY, () => api.admin.users.list());
+  const users = useMemo(() => usersQuery.data ?? [], [usersQuery.data]);
+  const loading = usersQuery.isFetching;
+  const loadError = usersQuery.error ? friendlyError(usersQuery.error, "Gagal memuat daftar pengguna.") : null;
+  const load = () => usersQuery.refetch();
 
-  useEffect(() => {
-    let ignore = false;
-    api.admin.users
-      .list()
-      .then((rows) => {
-        if (!ignore) setUsers(rows);
-      })
-      .catch((err) => {
-        if (!ignore) setError(friendlyError(err, "Gagal memuat daftar pengguna."));
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const patchUser = useLiveMutation<ManagedUser, { id: string; patch: { role?: UserRole; is_active?: boolean } }, ManagedUser>(
+    USERS_KEY,
+    ({ id, patch }) => api.admin.users.update(id, patch),
+    (list, { id, patch }) => list.map((x) => (x.id === id ? { ...x, ...patch } : x))
+  );
 
   const update = async (u: ManagedUser, patch: { role?: UserRole; is_active?: boolean }, okMsg: string) => {
     setBusyId(u.id);
     setError(null);
     setNotice(null);
     try {
-      const saved = await api.admin.users.update(u.id, patch);
-      setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, ...saved } : x)));
+      await patchUser.mutateAsync({ id: u.id, patch });
       setNotice(okMsg);
     } catch (err) {
       setError(friendlyError(err, "Perubahan gagal disimpan."));
@@ -115,9 +98,15 @@ export default function ManageUsersPage() {
           <p className="text-xs text-slate-500 mt-1">
             Atur peran dan status akun. Halaman ini hanya untuk Admin Riset (Superadmin).
           </p>
+          <LiveIndicator
+            className="mt-2"
+            updatedAt={usersQuery.dataUpdatedAt}
+            isFetching={usersQuery.isFetching}
+            isError={usersQuery.isError}
+          />
         </div>
         <button
-          onClick={load}
+          onClick={() => load()}
           disabled={loading}
           className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 disabled:opacity-50 self-start"
         >
@@ -126,10 +115,10 @@ export default function ManageUsersPage() {
         </button>
       </div>
 
-      {error && (
+      {(error || loadError) && (
         <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>{error}</span>
+          <span>{error || loadError}</span>
         </div>
       )}
       {notice && (
