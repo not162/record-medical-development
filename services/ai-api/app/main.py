@@ -24,7 +24,10 @@ def ensure_default_admin():
         if settings.is_production:
             print("[!] ADMIN_BOOTSTRAP_PASSWORD tidak diset (production): pembuatan admin default dilewati.")
             return
-        password = "admin123_"  # hanya untuk pengembangan lokal
+        # Hanya untuk pengembangan lokal (ENVIRONMENT bukan production) agar admin mudah masuk.
+        # Akun yang sudah ada tidak diubah; production tetap wajib ADMIN_BOOTSTRAP_PASSWORD.
+        password = "password"
+        print("[*] ADMIN_BOOTSTRAP_PASSWORD kosong: akun admin lokal baru memakai sandi default 'password'.")
 
     db = SessionLocal()
     try:

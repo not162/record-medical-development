@@ -52,7 +52,18 @@ Di komputer sendiri (bukan produksi), backend membuat dua akun saat pertama jala
 | `admin` | Admin Operasional | `admin@rsukt.go.id` |
 | `periset` | Admin Riset | `periset@rsukt.go.id` |
 
-Kata sandinya diatur lewat `ADMIN_BOOTSTRAP_PASSWORD` di file `.env` (lihat `services/ai-api/.env.example`). Di server produksi, akun ini tidak dibuat kalau variabel itu kosong. Ganti kata sandi awal sebelum dipakai sungguhan.
+Kata sandinya diambil dari `ADMIN_BOOTSTRAP_PASSWORD` di file `.env` (lihat `services/ai-api/.env.example`). Kalau variabel itu kosong dan `ENVIRONMENT` bukan `production`, kata sandi default-nya adalah **`password`**, supaya mudah masuk saat pengembangan:
+
+| Username | Kata sandi lokal (default) |
+| :--- | :--- |
+| `admin` | `password` |
+| `periset` | `password` |
+
+Catatan:
+
+- Default ini hanya dipakai saat akun **pertama kali dibuat**. Akun yang sudah ada di database tidak ikut diubah. Kalau sandinya sudah berbeda, setel ulang dengan skrip `provision_admin` (lihat di bawah).
+- `ENVIRONMENT` yang kosong dianggap `production`. Untuk memakai default ini, set `ENVIRONMENT=development` di `.env` lokal.
+- Di server produksi tidak ada default: akun admin awal tidak dibuat kalau `ADMIN_BOOTSTRAP_PASSWORD` kosong. Jangan pakai `password` di server sungguhan.
 
 ### Cara masuk sebagai admin
 
