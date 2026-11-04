@@ -89,6 +89,12 @@ E = [
     ("POST", "/admin/rag/evaluate", "RESEARCHER", 1),
     ("GET", "/admin/jobs/process", "RESEARCHER", 1),
     ("POST", "/admin/jobs/process", "RESEARCHER", 1),
+    ("POST", "/admin/insights/train", "RESEARCHER", 1),
+    ("GET", "/admin/insights/report", "RESEARCHER", 0),
+    ("POST", "/admin/insights/predict/text", "RESEARCHER", 1),
+    ("POST", "/admin/insights/predict/cardio", "RESEARCHER", 1),
+    ("POST", "/admin/insights/export/colab", "RESEARCHER", 1),
+    ("GET", "/admin/insights/export/colab/config.json", "RESEARCHER", 1),
 ]
 
 

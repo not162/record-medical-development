@@ -64,6 +64,7 @@ export const RESEARCH_PATHS = [
   "/admin/knowledge-base",
   "/admin/graph",
   "/admin/users",
+  "/admin/insights",
 ] as const;
 
 function matches(path: string, base: string): boolean {

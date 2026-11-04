@@ -295,6 +295,62 @@ export interface QuotaStatus {
   };
 }
 
+export interface InsightsScore { n: number; macro_f1: number; accuracy: number; ece: number }
+export interface InsightsFairness {
+  positive_rate: Record<string, number>;
+  tpr: Record<string, number>;
+  demographic_parity_gap: number;
+  equal_opportunity_gap: number;
+}
+export interface InsightsCardioMetrics { auc: number | null; brier: number; accuracy: number; fairness: Record<string, InsightsFairness> }
+export interface InsightsRound {
+  round: number;
+  step: string;
+  C: number;
+  val: InsightsScore;
+  accepted: boolean;
+  hard_examples?: number;
+  rlhf?: { human_pos: number; human_neg: number; random_pos: number; random_neg: number };
+}
+export interface InsightsReport {
+  version: string;
+  duration_s: number;
+  data: Record<string, number | Record<string, number>>;
+  pretrain: { n_texts: number; vocab: number; latent_dim: number; explained_variance: number; n_patterns: number };
+  debias_text: { label_weight_pct_before: Record<string, number>; label_weight_pct_after: Record<string, number> };
+  self_improvement: InsightsRound[];
+  calibration: { temperature: number; val_ece_before: number; val_ece_after: number };
+  test: InsightsScore;
+  labels: string[];
+  patterns: { id: number; size: number; top_terms: string[] }[];
+  cardio: {
+    status?: string;
+    n_rows_sampled?: number;
+    weight_pct_before?: Record<string, Record<string, number>>;
+    weight_pct_after?: Record<string, Record<string, number>>;
+    before_debias?: InsightsCardioMetrics;
+    after_debias?: InsightsCardioMetrics;
+  };
+}
+export interface InsightsTrainConfig { rounds: number; rlhf_random_rate: number; rlhf_beta: number; cardio_rows: number; seed?: number }
+export interface InsightsTextPrediction {
+  label: string;
+  confidence: number;
+  top_k: { label: string; probability: number }[];
+  variables: Record<string, number>;
+  pattern: { id: number; top_terms: string[] };
+  reasoning: { term: string; weight: number }[];
+  model_version: string;
+}
+export interface InsightsCardioPrediction {
+  risk_probability: number;
+  risk_label: string;
+  threshold: number;
+  reasoning: { feature: string; raw: string; direction: string; weight: number }[];
+  model_version: string;
+  disclaimer: string;
+}
+
 export const api = {
   auth: {
     login: (credentials: { username_or_email: string; password: string }) =>
@@ -332,6 +388,26 @@ export const api = {
           body: JSON.stringify(data),
         });
         return { ...u, role: normalizeRole(u.role) ?? "USER" };
+      },
+    },
+    // Insight respons pasien (Sprint 23) - khusus Admin Riset
+    insights: {
+      report: () => apiRequest<InsightsReport | { status: string }>("/admin/insights/report"),
+      train: (cfg: InsightsTrainConfig) =>
+        apiRequest<InsightsReport>("/admin/insights/train", { method: "POST", body: jsonBody(cfg) }),
+      predictText: (text: string) =>
+        apiRequest<InsightsTextPrediction>("/admin/insights/predict/text", { method: "POST", body: jsonBody({ text }) }),
+      predictCardio: (data: Record<string, string | number>) =>
+        apiRequest<InsightsCardioPrediction>("/admin/insights/predict/cardio", { method: "POST", body: jsonBody(data) }),
+      exportColab: () =>
+        apiRequest<{ files: string[]; generated_at: string }>("/admin/insights/export/colab", { method: "POST" }),
+      downloadColabFile: async (filename: string): Promise<Blob> => {
+        const token = getToken();
+        const res = await fetch(`${API_BASE_URL}/admin/insights/export/colab/${encodeURIComponent(filename)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error(`Unduhan gagal (HTTP ${res.status}).`);
+        return res.blob();
       },
     },
     // Knowledge base CRUD (DatasetRecord)

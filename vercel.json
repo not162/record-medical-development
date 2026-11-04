@@ -3,8 +3,8 @@
   "framework": null,
   "functions": {
     "api/**/*.py": {
-      "includeFiles": "services/ai-api/**",
-      "maxDuration": 30
+      "includeFiles": "{services/ai-api/**,datasets/raw/df_clinical_combined.csv,datasets/sft/sft_fast.jsonl,datasets/sft/sft_thinking.jsonl,datasets/inbox/penyakit_umum_awam.jsonl,datasets/inbox/clinical_cases.jsonl}",
+      "maxDuration": 60
     }
   },
   "rewrites": [

@@ -10,7 +10,8 @@ import {
   LayoutDashboard, Database, FileText, CheckSquare, 
   Cpu, Activity, BarChart3, BookOpen, GitFork, 
   ThumbsUp, ShieldAlert, Settings, LogOut,
-  ShieldCheck, AlertTriangle, Users, Lock
+  ShieldCheck, AlertTriangle, Users, Lock,
+  Sparkles,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -79,6 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/annotations", label: "Pemberian Label Data", icon: CheckSquare },
     { href: "/admin/knowledge-base", label: "Basis Pengetahuan", icon: BookOpen },
     { href: "/admin/graph", label: "Peta Hubungan Penyakit", icon: GitFork },
+    { href: "/admin/insights", label: "Insight Pasien & RLHF", icon: Sparkles },
     { href: "/admin/users", label: "Kelola Pengguna", icon: Users },
   ];
 
