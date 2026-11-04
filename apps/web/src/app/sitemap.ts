@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://klinik.rsukt.go.id";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://klinik-terpadu.vercel.app";
   const now = new Date();
 
   return [

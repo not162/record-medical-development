@@ -49,8 +49,22 @@ const nextConfig: NextConfig = {
             value: "SAMEORIGIN",
           },
           {
+            // Header lama ini dapat memicu kebocoran di browser lawas; OWASP menyarankan "0".
             key: "X-XSS-Protection",
-            value: "1; mode=block",
+            value: "0",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+          },
+          {
+            // CSP minimal yang aman bagi skrip inline Next.js: cegah clickjacking, injeksi <base>, plugin.
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
           },
           {
             key: "Referrer-Policy",

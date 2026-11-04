@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://klinik.rsukt.go.id"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://klinik-terpadu.vercel.app"),
   title: {
     default: "Web Klinik RSUKT | healthy with clinic and hospital",
     template: "%s | Web Klinik RSUKT",
@@ -88,8 +88,8 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "MedicalOrganization",
               "name": "Web Klinik RSUKT",
-              "url": "https://klinik.rsukt.go.id",
-              "logo": "https://klinik.rsukt.go.id/icons/icon-512.png",
+              "url": "https://klinik-terpadu.vercel.app",
+              "logo": "https://klinik-terpadu.vercel.app/icons/icon-512.png",
               "slogan": "healthy with clinic and hospital",
               "description": "Layanan Konsultasi Triase Medis Berbasis Kecerdasan Artifisial & Rekam Medis Terverifikasi RSUKT",
               "address": {

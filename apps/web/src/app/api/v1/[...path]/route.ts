@@ -11,9 +11,11 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
   const backendBase = rawBackend.replace(/\/api\/v1\/?$/, "").replace(/\/+$/, "");
   const targetUrl = `${backendBase}/api/v1/${pathStr}${queryString}`;
 
+  // Hanya teruskan header yang dibutuhkan backend; cookie & header hop-by-hop tidak diteruskan.
+  const BLOCKED = new Set(["host", "content-length", "connection", "cookie", "keep-alive", "upgrade", "te", "trailer", "proxy-authorization"]);
   const headers = new Headers();
   request.headers.forEach((value, key) => {
-    if (!["host", "content-length", "connection"].includes(key.toLowerCase())) {
+    if (!BLOCKED.has(key.toLowerCase())) {
       headers.set(key, value);
     }
   });
@@ -55,14 +57,10 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
       headers: responseHeaders,
     });
   } catch (error: unknown) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
+    // Detail internal (URL backend, pesan error) hanya dicatat di log server, tidak dikirim ke klien.
+    console.error("[api-proxy] backend tidak dapat dihubungi:", error instanceof Error ? error.message : error);
     return NextResponse.json(
-      {
-        error: "Backend API gateway error",
-        target_url: targetUrl,
-        detail: errorMsg,
-        tip: "Pastikan backend FastAPI telah berjalan atau atur variabel BACKEND_API_URL pada Vercel Dashboard.",
-      },
+      { detail: "Layanan sedang tidak dapat dihubungi. Silakan coba beberapa saat lagi." },
       { status: 502 }
     );
   }

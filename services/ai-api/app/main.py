@@ -1,3 +1,4 @@
+import os
 import datetime
 import importlib
 from fastapi import FastAPI
@@ -89,18 +90,27 @@ async def lifespan(app: FastAPI):
     yield
     print("[*] Shutting down Clinical AI API service...")
 
+# Dokumentasi API (Swagger/ReDoc/OpenAPI) tidak dipublikasikan di production kecuali
+# diaktifkan eksplisit lewat ENABLE_API_DOCS=1 - mencegah pemetaan seluruh endpoint oleh pihak luar.
+_docs_enabled = (not settings.is_production) or os.getenv("ENABLE_API_DOCS", "").lower() in ("1", "true", "yes")
+
 app = FastAPI(
     title="Clinical AI Chatbot Agent API",
-    description="Full-Stack Evidence-Grounded Clinical AI Assistant & Research Suite (RSUKT)",
+    description="Full-Stack Evidence-Grounded Clinical AI Assistant & Research Suite (Klinik Terpadu)",
     version="2.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
 )
 
-# Configure CORS - supports localhost, vercel.app, render.com and custom production domains
+# CORS: hanya origin resmi (settings.CORS_ORIGINS). Regex wildcard *.vercel.app dihapus karena
+# siapa pun bisa membuat situs *.vercel.app. Frontend memakai proxy same-origin (/api/v1),
+# jadi CORS hanya untuk origin tambahan yang didaftarkan via env CORS_ORIGINS / CORS_ORIGIN_REGEX.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_origin_regex=r"https://.*(\.vercel\.app|\.onrender\.com|\.railway\.app)",
+    allow_origin_regex=os.getenv("CORS_ORIGIN_REGEX") or None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
