@@ -103,6 +103,8 @@ export class ProsodyAnalyzer {
   async start(stream: MediaStream) {
     // 16 kHz langsung = format masukan Whisper; tanpa resampling tambahan
     this.ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
+    // iOS/Safari & Chrome memulai AudioContext dalam keadaan "suspended" sampai ada aksi pengguna
+    if (this.ctx.state === "suspended") await this.ctx.resume().catch(() => undefined);
     this.src = this.ctx.createMediaStreamSource(stream);
     this.node = this.ctx.createScriptProcessor(2048, 1, 1);
     this.node.onaudioprocess = (e) => this.ingest(e.inputBuffer.getChannelData(0));

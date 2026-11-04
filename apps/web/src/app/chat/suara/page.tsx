@@ -7,6 +7,44 @@ import {
 } from "lucide-react";
 import { ProsodyAnalyzer, type ProsodySnapshot } from "@/lib/voice/prosody";
 import { FaceAnalyzer, createFaceLandmarker, type FaceSnapshot } from "@/lib/vision/face";
+import {
+  checkMediaPermissions, openMedia, permissionHelp, watchMediaPermissions, type MediaPermissions, type PermState,
+} from "@/lib/media-permissions";
+
+const PERM_LABEL: Record<PermState, { text: string; cls: string }> = {
+  granted: { text: "diizinkan", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  prompt: { text: "akan ditanyakan", cls: "bg-blue-50 text-blue-700 border-blue-200" },
+  denied: { text: "diblokir", cls: "bg-red-50 text-red-700 border-red-200" },
+  unsupported: { text: "ditanyakan saat mulai", cls: "bg-slate-100 text-slate-600 border-slate-200" },
+};
+
+function PermissionPanel({ perms, useCamera }: { perms: MediaPermissions | null; useCamera: boolean }) {
+  if (!perms) return null;
+  const blocked =
+    (useCamera && perms.camera === "denied") || perms.microphone === "denied" ||
+    !perms.secure || !perms.policyAllows.microphone || (useCamera && !perms.policyAllows.camera);
+  return (
+    <div className={`rounded-xl border p-3 text-xs space-y-2 ${blocked ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-semibold text-slate-700">Izin perangkat:</span>
+        {useCamera && (
+          <span className={`px-2 py-0.5 rounded-full border ${PERM_LABEL[perms.camera].cls}`}>Kamera {PERM_LABEL[perms.camera].text}</span>
+        )}
+        <span className={`px-2 py-0.5 rounded-full border ${PERM_LABEL[perms.microphone].cls}`}>Mikrofon {PERM_LABEL[perms.microphone].text}</span>
+      </div>
+      {!perms.secure && <p className="text-red-700">Halaman harus dibuka lewat https:// agar kamera dapat diakses.</p>}
+      {(!perms.policyAllows.camera || !perms.policyAllows.microphone) && (
+        <p className="text-red-700">Kebijakan situs sedang memblokir kamera/mikrofon. Muat ulang halaman; bila tetap terblokir, hubungi admin.</p>
+      )}
+      {(perms.camera === "denied" || perms.microphone === "denied") && (
+        <p className="text-red-700">
+          <b>Akses diblokir sebelumnya.</b> {permissionHelp()}
+        </p>
+      )}
+      {useCamera && !perms.hasDevices.camera && <p className="text-amber-700">Kamera tidak terdeteksi. Konsultasi tetap bisa dengan suara saja.</p>}
+    </div>
+  );
+}
 
 type AsrState = { status: "idle" | "loading" | "ready" | "error"; pct?: number; info?: string };
 interface Line { id: number; text: string; pending: boolean }
@@ -43,6 +81,17 @@ export default function VoiceCameraPage() {
   const [asr, setAsr] = useState<AsrState>({ status: "idle" });
   const [lines, setLines] = useState<Line[]>([]);
   const [attachSummary, setAttachSummary] = useState(true);
+  const [perms, setPerms] = useState<MediaPermissions | null>(null);
+
+  const refreshPerms = useCallback(() => {
+    checkMediaPermissions().then(setPerms).catch(() => undefined);
+  }, []);
+
+  // status izin dibaca saat halaman dibuka dan diperbarui otomatis saat pengguna mengubahnya di browser
+  useEffect(() => {
+    refreshPerms();
+    return watchMediaPermissions(refreshPerms);
+  }, [refreshPerms]);
 
   const ensureWorker = useCallback(() => {
     if (workerRef.current) return workerRef.current;
@@ -87,10 +136,11 @@ export default function VoiceCameraPage() {
     setError(null);
     setStarting(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
-        video: useCamera ? { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" } : false,
-      });
+      // dipanggil langsung dari klik -> browser menampilkan dialog izin kamera & mikrofon
+      const media = await openMedia(useCamera);
+      const stream = media.stream;
+      if (media.note) setError(media.note);
+      refreshPerms();
       streamRef.current = stream;
       const worker = ensureWorker();
       const pa = new ProsodyAnalyzer((audio) => {
@@ -101,7 +151,7 @@ export default function VoiceCameraPage() {
       await pa.start(stream);
       prosodyRef.current = pa;
 
-      if (useCamera && videoRef.current) {
+      if (media.video && videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         try {
@@ -125,10 +175,17 @@ export default function VoiceCameraPage() {
     } catch (e) {
       const name = (e as DOMException)?.name;
       setError(
-        name === "NotAllowedError"
-          ? "Izin kamera/mikrofon ditolak. Aktifkan izin di pengaturan browser lalu coba lagi."
-          : "Kamera atau mikrofon tidak dapat diakses di perangkat ini."
+        name === "InsecureContext"
+          ? "Kamera hanya bisa dibuka lewat alamat aman (https://). Buka situs ini melalui https."
+          : name === "NotAllowedError" || name === "SecurityError"
+            ? `Izin mikrofon${useCamera ? "/kamera" : ""} ditolak. ${permissionHelp()}`
+            : name === "NotFoundError"
+              ? "Mikrofon tidak ditemukan. Sambungkan mikrofon atau headset lalu coba lagi."
+              : name === "NotReadableError"
+                ? "Mikrofon/kamera sedang dipakai aplikasi lain. Tutup aplikasi tersebut lalu coba lagi."
+                : "Kamera atau mikrofon tidak dapat diakses di perangkat ini."
       );
+      refreshPerms();
       await stop();
     } finally {
       setStarting(false);
@@ -180,9 +237,13 @@ export default function VoiceCameraPage() {
             <input type="checkbox" checked={useCamera} onChange={(e) => setUseCamera(e.target.checked)} className="accent-blue-600 h-4 w-4" />
             Aktifkan kamera untuk analisis raut wajah (opsional)
           </label>
+          <PermissionPanel perms={perms} useCamera={useCamera} />
           <button onClick={() => setConsent(true)} className="btn-primary w-full h-11 text-sm font-bold">
             Saya mengerti dan setuju
           </button>
+          <p className="text-[11px] text-slate-500">
+            Setelah menekan “Mulai bicara”, browser akan meminta izin kamera dan mikrofon. Pilih <b>Izinkan</b>.
+          </p>
           <p className="text-[11px] text-slate-500">Keadaan darurat? Segera hubungi 119 atau IGD terdekat.</p>
         </div>
       </div>
@@ -214,6 +275,8 @@ export default function VoiceCameraPage() {
             )}
           </div>
         </div>
+
+        {!running && <PermissionPanel perms={perms} useCamera={useCamera} />}
 
         {error && (
           <div className="p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs flex gap-2">
