@@ -104,7 +104,14 @@ class ClinicalAgent:
         self.groq_api_key = settings.GROQ_API_KEY
         self.default_model = settings.GROQ_DEFAULT_MODEL
         self.fallback_model = settings.GROQ_FALLBACK_MODEL
+        self.fast_model = settings.GROQ_FAST_MODEL
         self._groq_client = None
+
+    @staticmethod
+    def _model_extra(model: str) -> Dict[str, Any]:
+        # gpt-oss adalah model penalaran: effort "low" memangkas token berpikir -> latency suara rendah.
+        # Dikirim lewat extra_body agar aman untuk versi SDK groq lama.
+        return {"extra_body": {"reasoning_effort": "low"}} if model.startswith("openai/gpt-oss") else {}
 
     def _get_groq_client(self) -> Optional[Groq]:
         if not self.groq_api_key:
@@ -284,7 +291,7 @@ class ClinicalAgent:
                         "tetapi tampilkan ke pasien hanya kesimpulan yang sederhana dan berguna."
                     )
                 else:
-                    active_model = "llama-3.1-8b-instant" if "llama" in self.default_model.lower() else self.default_model
+                    active_model = self.fast_model or self.default_model
                     active_temp = 0.3
                     mode_prompt_instruction = (
                         "MODE: JAWABAN SINGKAT. Jawab ringkas (maksimal sekitar 150 kata) dan langsung ke inti."
@@ -369,7 +376,8 @@ class ClinicalAgent:
                     messages=cast(Any, messages_payload),
                     tools=cast(Any, TOOL_DEFINITIONS),
                     temperature=active_temp,
-                    max_tokens=1024
+                    max_tokens=1024,
+                    **self._model_extra(active_model),
                 )
                 msg = completion.choices[0].message
 
@@ -388,11 +396,14 @@ class ClinicalAgent:
                             "tool_call_id": tc.id,
                             "content": json.dumps(tool_res, ensure_ascii=False)
                         })
+                    # mode cepat tetap di model ringan agar jawaban suara tidak tertahan model besar
+                    follow_model = active_model if reasoning_mode != "thinking" else self.default_model
                     follow_up = client.chat.completions.create(
-                        model=self.default_model,
+                        model=follow_model,
                         messages=cast(Any, messages_payload),
                         temperature=0.2,
-                        max_tokens=1024
+                        max_tokens=1024,
+                        **self._model_extra(follow_model),
                     )
                     content = follow_up.choices[0].message.content
                 else:
@@ -408,7 +419,8 @@ class ClinicalAgent:
                             model=self.fallback_model,
                             messages=cast(Any, messages_payload),
                             temperature=0.2,
-                            max_tokens=1024
+                            max_tokens=1024,
+                            **self._model_extra(self.fallback_model),
                         )
                         content = completion.choices[0].message.content
                         model_used = self.fallback_model
