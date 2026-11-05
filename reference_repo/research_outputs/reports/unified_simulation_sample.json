@@ -6,6 +6,29 @@
     "warning": "KONTRAINDIKASI ABSOLUT: Beta-blocker (propranolol) tidak boleh diberikan pada pasien asma karena memicu bronkospasme fatal."
   },
   "cardiovascular_risk_assessment": "63.9% (HIGH RISK (Tinggi))",
+  "world_model": {
+    "action": "execute",
+    "state": {
+      "mahalanobis": 4.6753,
+      "warn_threshold": 5.2064,
+      "ood_ratio": 0.898,
+      "features_outside_train_range": []
+    },
+    "rollout": {
+      "p_nominal": 0.6394,
+      "p_mean": 0.6445,
+      "p_std": 0.01,
+      "p_interval_90": [
+        0.6314,
+        0.663
+      ],
+      "flip_rate": 0.0,
+      "n_rollouts": 64
+    },
+    "reasons": [
+      "Input sesuai distribusi latih dan keputusan stabil terhadap gangguan kecil."
+    ]
+  },
   "urgency_level": "HIGH RISK (Tinggi)",
-  "timestamp": "2026-10-23T07:20:43.802183+00:00"
+  "timestamp": "2026-11-05T20:05:14.232818+00:00"
 }

@@ -43,6 +43,7 @@ from sklearn.metrics import accuracy_score, brier_score_loss, f1_score, roc_auc_
 from sklearn.preprocessing import StandardScaler
 
 from app.ml.mode_router import extract_features
+from app.ml.world_model import WorldModel, WorldModelConfig, binary_mask
 
 SEED = 42
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -520,9 +521,17 @@ def train_cardio_track(max_rows: int = 20000, seed: int = SEED) -> Optional[Dict
         return out
 
     before, after = metrics(p0, yhat0), metrics(p1, yhat1)
+    # world model pra-eksekusi: dipelajari dari data latih mentah (bukan test) agar tidak bocor
+    wm = WorldModel(WorldModelConfig(seed=seed)).fit(X[tr], cardio_feature_names())
+    mutable = binary_mask(X[tr])
+    p_fn = lambda Z: m1.predict_proba(scaler.transform(Z))[:, 1]  # noqa: E731
+    acts = Counter(wm.simulate(X[i], p_fn, thr1, mutable)["action"] for i in te[:200])
     return {
         "model": m1, "scaler": scaler, "threshold": thr1, "feature_names": cardio_feature_names(),
+        "world_model": wm, "world_model_mutable": mutable,
         "report": {
+            "world_model": {"warn_mahalanobis": round(wm.warn_dist_, 4),
+                            "test_action_distribution": dict(acts), "n_test_simulated": int(min(200, len(te)))},
             "n_rows_sampled": data["n"], "n_train": int(len(tr)), "n_test": int(len(te)),
             "prevalence_train": round(float(y[tr].mean()), 4),
             "sensitive_attributes_excluded_from_features": list(SENSITIVE),
@@ -711,6 +720,17 @@ def predict_cardio(features: Dict[str, Any]) -> Dict[str, Any]:
         raise LookupError("Model risiko jantung belum dilatih.")
     cb = st["bundle"]["cardio"]
     x = np.array([_cardio_vector(features)], dtype=float)
+    # 1) world model mensimulasikan input SEBELUM prediktor dieksekusi
+    wm: Optional[WorldModel] = cb.get("world_model")
+    world = None
+    if wm is not None:
+        p_fn = lambda Z: cb["model"].predict_proba(cb["scaler"].transform(Z))[:, 1]  # noqa: E731
+        world = wm.simulate(x[0], p_fn, cb["threshold"], cb.get("world_model_mutable"))
+        if world["action"] == "abstain":
+            return {"risk_probability": None, "risk_label": "tidak_dieksekusi", "world_model": world,
+                    "model_version": st["version"],
+                    "disclaimer": "World model menolak mengeksekusi prediksi untuk input ini. Konsultasikan dengan dokter."}
+    # 2) eksekusi prediktor
     z = cb["scaler"].transform(x)
     p = float(cb["model"].predict_proba(z)[0, 1])
     contrib = z[0] * cb["model"].coef_[0]
@@ -723,6 +743,7 @@ def predict_cardio(features: Dict[str, Any]) -> Dict[str, Any]:
         "reasoning": [{"feature": FEATURE_LABELS_ID.get(names[i].split("=")[0], names[i]), "raw": names[i],
                        "direction": "menaikkan" if contrib[i] > 0 else "menurunkan", "weight": round(float(contrib[i]), 4)}
                       for i in top],
+        "world_model": world or {"action": "execute", "reasons": ["Artefak lama tanpa world model; latih ulang."]},
         "model_version": st["version"],
         "disclaimer": "Skor edukatif, bukan diagnosis. Konsultasikan dengan dokter.",
     }

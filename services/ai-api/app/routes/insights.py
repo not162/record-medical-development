@@ -162,6 +162,93 @@ def predict_cardio(req: CardioPredictRequest, db: Session = Depends(get_db), use
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
+# ----------------------------------------------------------------------------- multimodal SSL + person embedding
+_mm_lock = threading.Lock()
+_mm_state: Dict[str, Any] = {}
+MAX_WAVE_SAMPLES = 16000 * 15  # 15 detik @16 kHz
+
+
+class MultimodalTrainRequest(BaseModel):
+    n_persons: int = Field(45, ge=9, le=150)
+    epochs: int = Field(300, ge=20, le=1000)
+    dim: int = Field(32, ge=8, le=128)
+    seed: int = 42
+
+
+class SessionInput(BaseModel):
+    text: Optional[str] = Field(None, max_length=4000)
+    waveform: Optional[List[float]] = Field(None, max_length=MAX_WAVE_SAMPLES)
+    sample_rate: int = Field(16000, ge=8000, le=48000)
+    face: Optional[Dict[str, float]] = None
+    timestamp_days: float = 0.0
+
+
+class PersonEmbeddingRequest(BaseModel):
+    sessions: List[SessionInput] = Field(..., min_length=1, max_length=50)
+    include_embedding: bool = False
+
+
+def _mm_load() -> Optional[Dict[str, Any]]:
+    import joblib
+
+    if _mm_state.get("bundle"):
+        return _mm_state["bundle"]
+    p = pi._artifact_dir() / "multimodal_latest.joblib"
+    if p.exists():
+        _mm_state["bundle"] = joblib.load(p)
+    return _mm_state.get("bundle")
+
+
+@router.post("/multimodal/train")
+def train_multimodal(req: MultimodalTrainRequest, request: Request, db: Session = Depends(get_db),
+                     user: User = Depends(require_researcher)):
+    """Pre-train SSL kontrastif (teks/suara/wajah) + probe per orang. Saat ini memakai kohort SINTETIS
+    karena belum ada data multimodal pasien yang tersimpan di server (audio/video tetap on-device)."""
+    import joblib
+
+    from app.ml import multimodal_ssl as mm
+
+    if not _mm_lock.acquire(blocking=False):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Training multimodal sedang berjalan.")
+    try:
+        cfg = mm.MultimodalSSLConfig(dim=req.dim, epochs=req.epochs, seed=req.seed)
+        out = mm.run_multimodal_pipeline(mm.make_synthetic_cohort(req.n_persons, seed=req.seed), cfg)
+        out["report"]["synthetic_data"] = True
+        bundle = {"model": out["model"], "probe": out["probe"], "report": out["report"]}
+        joblib.dump(bundle, pi._artifact_dir() / "multimodal_latest.joblib")
+        _mm_state["bundle"] = bundle
+    finally:
+        _mm_lock.release()
+    _audit(db, user, "MULTIMODAL_TRAIN", request, {"probe": out["report"]["probe"]})
+    return out["report"]
+
+
+@router.post("/multimodal/person")
+def person_embedding(req: PersonEmbeddingRequest, user: User = Depends(require_researcher)):
+    """Sesi milik SATU orang -> person embedding (agregasi recency) + ringkasan teks."""
+    import numpy as np
+
+    from app.ml import multimodal_ssl as mm
+
+    b = _mm_load()
+    if not b:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model multimodal belum dilatih.")
+    sessions = [mm.Session("req", s.text, np.asarray(s.waveform, dtype=float) if s.waveform else None,
+                           s.sample_rate, s.face, s.timestamp_days) for s in req.sessions]
+    try:
+        agg = mm.aggregate_person(b["model"], sessions)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    res = {k: v for k, v in agg.items() if k != "embedding"}
+    res["summary"] = mm.person_text_summary(b["model"], sessions, agg, b.get("probe"))
+    if b.get("probe"):
+        res["person_prediction"] = b["probe"].predict(agg["embedding"])
+    if req.include_embedding:
+        res["embedding"] = [round(float(x), 5) for x in agg["embedding"]]
+    res["synthetic_trained"] = bool(b["report"].get("synthetic_data"))
+    return res
+
+
 @router.post("/export/colab")
 def export_colab(request: Request, db: Session = Depends(get_db), user: User = Depends(require_researcher)):
     """Siapkan berkas split pre-train/SFT/RLHF untuk pelatihan GPU di Colab (unduh via /export/colab/{file})."""

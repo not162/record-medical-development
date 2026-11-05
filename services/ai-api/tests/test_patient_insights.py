@@ -125,8 +125,19 @@ def test_pipeline_end_to_end():
     pi.save_result(res)
     p = pi.predict_text("batuk berdahak dan sesak napas sudah seminggu")
     assert p["label"] in r["labels"] and 0 < p["confidence"] <= 1 and p["variables"]["durasi_minggu"] == 1
-    c = pi.predict_cardio({"age": 70, "hypertension": 1, "diabetes": 1, "previous_heart_disease": 1})
+    realistic = {"age": 70, "hypertension": 1, "diabetes": 1, "previous_heart_disease": 1,
+                 "cholesterol_level": 240, "waist_circumference": 95, "sleep_hours": 6,
+                 "blood_pressure_systolic": 150, "blood_pressure_diastolic": 95, "fasting_blood_sugar": 130,
+                 "cholesterol_hdl": 40, "cholesterol_ldl": 160, "triglycerides": 200,
+                 "smoking_status": "Current", "physical_activity": "Low", "stress_level": "High",
+                 "dietary_habits": "Unhealthy"}
+    c = pi.predict_cardio(realistic)
+    assert c["world_model"]["action"] in ("execute", "execute_with_warning")
     assert 0 <= c["risk_probability"] <= 1 and c["reasoning"]
+    # world model menolak mengeksekusi input mustahil (tekanan darah & kolesterol = 0)
+    bad = pi.predict_cardio({"age": 70})
+    assert bad["world_model"]["action"] == "abstain" and bad["risk_probability"] is None
+    assert "world_model" in r["cardio"]
 
 
 # ----------------------------------------------------------------------------- API & privasi
@@ -147,6 +158,22 @@ def test_train_and_predict_api_without_leaking_chat():
     assert p.status_code == 200 and "label" in p.json()
     c = client.post(f"{P}/admin/insights/predict/cardio", headers=H["RESEARCHER"], json={"age": 55})
     assert c.status_code == 200 and "risk_probability" in c.json()
+
+
+def test_multimodal_train_and_person_embedding_api():
+    assert client.post(f"{P}/admin/insights/multimodal/train", headers=H["USER"], json={}).status_code == 403
+    r = client.post(f"{P}/admin/insights/multimodal/train", headers=H["RESEARCHER"],
+                    json={"n_persons": 18, "epochs": 40, "dim": 16})
+    assert r.status_code == 200, r.text
+    assert r.json()["synthetic_data"] is True and r.json()["probe"]["persons_overlap_between_splits"] == 0
+    wave = (0.3 * np.sin(2 * np.pi * 200 * np.arange(8000) / 16000)).tolist()
+    body = {"sessions": [{"text": "nyeri dada menjalar", "timestamp_days": 0},
+                         {"text": "dada terasa berat", "waveform": wave, "face": {"senyum": 0.1}, "timestamp_days": 7}],
+            "include_embedding": True}
+    p = client.post(f"{P}/admin/insights/multimodal/person", headers=H["RESEARCHER"], json=body)
+    assert p.status_code == 200, p.text
+    j = p.json()
+    assert j["n_sessions"] == 2 and len(j["embedding"]) == 16 and "summary" in j and "person_prediction" in j
 
 
 def test_colab_export_excludes_patient_chat_and_blocks_traversal():

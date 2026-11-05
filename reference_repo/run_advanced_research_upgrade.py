@@ -3,6 +3,9 @@ RSUKT Advanced Research Upgrade:
 1. IndoBERT Embedding-based Clinical Safety Guardrail (Error Detection)
 2. Tabular Cardiovascular Risk Predictor (heart_attack_prediction_indonesia.csv)
 3. Multi-Agent Unified Clinical Chatbot Engine
+4. World Model pra-eksekusi (OOD + rollout) sebelum tiap prediktor dijalankan
+5. Multi-modal Self-Supervised Learning (kontrastif) + waveform embedding + person embedding
+   dengan split per orang (services/ai-api/app/ml/multimodal_ssl.py)
 """
 
 import os
@@ -30,6 +33,11 @@ from sklearn.metrics import (
 # Import local project modules
 from src.hebbian import BipolarHebbianClassifier
 from src.perceptron import CustomBipolarPerceptron
+
+# Modul backend murni NumPy/sklearn (tanpa dependensi app.* lain)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "services", "ai-api"))
+from app.ml.world_model import WorldModel, WorldModelConfig, binary_mask  # noqa: E402
+from app.ml import multimodal_ssl as mm  # noqa: E402
 
 BASE_DIR = "research_outputs"
 os.makedirs(f"{BASE_DIR}/models/safety_guardrail", exist_ok=True)
@@ -112,6 +120,22 @@ plt.close(fig)
 
 print("[OK] Visualisasi Confusion Matrix Safety Guardrail tersimpan.")
 
+# --- World model pra-eksekusi untuk Safety Guardrail ---------------------------------------------
+# Dipelajari dari embedding TRAIN saja. Setiap input test disimulasikan dulu; prediktor hanya
+# dieksekusi bila world model tidak abstain.
+safety_wm = WorldModel(WorldModelConfig(noise_scale=0.02)).fit(X_train_emb)
+safety_fn = lambda Z: safety_models["Logistic Regression (IndoBERT)"].predict_proba(Z)[:, 1]  # noqa: E731
+safety_sims = [safety_wm.simulate(x, safety_fn, 0.5) for x in X_test_emb]
+exec_mask = np.array([s["action"] != "abstain" for s in safety_sims])
+safety_wm_report = {
+    "actions": pd.Series([s["action"] for s in safety_sims]).value_counts().to_dict(),
+    "executed": int(exec_mask.sum()), "abstained": int((~exec_mask).sum()),
+    "accuracy_on_executed": round(float(accuracy_score(y_test_emb[exec_mask], best_safety_preds[exec_mask])), 4)
+    if exec_mask.any() else None,
+}
+joblib.dump(safety_wm, f"{BASE_DIR}/models/safety_guardrail/safety_world_model.joblib")
+print("World model Safety Guardrail:", safety_wm_report)
+
 # ==============================================================================
 # UPGRADE 2: TABULAR CARDIOVASCULAR RISK PREDICTOR
 # ==============================================================================
@@ -176,6 +200,17 @@ joblib.dump(cardio_rf, f"{BASE_DIR}/models/cardiovascular/cardio_risk_rf.joblib"
 joblib.dump(scaler, f"{BASE_DIR}/models/cardiovascular/cardio_scaler.joblib")
 with open(f"{BASE_DIR}/models/cardiovascular/feature_names.json", "w") as f:
     json.dump(list(df_features.columns), f)
+
+# --- World model pra-eksekusi untuk Prediktor Kardiovaskular -------------------------------------
+cardio_wm = WorldModel(WorldModelConfig()).fit(X_train_c, list(df_features.columns))
+cardio_mutable = np.array([1.0] * len(numeric_cols) + [0.0] * len(categorical_cols))  # kategori tidak diganggu
+cardio_fn = lambda Z: cardio_rf.predict_proba(Z)[:, 1]  # noqa: E731
+cardio_sims = [cardio_wm.simulate(x, cardio_fn, 0.5, cardio_mutable) for x in X_test_c[:300]]
+cardio_wm_report = {"actions": pd.Series([s["action"] for s in cardio_sims]).value_counts().to_dict(),
+                    "n_simulated": len(cardio_sims), "warn_mahalanobis": round(cardio_wm.warn_dist_, 4)}
+joblib.dump({"world_model": cardio_wm, "mutable": cardio_mutable},
+            f"{BASE_DIR}/models/cardiovascular/cardio_world_model.joblib")
+print("World model Kardiovaskular:", cardio_wm_report)
 
 # Save metrics
 cardio_metrics = [{
@@ -251,6 +286,7 @@ def simulate_unified_consultation(user_text, patient_vitals=None):
     # 3. Cardiovascular Risk Scoring
     cardio_score_str = "N/A (Bukan keluhan kardiologi utama atau data vital tidak diinput)"
     risk_level = "ROUTINE"
+    world_model_result = None
     if patient_vitals and predicted_dept == "Kardiologi":
         # Form feature vector matching 18 features
         v_vector = [
@@ -274,6 +310,16 @@ def simulate_unified_consultation(user_text, patient_vitals=None):
             1 if patient_vitals.get("ekg_abnormal", False) else 0
         ]
         cardio_model = joblib.load(f"{BASE_DIR}/models/cardiovascular/cardio_risk_rf.joblib")
+        wm_b = joblib.load(f"{BASE_DIR}/models/cardiovascular/cardio_world_model.joblib")
+        # world model mensimulasikan input SEBELUM prediktor dieksekusi
+        world = wm_b["world_model"].simulate(np.array(v_vector, dtype=float),
+                                             lambda Z: cardio_model.predict_proba(Z)[:, 1], 0.5, wm_b["mutable"])
+        world_model_result = world
+        if world["action"] == "abstain":
+            return {"user_query": user_text, "predicted_department": predicted_dept,
+                    "world_model": world, "cardiovascular_risk_assessment": "TIDAK DIEKSEKUSI (world model abstain)",
+                    "urgency_level": "EMERGENCY" if error_detected else "RUJUK_DOKTER",
+                    "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()}
         risk_prob = cardio_model.predict_proba([v_vector])[0][1]
         if risk_prob >= 0.70:
             risk_level = "EMERGENCY (Kritis)"
@@ -291,6 +337,7 @@ def simulate_unified_consultation(user_text, patient_vitals=None):
             "warning": error_detail if error_detected else "Pemeriksaan Keamanan Lolos (Tidak terdeteksi kontraindikasi fatal)"
         },
         "cardiovascular_risk_assessment": cardio_score_str,
+        "world_model": world_model_result,
         "urgency_level": risk_level if risk_level != "ROUTINE" else ("EMERGENCY" if error_detected else "ROUTINE"),
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
     }
@@ -307,4 +354,21 @@ print(json.dumps(sample_case, indent=2))
 with open(f"{BASE_DIR}/reports/unified_simulation_sample.json", "w") as f:
     json.dump(sample_case, f, indent=2)
 
-print("\n[OK] Pipeline Upgrade 1 & 2 Selesai Dijalankan.")
+# ==============================================================================
+# UPGRADE 3: MULTI-MODAL SELF-SUPERVISED LEARNING + PERSON EMBEDDING
+# ==============================================================================
+print("\n" + "="*70)
+print("UPGRADE 3: MULTI-MODAL SSL (KONTRASTIF) + WAVEFORM & PERSON EMBEDDING")
+print("="*70)
+# Belum ada dataset multimodal pasien nyata -> kohort SINTETIS (metrik bukan klaim klinis).
+mm_out = mm.run_multimodal_pipeline(mm.make_synthetic_cohort(n_persons=45, seed=42))
+os.makedirs(f"{BASE_DIR}/models/multimodal", exist_ok=True)
+joblib.dump({"model": mm_out["model"], "probe": mm_out["probe"]}, f"{BASE_DIR}/models/multimodal/multimodal_ssl.joblib")
+mm_report = {**mm_out["report"], "world_model": {"safety": safety_wm_report, "cardio": cardio_wm_report}}
+with open(f"{BASE_DIR}/reports/multimodal_world_model_report.json", "w", encoding="utf8") as f:
+    json.dump(mm_report, f, indent=2, ensure_ascii=False, default=str)
+print(json.dumps({k: mm_report[k] for k in ("ssl", "probe")}, indent=2, default=str))
+for ex in mm_report["example_summaries"]:
+    print(f"- {ex['person_id']}: {ex['summary']}")
+
+print("\n[OK] Pipeline Upgrade 1, 2 & 3 (+ World Model) Selesai Dijalankan.")

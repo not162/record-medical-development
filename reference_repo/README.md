@@ -193,7 +193,7 @@ Spesifikasi lengkap dan dataset sumber bilion parameter tersedia di [**`docs/MOD
 
 ### 🧬 Arsitektur Pembelajaran di Atas LLM
 
-Selain memilih ukuran LLM, sistem memakai lapisan model ringan (CPU, scikit-learn/NumPy) yang belajar dari respons pasien. Status tiap komponen dicantumkan terus terang: ✅ = sudah ada di kode, 🧪 = desain/roadmap, belum diimplementasikan.
+Selain memilih ukuran LLM, sistem memakai lapisan model ringan (CPU, scikit-learn/NumPy) yang belajar dari respons pasien. Status tiap komponen dicantumkan terus terang (✅ = sudah ada di kode).
 
 ```
  Teks pasien ─┐                                   ┌─► Classifier Mode (Fast / Thinking)
@@ -213,20 +213,25 @@ Selain memilih ukuran LLM, sistem memakai lapisan model ringan (CPU, scikit-lear
 | **Debias & fairness** | ✅ | Reweighing (Kamiran & Calders) atas atribut sensitif dan label, dengan gap fairness dilaporkan sebelum dan sesudah. | [`patient_insights.py`](../services/ai-api/app/ml/patient_insights.py) |
 | **Waveform → fitur akustik (on-device)** | ✅ | Per frame ~32 ms pada 16 kHz: energi, pitch F0 (autokorelasi 70–400 Hz), VAD dengan ambang auto-kalibrasi; diturunkan menjadi latensi respons, jeda, intonasi, laju bicara. Audio tidak dikirim ke server. | [`prosody.ts`](../apps/web/src/lib/voice/prosody.ts) |
 | **Fitur wajah (on-device)** | ✅ | MediaPipe Face Landmarker (blendshape), kedipan, pose kepala. Hanya indikasi ekspresi, bukan diagnosis. | [`face.ts`](../apps/web/src/lib/vision/face.ts) |
-| **Waveform embedding** | 🧪 | Ganti fitur akustik tangan dengan encoder yang dilatih tanpa label pada waveform/log-mel (mis. wav2vec-style, masked prediction). Vektor tetap berdimensi kecil. | belum ada |
-| **Multi-modal self-supervised learning** | 🧪 | Pre-train tanpa label pada pasangan modalitas yang sinkron (teks ↔ suara ↔ wajah) dengan *contrastive loss* (InfoNCE): sesi yang sama saling mendekat, sesi lain saling menjauh. Dilanjutkan *fine-tune* supervised atas label yang sedikit. | belum ada |
-| **Person embedding & agregasi level-orang** | 🧪 | Setiap sesi/ucapan pasien diubah menjadi vektor, lalu **diagregasi per orang** (mean/attention pooling atas sesi, dibobot recency) menjadi satu *person embedding*. Input: teks, suara, wajah, dan jawaban teks pasien/pengguna; output: teks ringkasan + skor risiko per orang, bukan per kalimat. | belum ada |
+| **World model pra-eksekusi** | ✅ | Sebelum Safety Guardrail / Prediktor Kardiovaskular dieksekusi, world model mensimulasikan input: (1) *state model* (Mahalanobis + kovarians Ledoit-Wolf vs kuantil 99% data latih) untuk deteksi out-of-distribution, (2) 64 *rollout* "bagaimana jika" dengan derau pengukuran untuk mengukur sebaran probabilitas dan *flip rate*. Keputusan: `execute` / `execute_with_warning` / `abstain`. Saat abstain, skor tidak dikembalikan. | [`world_model.py`](../services/ai-api/app/ml/world_model.py), [`patient_insights.py`](../services/ai-api/app/ml/patient_insights.py), [`run_advanced_research_upgrade.py`](run_advanced_research_upgrade.py) |
+| **Waveform embedding** | ✅ | Waveform → log-mel 32 band (STFT + filterbank mel, NumPy) → statistik per band → proyeksi yang dilatih **self-supervised** (SimCLR-style): dua augmentasi (gain, potong waktu, derau) dari rekaman yang sama ditarik mendekat. | [`multimodal_ssl.py`](../services/ai-api/app/ml/multimodal_ssl.py) |
+| **Multi-modal self-supervised learning** | ✅ | InfoNCE simetris (CLIP-style) untuk teks ↔ suara, teks ↔ wajah, dan suara ↔ wajah dari sesi yang sama, tanpa label. Modalitas yang hilang di-*mask*. Gradien diturunkan manual dan diuji terhadap gradien numerik. | [`multimodal_ssl.py`](../services/ai-api/app/ml/multimodal_ssl.py) |
+| **Person embedding & agregasi level-orang** | ✅ | Embedding sesi diagregasi per orang (rerata berbobot recency, half-life 30 hari) → *person embedding* + skor konsistensi. Input teks/suara/wajah → output **ringkasan teks** per orang. Split train/val/test dilakukan **per orang**; test tidak ikut pre-train SSL. Akurasi split per sesi (bocor) dilaporkan sebagai pembanding. | [`multimodal_ssl.py`](../services/ai-api/app/ml/multimodal_ssl.py) |
 
-#### Alur pelatihan yang direncanakan
+**Endpoint (khusus RESEARCHER):** `POST /admin/insights/multimodal/train` dan `POST /admin/insights/multimodal/person` (sesi satu orang → embedding, prediksi, ringkasan). `POST /admin/insights/predict/cardio` kini selalu menyertakan blok `world_model`.
 
+> Belum ada dataset multimodal pasien nyata di server (audio/video tetap diproses on-device), jadi SSL saat ini dilatih pada **kohort sintetis**. Akurasi probe 1.0 pada data sintetis hanya menunjukkan pipeline berjalan, **bukan** performa klinis.
+
+#### Alur pelatihan
+
+0. **World model**: dipelajari dari data latih; setiap prediksi disimulasikan dulu sebelum dieksekusi.
 1. **Self-supervised pre-train** (tanpa label): encoder teks, waveform, dan wajah dilatih bersama lewat *contrastive loss* multimodal.
 2. **Person-level aggregation**: embedding sesi digabung menjadi *person embedding*; pemisahan train/val/test dilakukan **per orang** (bukan per kalimat) agar tidak terjadi kebocoran data antar sesi pasien yang sama.
 3. **Supervised fine-tune**: classifier label/risiko dan classifier mode *Fast/Thinking* dilatih di atas embedding yang dibekukan.
 4. **RLHF (+/-) dan RLCD**: skor reward dari umpan balik pasien dan distilasi teacher menyetel ulang bobot, dengan gerbang penerimaan berbasis validasi.
 5. **Evaluasi**: akurasi, F1, AUROC, Brier, ECE, serta gap fairness per kelompok pada test split.
 
-> ⚠️ Seluruh keluaran bersifat pendukung keputusan dan **belum divalidasi secara klinis**. Dataset kecil menghasilkan metrik yang optimistis; jangan dipakai sebagai klaim performa. Komponen 🧪 adalah rencana, bukan fitur yang sudah berjalan.
-
+> ⚠️ Seluruh keluaran bersifat pendukung keputusan dan **belum divalidasi secara klinis**. Dataset kecil menghasilkan metrik yang optimistis; jangan dipakai sebagai klaim performa.
 ---
 
 ## 🚀 Production REST API ([`app_api.py`](app_api.py))
