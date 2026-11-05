@@ -3,7 +3,7 @@ import json
 import datetime
 import psycopg2
 
-db_url = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_LaWS9INA1Qde@ep-rough-flower-b48s8vjt-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require")
+db_url = os.environ["DATABASE_URL"]
 
 backup_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "database", "backups"))
 os.makedirs(backup_dir, exist_ok=True)
