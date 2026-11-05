@@ -807,6 +807,31 @@ def submit_chat_feedback(
             "notes": req.notes or "Perlu penyesuaian kualitas klinis."
         }
 
+    # RLHF real-time: skor per komponen (negatif utk DISLIKE, positif utk LIKE) berbasis context window pasien
+    try:
+        from app.ml.mode_router import route_mode
+        from app.ml.realtime_rlhf import ContextWindow, get_rlhf
+
+        history = (db.query(ChatMessage).filter(ChatMessage.session_id == msg.session_id,
+                                                ChatMessage.created_at <= msg.created_at)
+                   .order_by(ChatMessage.created_at).all())
+        users = [m.content for m in history if m.sender_role == "user"][-6:]
+        prev_asst = [m.content for m in history if m.sender_role == "assistant" and m.id != msg.id][-3:]
+        evidence: List[str] = []
+        try:
+            for e in json.loads(msg.evidence_context or "[]") or []:
+                evidence.append(e.get("content", "") if isinstance(e, dict) else str(e))
+        except (ValueError, TypeError):
+            pass
+        mode = route_mode(users[-1])["mode"] if users else "fast"
+        rt = get_rlhf().update(mode, req.feedback_type, msg.content,
+                               ContextWindow(users, prev_asst, evidence), req.improvement_category)
+        rlhf_meta["realtime"] = {"mode": rt["mode"], "quality": rt["quality"],
+                                 "component_rewards": rt["component_rewards"],
+                                 "router_bias_thinking": rt["router_bias_thinking"]}
+    except Exception as e:  # umpan balik pasien tidak boleh gagal karena komponen pembelajaran
+        rlhf_meta["realtime"] = {"error": type(e).__name__}
+
     notes_str = json.dumps(rlhf_meta, ensure_ascii=False)
 
     existing_fb = db.query(FeedbackRecord).filter(

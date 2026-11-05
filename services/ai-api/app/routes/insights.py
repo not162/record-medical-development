@@ -249,6 +249,20 @@ def person_embedding(req: PersonEmbeddingRequest, user: User = Depends(require_r
     return res
 
 
+@router.get("/rlhf/realtime")
+def realtime_rlhf_summary(budget_flops: float = 1e29, user: User = Depends(require_researcher)):
+    """Status RLHF real-time per mode (Fast/Thinking) + akuntansi parameter & FLOPs per ukuran model."""
+    from app.ml import realtime_rlhf as rr
+
+    return {
+        "rlhf": rr.get_rlhf().summary(),
+        "compute": {size: {mode: rr.compute_profile(size, mode, budget_flops) for mode in ("fast", "thinking")}
+                    for size in rr.MODEL_SPECS},
+        "flops_growth_compute_optimal": rr.flops_growth_table(),
+        "budget_optimum": rr.chinchilla_optimal(budget_flops),
+    }
+
+
 @router.post("/export/colab")
 def export_colab(request: Request, db: Session = Depends(get_db), user: User = Depends(require_researcher)):
     """Siapkan berkas split pre-train/SFT/RLHF untuk pelatihan GPU di Colab (unduh via /export/colab/{file})."""

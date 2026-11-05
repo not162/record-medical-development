@@ -176,6 +176,32 @@ def test_multimodal_train_and_person_embedding_api():
     assert j["n_sessions"] == 2 and len(j["embedding"]) == 16 and "summary" in j and "person_prediction" in j
 
 
+def test_feedback_triggers_realtime_rlhf_and_researcher_summary():
+    db = SessionLocal()
+    a = db.query(ChatMessage).filter(ChatMessage.sender_role == "assistant").first()
+    sid, mid = a.session_id, a.id
+    db.close()
+    for fb in ("DISLIKE", "LIKE"):
+        r = client.post(f"{P}/chat/feedback", headers=H["USER"],
+                        json={"session_id": sid, "message_id": mid, "feedback_type": fb,
+                              "improvement_category": "RUJUKAN_TIDAK_TEPAT"})
+        assert r.status_code == 200, r.text
+        assert "component_rewards" not in r.text  # detail ML tidak ditampilkan ke pasien
+    db = SessionLocal()
+    rec = db.query(FeedbackRecord).filter(FeedbackRecord.message_id == mid).first()
+    import json as _json
+    rt = _json.loads(rec.notes)["realtime"]
+    db.close()
+    assert "error" not in rt, rt
+    assert all(v >= 0 for v in rt["component_rewards"].values())  # LIKE terakhir -> positif
+    s = client.get(f"{P}/admin/insights/rlhf/realtime", headers=H["RESEARCHER"])
+    assert s.status_code == 200
+    j = s.json()
+    assert j["budget_optimum"]["budget_flops"] == 1e29
+    assert sum(m["n"] for m in j["rlhf"]["modes"].values()) >= 2
+    assert client.get(f"{P}/admin/insights/rlhf/realtime", headers=H["USER"]).status_code == 403
+
+
 def test_colab_export_excludes_patient_chat_and_blocks_traversal():
     r = client.post(f"{P}/admin/insights/export/colab", headers=H["RESEARCHER"])
     assert r.status_code == 200

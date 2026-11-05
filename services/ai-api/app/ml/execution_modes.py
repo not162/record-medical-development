@@ -47,6 +47,8 @@ class ModeExecutionResult(BaseModel):
     speculative_acceptance_prob: Optional[float] = 0.88
     speculative_trick: str = "h_ntp += h_mtp.detach() - h_mtp"
     navigated_docs: List[Dict[str, Any]] = Field(default_factory=list)
+    # Akuntansi parameter & FLOPs (estimasi analitik: inferensi 2N/token, training 6ND, anggaran 1e29)
+    compute: Dict[str, Any] = Field(default_factory=dict)
 
 
 class FastModeEngine:
@@ -213,20 +215,25 @@ class ExecutionModeRouter:
         query: str,
         candidate_docs: List[Dict[str, Any]],
         mode: str = "thinking",
-        base_learning_rate: float = 0.005
+        base_learning_rate: float = 0.005,
+        model_size: str = "70b",
     ) -> ModeExecutionResult:
+        from app.ml.realtime_rlhf import compute_profile
+
         if mode == "fast":
-            return self.fast_engine.execute(
+            res = self.fast_engine.execute(
                 query=query,
                 candidate_docs=candidate_docs,
                 base_learning_rate=base_learning_rate
             )
         else:
-            return self.thinking_engine.execute(
+            res = self.thinking_engine.execute(
                 query=query,
                 candidate_docs=candidate_docs,
                 base_learning_rate=base_learning_rate
             )
+        res.compute = compute_profile(model_size, res.mode)
+        return res
 
 
 # Singleton Mode Router
