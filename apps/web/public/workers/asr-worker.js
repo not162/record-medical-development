@@ -73,14 +73,17 @@ async function load(prefer) {
   tier = name;
   const kv = Boolean(t.model?.config?.use_cache ?? true);
   post({ type: "ready", model: MODELS[name], device, rtf: Math.round(rtf * 100) / 100, maxBatch, kvCache: kv });
+  // segmen yang masuk selama model diunduh langsung diproses (sebelumnya menunggu segmen berikutnya)
+  drain();
 }
 
 async function drain() {
   if (busy || !transcriber) return;
   busy = true;
+  let batch = [];
   try {
     while (queue.length) {
-      const batch = queue.splice(0, maxBatch);
+      batch = queue.splice(0, maxBatch);
       const t0 = performance.now();
       const out = await transcriber(batch.map((b) => b.audio), { language: "indonesian", task: "transcribe" });
       const arr = Array.isArray(out) ? out : [out];
@@ -90,7 +93,8 @@ async function drain() {
       );
     }
   } catch (e) {
-    post({ type: "error", message: String(e?.message || e) });
+    // jangan biarkan baris transkrip menggantung "mengenali ucapan..." selamanya
+    post({ type: "error", message: String(e?.message || e), ids: [...batch, ...queue.splice(0)].map((b) => b.id) });
   } finally {
     busy = false;
   }
@@ -105,6 +109,6 @@ self.onmessage = async (e) => {
       drain();
     }
   } catch (err) {
-    post({ type: "error", message: String(err?.message || err), tier });
+    post({ type: "error", message: String(err?.message || err), tier, ids: queue.splice(0).map((b) => b.id) });
   }
 };

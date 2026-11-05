@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { ProsodyAnalyzer, type ProsodySnapshot } from "@/lib/voice/prosody";
 import { FaceAnalyzer, createFaceLandmarker, type FaceSnapshot } from "@/lib/vision/face";
+import { PoseAnalyzer, drawPose, type PoseSnapshot } from "@/lib/vision/pose";
 import {
   checkMediaPermissions, openMedia, permissionHelp, watchMediaPermissions, type MediaPermissions, type PermState,
 } from "@/lib/media-permissions";
@@ -67,7 +68,10 @@ export default function VoiceCameraPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const prosodyRef = useRef<ProsodyAnalyzer | null>(null);
   const faceRef = useRef<FaceAnalyzer | null>(null);
+  const poseRef = useRef<PoseAnalyzer | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
   const workerRef = useRef<Worker | null>(null);
+  const asrFailed = useRef<string | null>(null);
   const rafRef = useRef<number | null>(null);
   const segId = useRef(0);
 
@@ -78,6 +82,7 @@ export default function VoiceCameraPage() {
   const [error, setError] = useState<string | null>(null);
   const [prosody, setProsody] = useState<ProsodySnapshot | null>(null);
   const [face, setFace] = useState<FaceSnapshot | null>(null);
+  const [pose, setPose] = useState<PoseSnapshot | null>(null);
   const [asr, setAsr] = useState<AsrState>({ status: "idle" });
   const [lines, setLines] = useState<Line[]>([]);
   const [attachSummary, setAttachSummary] = useState(true);
@@ -106,7 +111,14 @@ export default function VoiceCameraPage() {
         });
       if (m.type === "result")
         setLines((ls) => ls.map((l) => (l.id === m.id ? { ...l, text: m.text || "(tidak terdengar jelas)", pending: false } : l)));
-      if (m.type === "error") setAsr({ status: "error", info: m.message });
+      if (m.type === "error") {
+        setAsr({ status: "error", info: m.message });
+        // tier === null -> model gagal dimuat (bukan sekadar satu segmen gagal didekode)
+        if ("tier" in m && m.tier === null) asrFailed.current = m.message;
+        const failed = new Set<number>(m.ids || []);
+        setLines((ls) => ls.map((l) => (l.pending && (failed.has(l.id) || asrFailed.current)
+          ? { ...l, text: "(pengenal suara gagal; ketik keluhan Anda di chat)", pending: false } : l)));
+      }
     };
     setAsr({ status: "loading", pct: 0 });
     w.postMessage({ type: "load" });
@@ -121,6 +133,9 @@ export default function VoiceCameraPage() {
     prosodyRef.current = null;
     faceRef.current?.close();
     faceRef.current = null;
+    poseRef.current?.close();
+    poseRef.current = null;
+    overlayRef.current?.getContext("2d")?.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
@@ -145,6 +160,10 @@ export default function VoiceCameraPage() {
       const worker = ensureWorker();
       const pa = new ProsodyAnalyzer((audio) => {
         const id = ++segId.current;
+        if (asrFailed.current) {
+          setLines((ls) => [...ls, { id, text: "(pengenal suara gagal; ketik keluhan Anda di chat)", pending: false }]);
+          return;
+        }
         setLines((ls) => [...ls, { id, text: "", pending: true }]);
         worker.postMessage({ type: "segment", id, audio }, [audio.buffer]);
       });
@@ -154,6 +173,14 @@ export default function VoiceCameraPage() {
       if (media.video && videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+        // pose (YOLO11n-pose) di worker terpisah: dimuat paralel dengan wajah, kegagalan satu tidak memblokir yang lain
+        try {
+          const pa2 = new PoseAnalyzer();
+          pa2.onError = () => setError("Deteksi pose tidak dapat berjalan di perangkat ini. Analisis lain tetap berjalan.");
+          poseRef.current = pa2;
+        } catch {
+          poseRef.current = null;
+        }
         try {
           faceRef.current = new FaceAnalyzer(await createFaceLandmarker());
         } catch {
@@ -162,12 +189,34 @@ export default function VoiceCameraPage() {
       }
       setRunning(true);
       let lastUi = 0;
+      let lastFace = 0;
+      let lastDraw = 0;
+      let faceCost = 0; // ms per deteksi wajah (EMA) -> interval adaptif
       const loop = (now: number) => {
-        if (faceRef.current && videoRef.current) faceRef.current.process(videoRef.current, now);
+        const v = videoRef.current;
+        if (document.hidden) {
+          rafRef.current = requestAnimationFrame(loop);
+          return;
+        }
+        // wajah: maks ~15 fps, dan main thread tidak pernah dipakai > ~25% untuk wajah di perangkat lambat
+        if (faceRef.current && v && now - lastFace >= Math.max(66, faceCost * 4)) {
+          lastFace = now;
+          const t0 = performance.now();
+          faceRef.current.process(v, now);
+          faceCost = 0.8 * faceCost + 0.2 * (performance.now() - t0);
+        }
+        if (poseRef.current && v) {
+          poseRef.current.tick(v, now);
+          if (overlayRef.current && now - lastDraw >= 100) {
+            lastDraw = now;
+            drawPose(overlayRef.current, poseRef.current.persons(), v.videoWidth, v.videoHeight);
+          }
+        }
         if (now - lastUi > 250) {
           lastUi = now;
           setProsody(prosodyRef.current?.snapshot() ?? null);
           if (faceRef.current) setFace(faceRef.current.current());
+          if (poseRef.current) setPose(poseRef.current.current());
         }
         rafRef.current = requestAnimationFrame(loop);
       };
@@ -202,6 +251,9 @@ export default function VoiceCameraPage() {
       if (prosody.intonation.endContour) parts.push(`intonasi akhir ${prosody.intonation.endContour}`);
     }
     if (face?.faceFound) parts.push(`raut wajah cenderung ${face.expression.toLowerCase()}`);
+    if (pose?.chestHoldSec) parts.push(`tangan memegang dada sekitar ${Math.round(pose.chestHoldSec)} detik`);
+    if (pose?.headHoldSec) parts.push(`tangan memegang kepala sekitar ${Math.round(pose.headHoldSec)} detik`);
+    if (pose && pose.restlessness > 0.6) parts.push("tubuh tampak gelisah");
     return parts.length ? `\n\n[Catatan otomatis dari perangkat saya: ${parts.join(", ")}. Ini hanya indikasi, bukan diagnosis.]` : "";
   };
 
@@ -231,7 +283,7 @@ export default function VoiceCameraPage() {
             <li className="flex gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />Semua proses berjalan di perangkat Anda. Video dan rekaman suara <b>tidak dikirim atau disimpan</b> di server.</li>
             <li className="flex gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />Yang dikirim ke asisten hanya teks yang Anda setujui sendiri sebelum menekan Kirim.</li>
             <li className="flex gap-2"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />Hasil analisis wajah dan suara hanya indikasi, bukan diagnosis.</li>
-            <li className="flex gap-2"><Cpu className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />Pada pemakaian pertama, model pengenal suara (±40–75 MB) diunduh sekali ke perangkat Anda.</li>
+            <li className="flex gap-2"><Cpu className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />Pada pemakaian pertama, model pengenal suara (±40–75 MB) dan model pose (±3 MB) diunduh sekali ke perangkat Anda.</li>
           </ul>
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={useCamera} onChange={(e) => setUseCamera(e.target.checked)} className="accent-blue-600 h-4 w-4" />
@@ -288,6 +340,17 @@ export default function VoiceCameraPage() {
           <div className="space-y-3">
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 border border-slate-200">
               <video ref={videoRef} muted playsInline className="w-full h-full object-cover -scale-x-100" />
+              <canvas ref={overlayRef} aria-hidden className="pointer-events-none absolute inset-0 w-full h-full -scale-x-100" />
+              {running && pose && pose.persons > 1 && (
+                <span className="absolute bottom-3 left-3 right-3 rounded-lg bg-amber-500/90 px-2.5 py-1 text-[11px] text-white">
+                  Terdeteksi {pose.persons} orang. Untuk privasi, pastikan hanya Anda yang terlihat di kamera.
+                </span>
+              )}
+              {running && pose?.ready && pose.persons <= 1 && pose.framing !== "pas" && (
+                <span className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2.5 py-1 text-[11px] text-white">
+                  Posisi: {pose.framing}
+                </span>
+              )}
               {!running && (
                 <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
                   {useCamera ? "Kamera mati" : "Mode suara saja"}
@@ -315,6 +378,16 @@ export default function VoiceCameraPage() {
             <Metric label="Tone up (energi)" value={prosody?.toneUpDb != null ? `${prosody.toneUpDb > 0 ? "+" : ""}${prosody.toneUpDb} dB` : "-"} hint={prosody ? `level ${prosody.levelDb} dB · derau ${prosody.noiseFloorDb} dB` : undefined} />
             <Metric label="Laju bicara" value={prosody?.speechRate ?? "-"} hint="segmen bersuara per detik" />
             <Metric label="Durasi bicara" value={ms(prosody?.speechMs)} />
+            <Metric
+              label="Gestur (pose)"
+              value={!pose?.ready ? (running && useCamera ? "memuat..." : "-") : pose.handOnChest ? "Tangan di dada" : pose.handToHead ? "Tangan di kepala" : "Tidak ada"}
+              hint={pose?.ready ? `dada ${pose.chestHoldSec} dtk · kepala ${pose.headHoldSec} dtk` : undefined}
+            />
+            <Metric
+              label="Posisi & gerak"
+              value={pose?.ready ? pose.framing : "-"}
+              hint={pose?.ready ? `gelisah ${pose.restlessness} · bahu miring ${pose.shoulderTiltDeg ?? "-"}° · ${pose.inferMs} ms/${pose.fps} fps` : undefined}
+            />
           </div>
         </div>
 
