@@ -31,7 +31,7 @@ class CreateSessionRequest(BaseModel):
 class ChatMessageRequest(BaseModel):
     session_id: str = Field(..., description="ID sesi percakapan klinis aktif")
     content: str = Field(..., min_length=1, max_length=2000, description="Pesan pertanyaan pengguna")
-    reasoning_mode: Optional[str] = Field("thinking", description="Mode penalaran: 'thinking' (17 ML & 8 DL) atau 'fast' (5 ML & 2 DL)")
+    reasoning_mode: Optional[str] = Field("thinking", description="Mode penalaran: 'thinking' (17 ML & 8 DL), 'fast' (5 ML & 2 DL), atau 'auto' (router + bias RLHF real-time)")
 
 class UpgradeSessionRequest(BaseModel):
     guest_session_id: str
@@ -61,6 +61,18 @@ def _block_admin(user: Optional[User]) -> Optional[User]:
     if user is not None and normalize_role(user.role) in ADMIN_ROLES:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ADMIN_CHAT_BLOCK_MESSAGE)
     return user
+
+
+def _resolve_mode(requested: Optional[str], text: str, tier) -> str:
+    """Pilihan eksplisit klien dihormati; 'auto' memakai router + bias RLHF; tier tetap membatasi."""
+    mode = requested
+    if requested in (None, "", "auto"):
+        try:
+            from app.ml.realtime_rlhf import route_with_feedback
+            mode = route_with_feedback(text)["mode"]
+        except Exception:
+            mode = "thinking"
+    return mode if mode in tier.allowed_modes else "fast"
 
 
 def require_patient(current_user: User = Depends(require_user)) -> User:
@@ -415,8 +427,8 @@ def send_chat_message(
             headers={"Retry-After": str(retry_after)}
         )
 
-    # Mode restriction: Guest restricted to 'fast'
-    mode = req.reasoning_mode if (req.reasoning_mode in tier.allowed_modes) else "fast"
+    # Mode restriction: Guest restricted to 'fast'; 'auto' -> router + bias RLHF real-time
+    mode = _resolve_mode(req.reasoning_mode, clean_content, tier)
 
     # Emergency Red Flag & Mental Health Crisis Evaluation (2.4)
     safety_alert_text = check_medical_safety(clean_content)
@@ -617,7 +629,7 @@ def stream_chat_message(
             headers={"Retry-After": str(retry_after)}
         )
 
-    mode = req.reasoning_mode if (req.reasoning_mode in tier.allowed_modes) else "fast"
+    mode = _resolve_mode(req.reasoning_mode, clean_content, tier)
     masked_query = mask_pii(clean_content)
 
     def event_generator():

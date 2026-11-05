@@ -67,3 +67,44 @@ def test_realtime_update_per_mode_and_persistence(tmp_path):
     assert r.predict_reward("fast", qb, BAD) < 0
     r2 = rr.RealtimeRLHF(p)
     assert r2.summary()["modes"]["fast"]["n"] == 4 and r2.predict_reward("thinking", qg, GOOD) > 0
+
+
+# ----------------------------------------------------------------------------- router + bias RLHF
+def _trained(tmp_path, like_mode):
+    r = rr.RealtimeRLHF(tmp_path / "s.json")
+    other = "fast" if like_mode == "thinking" else "thinking"
+    for _ in range(4):
+        r.update(like_mode, "LIKE", GOOD, CTX)
+        r.update(other, "DISLIKE", BAD, CTX)
+    return r
+
+
+def test_router_red_flag_always_thinking_even_if_patients_prefer_fast(tmp_path):
+    r = _trained(tmp_path, "fast")
+    assert r.router_bias() < -rr.BIAS_MIN
+    out = rr.route_with_feedback("nyeri dada menjalar ke lengan kiri", r)
+    assert out["mode"] == "thinking" and out["rlhf_applied"] is False
+
+
+def test_router_no_bias_without_enough_feedback(tmp_path):
+    r = rr.RealtimeRLHF(tmp_path / "e.json")
+    out = rr.route_with_feedback("apa itu pola makan sehat", r)
+    assert out["rlhf_bias_thinking"] == 0.0 and out["rlhf_applied"] is False
+
+
+def test_router_bias_shifts_only_uncertain_decisions(tmp_path, monkeypatch):
+    from app.ml import mode_router
+    r = _trained(tmp_path, "thinking")
+    monkeypatch.setattr(mode_router, "route_mode", lambda t: {"mode": "fast", "confidence": 0.6, "reasons": []})
+    out = rr.route_with_feedback("pusing ringan", r)
+    assert out["mode"] == "thinking" and out["rlhf_applied"] and out["base_mode"] == "fast"
+    monkeypatch.setattr(mode_router, "route_mode", lambda t: {"mode": "fast", "confidence": 0.95, "reasons": []})
+    assert rr.route_with_feedback("pusing ringan", r)["mode"] == "fast"
+
+
+def test_router_never_shifts_drug_question_to_fast(tmp_path, monkeypatch):
+    from app.ml import mode_router
+    r = _trained(tmp_path, "fast")
+    monkeypatch.setattr(mode_router, "route_mode", lambda t: {"mode": "thinking", "confidence": 0.6, "reasons": []})
+    out = rr.route_with_feedback("berapa dosis paracetamol", r)
+    assert out["mode"] == "thinking" and not out["rlhf_applied"]

@@ -307,6 +307,32 @@ class RealtimeRLHF:
                 "router_bias_thinking": self.router_bias()}
 
 
+BIAS_MIN = 0.2          # selisih EMA reward minimum agar preferensi pasien dipakai
+CONF_MAX = 0.8          # hanya keputusan router yang ragu (< 0.8) yang boleh digeser
+
+
+def route_with_feedback(text: str, rlhf: Optional["RealtimeRLHF"] = None) -> Dict[str, Any]:
+    """Router Fast/Thinking + bias RLHF real-time.
+    Aturan keselamatan: tanda bahaya SELALU thinking; pertanyaan obat tidak pernah digeser ke fast;
+    bias hanya menggeser keputusan yang tidak yakin dan bila tiap mode punya >= 3 umpan balik."""
+    from app.ml.mode_router import extract_features, route_mode
+
+    base = route_mode(text)
+    bias = (rlhf or get_rlhf()).router_bias()
+    out = {**base, "base_mode": base["mode"], "rlhf_bias_thinking": bias, "rlhf_applied": False}
+    if base.get("confidence", 1.0) >= CONF_MAX or abs(bias) < BIAS_MIN:
+        return out
+    preferred = "thinking" if bias > 0 else "fast"
+    if preferred == base["mode"]:
+        return out
+    if preferred == "fast" and extract_features(text)["drug_hits"] > 0:
+        out["reasons"] = list(base.get("reasons", [])) + ["bias RLHF ke fast diabaikan: pertanyaan obat"]
+        return out
+    out.update(mode=preferred, rlhf_applied=True,
+               reasons=list(base.get("reasons", [])) + [f"umpan balik pasien lebih menyukai {preferred} (bias {bias:+.2f})"])
+    return out
+
+
 _singleton: Optional[RealtimeRLHF] = None
 
 
