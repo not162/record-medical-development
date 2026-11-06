@@ -24,7 +24,10 @@ def ensure_default_admin():
         if settings.is_production:
             print("[!] ADMIN_BOOTSTRAP_PASSWORD tidak diset (production): pembuatan admin default dilewati.")
             return
-        password = "admin123_"  # hanya untuk pengembangan lokal
+        # Hanya untuk pengembangan lokal (ENVIRONMENT bukan production) agar admin mudah masuk.
+        # Akun yang sudah ada tidak diubah; production tetap wajib ADMIN_BOOTSTRAP_PASSWORD.
+        password = "password"
+        print("[*] ADMIN_BOOTSTRAP_PASSWORD kosong: akun admin lokal baru memakai sandi default 'password'.")
 
     db = SessionLocal()
     try:
@@ -84,6 +87,22 @@ async def lifespan(app: FastAPI):
                     conn.commit()
         except Exception as _col_e:
             print(f"[!] Info: Column check chat_sessions.summary: {_col_e}")
+        # kolom profil baru (tanggal lahir, kunci data klinis, foto) untuk DB yang sudah ada
+        try:
+            from sqlalchemy import text
+            new_cols = {"birth_date": "DATE", "clinical_locked_at": "TIMESTAMP", "photo_data": "TEXT"}
+            with engine.connect() as conn:
+                if engine.dialect.name == "sqlite":
+                    have = {row[1] for row in conn.execute(text("PRAGMA table_info(patient_profiles)"))}
+                    for c, t in new_cols.items():
+                        if c not in have:
+                            conn.execute(text(f"ALTER TABLE patient_profiles ADD COLUMN {c} {t}"))
+                elif engine.dialect.name == "postgresql":
+                    for c, t in new_cols.items():
+                        conn.execute(text(f"ALTER TABLE patient_profiles ADD COLUMN IF NOT EXISTS {c} {t}"))
+                conn.commit()
+        except Exception as _pc_e:
+            print(f"[!] Info: Column check patient_profiles: {_pc_e}")
         ensure_default_admin()
     except Exception as e:
         print(f"[!] Warning: Database initialization exception (handled for serverless): {e}")
@@ -123,7 +142,7 @@ app.include_router(rag.router, prefix=settings.API_V1_PREFIX)
 app.include_router(chat.router, prefix=settings.API_V1_PREFIX)
 
 # Router tambahan: knowledge CRUD, graph CRUD, jobs (diimpor defensif)
-for _name in ("knowledge", "graph_crud", "jobs", "insights"):
+for _name in ("knowledge", "graph_crud", "jobs", "insights", "wellness"):
     try:
         _router = importlib.import_module(f"app.routes.{_name}").router
         app.include_router(_router, prefix=settings.API_V1_PREFIX)

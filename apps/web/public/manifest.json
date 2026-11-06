@@ -1,6 +1,6 @@
 {
-  "name": "Web Klinik - Asisten Kesehatan AI",
-  "short_name": "Web Klinik",
+  "name": "Clinic with Agent Healthy - Asisten Kesehatan AI",
+  "short_name": "Agent Healthy",
   "description": "Tanya seputar kesehatan dengan asisten AI berbasis pedoman klinis terverifikasi, kapan saja.",
   "id": "/",
   "start_url": "/chat?source=pwa",

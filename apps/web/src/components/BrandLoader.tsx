@@ -73,7 +73,7 @@ export default function BrandLoader() {
         {/* Brand Name & Slogan */}
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            Web Klinik RSUKT
+            Clinic with Agent Healthy
           </h1>
           <p className="text-xs uppercase tracking-widest font-semibold text-cyan-400">
             healthy with clinic and hospital

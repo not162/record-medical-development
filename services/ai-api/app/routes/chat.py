@@ -31,7 +31,7 @@ class CreateSessionRequest(BaseModel):
 class ChatMessageRequest(BaseModel):
     session_id: str = Field(..., description="ID sesi percakapan klinis aktif")
     content: str = Field(..., min_length=1, max_length=2000, description="Pesan pertanyaan pengguna")
-    reasoning_mode: Optional[str] = Field("thinking", description="Mode penalaran: 'thinking' (17 ML & 8 DL) atau 'fast' (5 ML & 2 DL)")
+    reasoning_mode: Optional[str] = Field("thinking", description="Mode penalaran: 'thinking' (17 ML & 8 DL), 'fast' (5 ML & 2 DL), atau 'auto' (router + bias RLHF real-time)")
 
 class UpgradeSessionRequest(BaseModel):
     guest_session_id: str
@@ -61,6 +61,18 @@ def _block_admin(user: Optional[User]) -> Optional[User]:
     if user is not None and normalize_role(user.role) in ADMIN_ROLES:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ADMIN_CHAT_BLOCK_MESSAGE)
     return user
+
+
+def _resolve_mode(requested: Optional[str], text: str, tier) -> str:
+    """Pilihan eksplisit klien dihormati; 'auto' memakai router + bias RLHF; tier tetap membatasi."""
+    mode = requested
+    if requested in (None, "", "auto"):
+        try:
+            from app.ml.realtime_rlhf import route_with_feedback
+            mode = route_with_feedback(text)["mode"]
+        except Exception:
+            mode = "thinking"
+    return mode if mode in tier.allowed_modes else "fast"
 
 
 def require_patient(current_user: User = Depends(require_user)) -> User:
@@ -415,8 +427,8 @@ def send_chat_message(
             headers={"Retry-After": str(retry_after)}
         )
 
-    # Mode restriction: Guest restricted to 'fast'
-    mode = req.reasoning_mode if (req.reasoning_mode in tier.allowed_modes) else "fast"
+    # Mode restriction: Guest restricted to 'fast'; 'auto' -> router + bias RLHF real-time
+    mode = _resolve_mode(req.reasoning_mode, clean_content, tier)
 
     # Emergency Red Flag & Mental Health Crisis Evaluation (2.4)
     safety_alert_text = check_medical_safety(clean_content)
@@ -617,7 +629,7 @@ def stream_chat_message(
             headers={"Retry-After": str(retry_after)}
         )
 
-    mode = req.reasoning_mode if (req.reasoning_mode in tier.allowed_modes) else "fast"
+    mode = _resolve_mode(req.reasoning_mode, clean_content, tier)
     masked_query = mask_pii(clean_content)
 
     def event_generator():
@@ -806,6 +818,31 @@ def submit_chat_feedback(
             "category": req.improvement_category or "KURANG_SESUAI",
             "notes": req.notes or "Perlu penyesuaian kualitas klinis."
         }
+
+    # RLHF real-time: skor per komponen (negatif utk DISLIKE, positif utk LIKE) berbasis context window pasien
+    try:
+        from app.ml.mode_router import route_mode
+        from app.ml.realtime_rlhf import ContextWindow, get_rlhf
+
+        history = (db.query(ChatMessage).filter(ChatMessage.session_id == msg.session_id,
+                                                ChatMessage.created_at <= msg.created_at)
+                   .order_by(ChatMessage.created_at).all())
+        users = [m.content for m in history if m.sender_role == "user"][-6:]
+        prev_asst = [m.content for m in history if m.sender_role == "assistant" and m.id != msg.id][-3:]
+        evidence: List[str] = []
+        try:
+            for e in json.loads(msg.evidence_context or "[]") or []:
+                evidence.append(e.get("content", "") if isinstance(e, dict) else str(e))
+        except (ValueError, TypeError):
+            pass
+        mode = route_mode(users[-1])["mode"] if users else "fast"
+        rt = get_rlhf().update(mode, req.feedback_type, msg.content,
+                               ContextWindow(users, prev_asst, evidence), req.improvement_category)
+        rlhf_meta["realtime"] = {"mode": rt["mode"], "quality": rt["quality"],
+                                 "component_rewards": rt["component_rewards"],
+                                 "router_bias_thinking": rt["router_bias_thinking"]}
+    except Exception as e:  # umpan balik pasien tidak boleh gagal karena komponen pembelajaran
+        rlhf_meta["realtime"] = {"error": type(e).__name__}
 
     notes_str = json.dumps(rlhf_meta, ensure_ascii=False)
 

@@ -109,6 +109,6 @@ The following table summarizes the quantitative metrics across the 5 architectur
 
 - **Backend Repository:** `https://github.com/not162/record-medical-development.git` (`main`)
 - **Backend Production URL:** `https://ai-api-dusky-eight.vercel.app`
-- **Frontend Production URL:** `https://halo-skut.vercel.app`
+- **Frontend Production URL:** `https://clinic-with-agent-healthy.vercel.app`
 - **Automated Test Coverage:** 42 test cases passing across Unit, OWASP Security, Privacy Isolation, Sprint 21 RL Reasoning, and Sprint 22 Kernel/RAG Optimization suites.
 

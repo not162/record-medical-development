@@ -56,3 +56,6 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Local Claude Code launch config (contains dev secrets)
+.claude/launch.json

@@ -72,7 +72,7 @@ export function PwaRegistration() {
         </div>
       ) : (
         <div role="status" className="pointer-events-auto flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-700 shadow-lg">
-          <span>Versi baru Web Klinik tersedia.</span>
+          <span>Versi baru Clinic with Agent Healthy tersedia.</span>
           <button
             type="button"
             onClick={() => waiting?.postMessage("SKIP_WAITING")}

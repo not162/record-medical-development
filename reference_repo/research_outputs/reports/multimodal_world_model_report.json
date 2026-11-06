@@ -1,0 +1,78 @@
+{
+  "synthetic_data": false,
+  "n_sessions": 134,
+  "n_persons": 45,
+  "ssl": {
+    "modalities": [
+      "face",
+      "text",
+      "wave"
+    ],
+    "pairs": [
+      "text<->wave",
+      "text<->face",
+      "wave<->face"
+    ],
+    "wave_ssl_views": 82,
+    "loss_start": 21.4006,
+    "loss_end": 4.3693,
+    "epochs": 300,
+    "dim": 32,
+    "cross_modal_retrieval_top1": {
+      "text->wave": 0.2083,
+      "chance_text->wave": 0.0139,
+      "text->face": 0.194,
+      "chance_text->face": 0.0149,
+      "wave->face": 1.0,
+      "chance_wave->face": 0.0172
+    }
+  },
+  "probe": {
+    "split": {
+      "train": 27,
+      "val": 9,
+      "test": 9
+    },
+    "persons_overlap_between_splits": 0,
+    "person_split_test_accuracy": 1.0,
+    "person_split_test_macro_f1": 1.0,
+    "session_split_accuracy_LEAKY": 1.0,
+    "note": "Akurasi split per sesi biasanya lebih tinggi karena orang yang sama bocor ke test; angka yang sah adalah split per orang."
+  },
+  "example_summaries": [
+    {
+      "person_id": "P018",
+      "summary": "4 sesi teragregasi (teks 3, suara 3, wajah 3); konsistensi antar sesi 0.71. Tema keluhan dominan: gelisah, berdebar gelisah, jantung, berdebar, jantung berdebar, gelisah tangan. Perkiraan kategori tingkat-orang: cemas (p=0.83). Ringkasan edukatif, bukan diagnosis."
+    },
+    {
+      "person_id": "P021",
+      "summary": "3 sesi teragregasi (teks 2, suara 3, wajah 2); konsistensi antar sesi 0.73. Tema keluhan dominan: berdebar gelisah, berdebar, jantung, jantung berdebar, berlebihan, cemas berlebihan. Perkiraan kategori tingkat-orang: cemas (p=0.82). Ringkasan edukatif, bukan diagnosis."
+    },
+    {
+      "person_id": "P027",
+      "summary": "3 sesi teragregasi (teks 3, suara 3, wajah 3); konsistensi antar sesi 0.92. Tema keluhan dominan: cemas sulit, merasa cemas, merasa, cemas, sulit tidur, sulit. Perkiraan kategori tingkat-orang: cemas (p=0.83). Ringkasan edukatif, bukan diagnosis."
+    }
+  ],
+  "disclaimer": "Data sintetis bila synthetic_data=true; metrik bukan klaim klinis.",
+  "world_model": {
+    "safety": {
+      "actions": {
+        "abstain": 2,
+        "execute_with_warning": 2,
+        "execute": 1
+      },
+      "executed": 3,
+      "abstained": 2,
+      "accuracy_on_executed": 1.0
+    },
+    "cardio": {
+      "actions": {
+        "execute": 285,
+        "execute_with_warning": 10,
+        "abstain": 5
+      },
+      "n_simulated": 300,
+      "warn_mahalanobis": 5.2064
+    }
+  }
+}

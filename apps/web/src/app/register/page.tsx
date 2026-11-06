@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { AuthShell, FieldHint, FieldLabel, FormAlert } from "@/components/auth/AuthShell";
 import { PasswordInput, StrengthMeter } from "@/components/auth/PasswordInput";
+import { BLOOD_TYPES, ageFromIso, todayLocalIso } from "@/lib/age";
 
 const RESERVED = ["admin", "administrator", "root", "superuser", "admin_rsukt", "system"];
 const USERNAME_RE = /^[a-z0-9._]{3,30}$/;
@@ -21,7 +22,13 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [bloodType, setBloodType] = useState("");
   const [agree, setAgree] = useState(false);
+  // tanggal hari ini dibaca di effect (bukan saat render) agar tidak dibekukan saat prerender
+  const [today, setToday] = useState("");
+  useEffect(() => setToday(todayLocalIso()), []);
+  const agePreview = birthDate && today ? ageFromIso(birthDate, today) : null;
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,6 +52,14 @@ export default function RegisterPage() {
       setError("Format email belum valid.");
       return;
     }
+    if (!birthDate || birthDate > today || !agePreview || agePreview.years > 130) {
+      setError("Isi tanggal lahir yang valid (tidak boleh di masa depan).");
+      return;
+    }
+    if (!BLOOD_TYPES.includes(bloodType)) {
+      setError("Pilih golongan darah Anda.");
+      return;
+    }
     if (password.length < 8) {
       setError("Kata sandi minimal 8 karakter.");
       return;
@@ -65,6 +80,8 @@ export default function RegisterPage() {
         email: email.trim().toLowerCase(),
         password,
         full_name: fullName.trim() || undefined,
+        birth_date: birthDate,
+        blood_type: bloodType,
       });
       setSuccess(true);
       setTimeout(() => router.push("/login"), 1500);
@@ -130,8 +147,41 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             className="field"
           />
-          <FieldHint>Dipakai untuk masuk dan memulihkan kata sandi.</FieldHint>
+          <FieldHint>Dipakai untuk masuk dan memulihkan kata sandi. Tidak dapat diubah setelah mendaftar.</FieldHint>
         </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <FieldLabel htmlFor="reg-birth">Tanggal lahir</FieldLabel>
+            <input
+              id="reg-birth"
+              name="bday"
+              type="date"
+              required
+              autoComplete="bday"
+              max={today || undefined}
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="field"
+            />
+            <FieldHint>
+              {agePreview
+                ? `Usia hari ini: ${agePreview.years} tahun ${agePreview.months} bulan. Usia diperbarui otomatis tiap hari.`
+                : "Usia dihitung otomatis dari tanggal lahir."}
+            </FieldHint>
+          </div>
+          <div>
+            <FieldLabel htmlFor="reg-blood">Golongan darah</FieldLabel>
+            <select id="reg-blood" required value={bloodType} onChange={(e) => setBloodType(e.target.value)} className="field">
+              <option value="" disabled>Pilih golongan darah</option>
+              {BLOOD_TYPES.map((b) => <option key={b} value={b}>{b}</option>)}
+            </select>
+            <FieldHint>Sesuai kartu/hasil lab Anda.</FieldHint>
+          </div>
+        </div>
+        <FormAlert tone="info">
+          Email, tanggal lahir, dan golongan darah <b>tidak dapat diubah</b> setelah pendaftaran. Periksa kembali sebelum mendaftar.
+        </FormAlert>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>

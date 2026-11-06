@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 
 export const metadata = {
-  title: "Kebijakan Privasi Rekam Medis & Perlindungan Data Pribadi | Web Klinik RSUKT",
+  title: "Kebijakan Privasi Rekam Medis & Perlindungan Data Pribadi | Clinic with Agent Healthy",
   description: "Kebijakan Privasi Rekam Medis Elektronik Terpadu RSUKT sesuai UU No. 27 Tahun 2022 (UU PDP) dan ISO/IEC 27001:2022.",
 };
 
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
               1. Prinsip Kerahasiaan Medis & Landasan Hukum
             </h2>
             <p>
-              Web Klinik RSUKT berkomitmen melindungi privasi pasien dan integritas data medis klinis. Seluruh pemrosesan informasi kesehatan elektronik mematuhi Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP), Peraturan Menteri Kesehatan No. 24 Tahun 2022 tentang Rekam Medis, serta standar keamanan ISO/IEC 27001:2022.
+              Clinic with Agent Healthy berkomitmen melindungi privasi pasien dan integritas data medis klinis. Seluruh pemrosesan informasi kesehatan elektronik mematuhi Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP), Peraturan Menteri Kesehatan No. 24 Tahun 2022 tentang Rekam Medis, serta standar keamanan ISO/IEC 27001:2022.
             </p>
           </section>
 

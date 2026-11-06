@@ -30,17 +30,17 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://klinik-terpadu.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://clinic-with-agent-healthy.vercel.app"),
   title: {
-    default: "Web Klinik RSUKT | healthy with clinic and hospital",
-    template: "%s | Web Klinik RSUKT",
+    default: "Clinic with Agent Healthy | healthy with clinic and hospital",
+    template: "%s | Clinic with Agent Healthy",
   },
-  description: "Web Klinik RSUKT: tanya seputar kesehatan dengan asisten AI, kapan saja.",
+  description: "Clinic with Agent Healthy: tanya seputar kesehatan dengan asisten AI, kapan saja.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Web Klinik",
+    title: "Agent Healthy",
   },
   icons: {
     icon: [
@@ -50,10 +50,10 @@ export const metadata: Metadata = {
     apple: "/icons/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Web Klinik RSUKT | Asisten Kesehatan AI",
+    title: "Clinic with Agent Healthy | Asisten Kesehatan AI",
     description: "Tanya seputar kesehatan dengan asisten AI, kapan saja.",
     url: "/",
-    siteName: "Web Klinik RSUKT",
+    siteName: "Clinic with Agent Healthy",
     locale: "id_ID",
     type: "website",
   },
@@ -87,9 +87,9 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "MedicalOrganization",
-              "name": "Web Klinik RSUKT",
-              "url": "https://klinik-terpadu.vercel.app",
-              "logo": "https://klinik-terpadu.vercel.app/icons/icon-512.png",
+              "name": "Clinic with Agent Healthy",
+              "url": "https://clinic-with-agent-healthy.vercel.app",
+              "logo": "https://clinic-with-agent-healthy.vercel.app/icons/icon-512.png",
               "slogan": "healthy with clinic and hospital",
               "description": "Layanan Konsultasi Triase Medis Berbasis Kecerdasan Artifisial & Rekam Medis Terverifikasi RSUKT",
               "address": {

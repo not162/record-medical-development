@@ -179,15 +179,59 @@ pooler.dense.bias                          | MISSING    |
 
 Klien dapat memilih ukuran model melalui parameter `model_size` saat memanggil API:
 
-| Parameter API | Model | Skala Parameter | Karakteristik RAG | Latensi | Rekomendasi Ekstraksi Chunks |
-|:---:|---|:---:|---|:---:|:---:|
-| `8b` | `llama-3.1-8b-instant` | **8 Billion** | Cepat, responsif, hemat memori | ~75 ms | 3 chunks (~600 token) |
-| `27b` | `qwen/qwen3.8-27b` | **27 Billion** | **Sweet Spot Klinis**: Penalaran spesialis, efisien single-GPU 24GB | ~110 ms | 5 chunks (~1.500 token) |
-| `70b` | `llama-3.3-70b-versatile` | **70 Billion** | **Gold Standard Medis**, penalaran klinis kompleks | ~180 ms | 5–8 chunks (~2.000 token) |
-| `8x7b` | `mixtral-8x7b-32768` | **47 Billion (MoE)** | Seimbang antara throughput dan analisis mendalam | ~130 ms | 4 chunks (~1.200 token) |
+| Parameter API | Model | Skala Parameter | Karakteristik RAG | Mode Eksekusi Default | Latensi | Rekomendasi Ekstraksi Chunks |
+|:---:|---|:---:|---|:---:|:---:|:---:|
+| `8b` | `llama-3.1-8b-instant` | **8 Billion** | Cepat, responsif, hemat memori | ⚡ **Fast** | ~75 ms | 3 chunks (~600 token) |
+| `27b` | `qwen/qwen3.8-27b` | **27 Billion** | **Sweet Spot Klinis**: Penalaran spesialis, efisien single-GPU 24GB | ⚡ Fast / 🧠 Thinking (otomatis via router) | ~110 ms | 5 chunks (~1.500 token) |
+| `70b` | `llama-3.3-70b-versatile` | **70 Billion** | **Gold Standard Medis**, penalaran klinis kompleks | 🧠 **Thinking** | ~180 ms | 5–8 chunks (~2.000 token) |
+| `8x7b` | `mixtral-8x7b-32768` | **47 Billion (MoE)** | Seimbang antara throughput dan analisis mendalam | ⚡ Fast / 🧠 Thinking (otomatis via router) | ~130 ms | 4 chunks (~1.200 token) |
+
+> Latensi adalah estimasi per panggilan generasi, bukan hasil benchmark terukur pada perangkat keras tertentu.
+> Mode eksekusi bukan fitur bawaan model: ia dipilih oleh *classifier router* (lihat bagian di bawah) dan dapat dioverride klien.
 
 Spesifikasi lengkap dan dataset sumber bilion parameter tersedia di [**`docs/MODEL_BILLION_PARAMETERS_SPEC.md`**](docs/MODEL_BILLION_PARAMETERS_SPEC.md) dan [**`docs/model_billion_parameters_sources.jsonl`**](docs/model_billion_parameters_sources.jsonl).
 
+### 🧬 Arsitektur Pembelajaran di Atas LLM
+
+Selain memilih ukuran LLM, sistem memakai lapisan model ringan (CPU, scikit-learn/NumPy) yang belajar dari respons pasien. Status tiap komponen dicantumkan terus terang (✅ = sudah ada di kode).
+
+```
+ Teks pasien ─┐                                   ┌─► Classifier Mode (Fast / Thinking)
+ Suara (wave) ├─► Encoder per-modalitas ─► Fusi ──┼─► Classifier Label / Risiko (supervised)
+ Wajah (blend)┘        (embedding)       multimodal└─► Person Embedding ─► Agregasi level-orang
+                                                              │
+                         Skor RLHF (+/-) & RLCD ◄─────────────┘  (umpan balik + distilasi teacher)
+```
+
+| Komponen | Status | Penjelasan | Lokasi |
+|---|:---:|---|---|
+| **Supervised learning** | ✅ | Post-train atas label departemen/poli dan skor risiko jantung (logistic regression), dengan split train/val/test stratified; test split tidak dipakai saat tuning. | [`patient_insights.py`](../services/ai-api/app/ml/patient_insights.py) |
+| **Unsupervised pre-train (teks)** | ✅ | TF-IDF → LSA (TruncatedSVD) → KMeans untuk menemukan pola keluhan tanpa label. Ini cikal bakal *text embedding*. | [`patient_insights.py`](../services/ai-api/app/ml/patient_insights.py) |
+| **Classifier respons AI: Fast & Thinking** | ✅ | Decision tree interpretabel memutuskan apakah query dijawab mode *Fast* atau *Thinking*. Satu kata kunci red-flag (mis. nyeri dada, kejang) **selalu** memaksa *Thinking* (bias keselamatan). Jika artefak model hilang, dipakai fallback berbasis aturan. | [`mode_router.py`](../services/ai-api/app/ml/mode_router.py), [`execution_modes.py`](../services/ai-api/app/ml/execution_modes.py) |
+| **Skor RLHF (+/-)** | ✅ | Reward dari umpan balik pasien (LIKE = +1, DISLIKE = −1) ditambah eksplorasi reward acak ± pada sampel tanpa umpan balik; *reward-weighted fine-tuning* dengan gerbang penerimaan: hasil ditolak jika skor validasi turun. | [`patient_insights.py`](../services/ai-api/app/ml/patient_insights.py) |
+| **Skor RLCD** | ✅ | Distilasi *soft-label cross-entropy* dari teacher (penalaran dalam) ke student: `L = α·T²·L_soft + (1−α)·L_hard`, T = 2.0, α = 0.7, data klinis sintetis. | [`rlcd_distiller.py`](../services/ai-api/app/ml/rlcd_distiller.py) |
+| **Debias & fairness** | ✅ | Reweighing (Kamiran & Calders) atas atribut sensitif dan label, dengan gap fairness dilaporkan sebelum dan sesudah. | [`patient_insights.py`](../services/ai-api/app/ml/patient_insights.py) |
+| **Waveform → fitur akustik (on-device)** | ✅ | Per frame ~32 ms pada 16 kHz: energi, pitch F0 (autokorelasi 70–400 Hz), VAD dengan ambang auto-kalibrasi; diturunkan menjadi latensi respons, jeda, intonasi, laju bicara. Audio tidak dikirim ke server. | [`prosody.ts`](../apps/web/src/lib/voice/prosody.ts) |
+| **Fitur wajah (on-device)** | ✅ | MediaPipe Face Landmarker (blendshape), kedipan, pose kepala. Hanya indikasi ekspresi, bukan diagnosis. | [`face.ts`](../apps/web/src/lib/vision/face.ts) |
+| **World model pra-eksekusi** | ✅ | Sebelum Safety Guardrail / Prediktor Kardiovaskular dieksekusi, world model mensimulasikan input: (1) *state model* (Mahalanobis + kovarians Ledoit-Wolf vs kuantil 99% data latih) untuk deteksi out-of-distribution, (2) 64 *rollout* "bagaimana jika" dengan derau pengukuran untuk mengukur sebaran probabilitas dan *flip rate*. Keputusan: `execute` / `execute_with_warning` / `abstain`. Saat abstain, skor tidak dikembalikan. | [`world_model.py`](../services/ai-api/app/ml/world_model.py), [`patient_insights.py`](../services/ai-api/app/ml/patient_insights.py), [`run_advanced_research_upgrade.py`](run_advanced_research_upgrade.py) |
+| **Waveform embedding** | ✅ | Waveform → log-mel 32 band (STFT + filterbank mel, NumPy) → statistik per band → proyeksi yang dilatih **self-supervised** (SimCLR-style): dua augmentasi (gain, potong waktu, derau) dari rekaman yang sama ditarik mendekat. | [`multimodal_ssl.py`](../services/ai-api/app/ml/multimodal_ssl.py) |
+| **Multi-modal self-supervised learning** | ✅ | InfoNCE simetris (CLIP-style) untuk teks ↔ suara, teks ↔ wajah, dan suara ↔ wajah dari sesi yang sama, tanpa label. Modalitas yang hilang di-*mask*. Gradien diturunkan manual dan diuji terhadap gradien numerik. | [`multimodal_ssl.py`](../services/ai-api/app/ml/multimodal_ssl.py) |
+| **Person embedding & agregasi level-orang** | ✅ | Embedding sesi diagregasi per orang (rerata berbobot recency, half-life 30 hari) → *person embedding* + skor konsistensi. Input teks/suara/wajah → output **ringkasan teks** per orang. Split train/val/test dilakukan **per orang**; test tidak ikut pre-train SSL. Akurasi split per sesi (bocor) dilaporkan sebagai pembanding. | [`multimodal_ssl.py`](../services/ai-api/app/ml/multimodal_ssl.py) |
+
+**Endpoint (khusus RESEARCHER):** `POST /admin/insights/multimodal/train` dan `POST /admin/insights/multimodal/person` (sesi satu orang → embedding, prediksi, ringkasan). `POST /admin/insights/predict/cardio` kini selalu menyertakan blok `world_model`.
+
+> Belum ada dataset multimodal pasien nyata di server (audio/video tetap diproses on-device), jadi SSL saat ini dilatih pada **kohort sintetis**. Akurasi probe 1.0 pada data sintetis hanya menunjukkan pipeline berjalan, **bukan** performa klinis.
+
+#### Alur pelatihan
+
+0. **World model**: dipelajari dari data latih; setiap prediksi disimulasikan dulu sebelum dieksekusi.
+1. **Self-supervised pre-train** (tanpa label): encoder teks, waveform, dan wajah dilatih bersama lewat *contrastive loss* multimodal.
+2. **Person-level aggregation**: embedding sesi digabung menjadi *person embedding*; pemisahan train/val/test dilakukan **per orang** (bukan per kalimat) agar tidak terjadi kebocoran data antar sesi pasien yang sama.
+3. **Supervised fine-tune**: classifier label/risiko dan classifier mode *Fast/Thinking* dilatih di atas embedding yang dibekukan.
+4. **RLHF (+/-) dan RLCD**: skor reward dari umpan balik pasien dan distilasi teacher menyetel ulang bobot, dengan gerbang penerimaan berbasis validasi.
+5. **Evaluasi**: akurasi, F1, AUROC, Brier, ECE, serta gap fairness per kelompok pada test split.
+
+> ⚠️ Seluruh keluaran bersifat pendukung keputusan dan **belum divalidasi secara klinis**. Dataset kecil menghasilkan metrik yang optimistis; jangan dipakai sebagai klaim performa.
 ---
 
 ## 🚀 Production REST API ([`app_api.py`](app_api.py))

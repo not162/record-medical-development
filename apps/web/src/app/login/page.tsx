@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <AuthShell>
-      <h1 className="text-[22px] font-extrabold tracking-tight text-slate-900">Masuk ke Web Klinik</h1>
+      <h1 className="text-[22px] font-extrabold tracking-tight text-slate-900">Masuk ke Clinic with Agent Healthy</h1>
       <p className="mt-1 text-sm text-slate-500">Gunakan username atau email dan kata sandi akun Anda.</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate={false}>

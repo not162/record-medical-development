@@ -57,7 +57,7 @@ export function AuthShell({ children, wide = false }: { children: React.ReactNod
       </main>
 
       <footer className="pb-6 text-center text-[11px] text-slate-500">
-        © 2026 Web Klinik · Asisten kesehatan AI, bukan pengganti dokter.
+        © 2026 Clinic with Agent Healthy · Asisten kesehatan AI, bukan pengganti dokter.
       </footer>
     </div>
   );
@@ -75,11 +75,13 @@ export function FieldHint({ children }: { children: React.ReactNode }) {
   return <p className="mt-1.5 text-[11.5px] leading-snug text-slate-500">{children}</p>;
 }
 
-export function FormAlert({ tone, children }: { tone: "error" | "success"; children: React.ReactNode }) {
+export function FormAlert({ tone, children }: { tone: "error" | "success" | "info"; children: React.ReactNode }) {
   const cls =
     tone === "error"
       ? "border-red-200 bg-red-50 text-red-700"
-      : "border-emerald-200 bg-emerald-50 text-emerald-700";
+      : tone === "info"
+        ? "border-amber-200 bg-amber-50 text-amber-800"
+        : "border-emerald-200 bg-emerald-50 text-emerald-700";
   return (
     <div role={tone === "error" ? "alert" : "status"} className={`rounded-xl border px-3.5 py-3 text-[13px] ${cls}`}>
       {children}

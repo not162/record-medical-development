@@ -33,7 +33,7 @@ Platform **RSUKT Clinical AI** hadir sebagai jembatan cerdas antara masyarakat a
 
 ## 2. Storyboard & Naskah Video Demo Interaktif (Durasi 2 Menit)
 
-Video demo ini disimulasikan secara langsung pada Landing Page RSUKT (`https://halo-skut.vercel.app/#tutorial-demo`):
+Video demo ini disimulasikan secara langsung pada Landing Page RSUKT (`https://clinic-with-agent-healthy.vercel.app/#tutorial-demo`):
 
 ```
 +-----------------------------------------------------------------------------------------+
@@ -81,7 +81,7 @@ Video demo ini disimulasikan secara langsung pada Landing Page RSUKT (`https://h
 #### Adegan 5: Penutup & Jaminan Privasi (01:45 - 02:00)
 - **Visual:** Tampilan sertifikasi ISO/IEC 27001 dan UU PDP No. 27/2022. Tombol Call-to-Action menuju pendaftaran pasien dan konsultasi gratis 24/7.
 - **Voiceover (VO):**
-  > *"Seluruh percakapan dienkripsi penuh sesuai Undang-Undang Perlindungan Data Pribadi. RSUKT: healthy with clinic and hospital. Coba sekarang di halo-skut.vercel.app."*
+  > *"Seluruh percakapan dienkripsi penuh sesuai Undang-Undang Perlindungan Data Pribadi. RSUKT: healthy with clinic and hospital. Coba sekarang di clinic-with-agent-healthy.vercel.app."*
 
 ---
 
@@ -96,7 +96,7 @@ Pilih Topik / Ketik Keluhan  -->  Pilih Mode Komputasi  -->  Simak Telaah & Sita
 ```
 
 1. **Langkah 1: Sampaikan Keluhan Anda**
-   - Buka laman chat di [https://halo-skut.vercel.app/chat](https://halo-skut.vercel.app/chat).
+   - Buka laman chat di [https://clinic-with-agent-healthy.vercel.app/chat](https://clinic-with-agent-healthy.vercel.app/chat).
    - Klik salah satu topik cepat jika keluhan sesuai, atau ketikkan gejala Anda secara bebas di kotak input. Cantumkan durasi sakit, lokasi nyeri, dan apa yang memperberat atau meringankan gejala.
 2. **Langkah 2: Tentukan Mode Konsultasi**
    - **Thinking Mode (Disarankan):** Untuk keluhan yang memerlukan penelusuran protokol medis berbobot, telaah tanda bahaya, dan rekomendasi spesialisasi.
@@ -132,7 +132,7 @@ Demi menegakkan etika kedokteran, keselamatan nyawa, dan kepatuhan hukum **UU No
 ## 5. Integrasi Fitur pada Landing Page Publik
 
 Seluruh materi di atas telah diintegrasikan langsung pada **Landing Page Utama**:
-- **URL Laman Utama:** [https://halo-skut.vercel.app/](https://halo-skut.vercel.app/)
+- **URL Laman Utama:** [https://clinic-with-agent-healthy.vercel.app/](https://clinic-with-agent-healthy.vercel.app/)
 - **Section Khusus:**
   - `#tutorial-demo`: Pemutar video interaktif dengan 4 skenario real-time dan scrubber bar waktu.
   - `#scope-limits`: Matriks dua kartu komparasi hijau & merah yang memandu pengguna memahami etika dan batasan penggunaan AI.

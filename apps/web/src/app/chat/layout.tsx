@@ -10,7 +10,7 @@ import {
   Bot, MessageSquarePlus, History, User, Settings, 
   LogOut, ShieldAlert, Stethoscope, ChevronRight,
   Menu, X, Shield,
-  Video,
+  HeartPulse,
 } from "lucide-react";
 
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
@@ -35,7 +35,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const navItems = [
     { href: "/chat", label: "Tanya Asisten", icon: Bot },
     { href: "/chat/history", label: "Riwayat Sesi", icon: History },
-    { href: "/chat/suara", label: "Konsultasi Suara & Kamera", icon: Video },
+    { href: "/chat/tips", label: "Tips Hidup Sehat", icon: HeartPulse },
     { href: "/profile", label: "Profil Saya", icon: User },
     { href: "/settings", label: "Pengaturan Akun", icon: Settings },
   ];
@@ -94,8 +94,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               <Stethoscope className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="font-bold text-xs tracking-tight text-slate-900 leading-tight">RSUKT Chatbot</h1>
-              <span className="text-[9px] text-cyan-700 font-medium block">Asisten Medis Pasien</span>
+              <h1 className="font-bold text-xs tracking-tight text-slate-900 leading-tight">Clinic with Agent Healthy</h1>
+              <span className="text-[9px] text-cyan-700 font-medium block">Asisten Kesehatan Pasien</span>
             </div>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                     <Stethoscope className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-sm text-slate-900">RSUKT Chatbot</h2>
+                    <h2 className="font-bold text-sm text-slate-900">Clinic with Agent Healthy</h2>
                     <span className="text-[10px] text-cyan-700 font-semibold">Menu Utama</span>
                   </div>
                 </div>
@@ -226,8 +226,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               <Stethoscope className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-sm tracking-tight text-slate-900">RSUKT Chatbot</h2>
-              <span className="text-[10px] text-cyan-700 font-semibold">Asisten Medis Pasien</span>
+              <h2 className="font-bold text-sm tracking-tight text-slate-900">Clinic with Agent Healthy</h2>
+              <span className="text-[10px] text-cyan-700 font-semibold">Asisten Kesehatan Pasien</span>
             </div>
           </div>
 

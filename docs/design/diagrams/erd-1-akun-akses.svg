@@ -1,0 +1,65 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 950 346' width='950' height='346'>
+<defs><marker id='one' markerWidth='12' markerHeight='12' refX='6' refY='11' orient='auto-start-reverse'><path d='M1,11 H11 M1,8 H11' stroke='#475569' stroke-width='1.4'/></marker></defs>
+<rect width='100%' height='100%' fill='#ffffff'/>
+<text x='30' y='38' font-size='18' font-weight='700' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>ERD 1. Akun dan Akses</text>
+<rect x='30' y='70' width='250' height='166' rx='10' fill='#ffffff' stroke='#2563eb' stroke-width='1.5'/>
+<rect x='30' y='70' width='250' height='30' rx='10' fill='#2563eb'/>
+<rect x='30' y='90' width='250' height='10' fill='#2563eb'/>
+<text x='42' y='90' font-size='13' font-weight='700' fill='#ffffff' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>users</text>
+<text x='42' y='115' font-size='11.5' font-weight='700' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>+id</text>
+<text x='268' y='115' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='133' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>username {UK}</text>
+<text x='268' y='133' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='151' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>email {UK}</text>
+<text x='268' y='151' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='169' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>hashed_password</text>
+<text x='268' y='169' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='187' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>full_name?</text>
+<text x='268' y='187' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='205' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>role</text>
+<text x='268' y='205' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='223' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>is_active</text>
+<text x='268' y='223' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>boolean</text>
+<rect x='350' y='70' width='250' height='184' rx='10' fill='#ffffff' stroke='#2563eb' stroke-width='1.5'/>
+<rect x='350' y='70' width='250' height='30' rx='10' fill='#2563eb'/>
+<rect x='350' y='90' width='250' height='10' fill='#2563eb'/>
+<text x='362' y='90' font-size='13' font-weight='700' fill='#ffffff' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>patient_profiles</text>
+<text x='362' y='115' font-size='11.5' font-weight='700' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>+id</text>
+<text x='588' y='115' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='362' y='133' font-size='11.5' font-weight='400' font-style='italic' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>user_id</text>
+<text x='588' y='133' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='362' y='151' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>nik_anonymized?</text>
+<text x='588' y='151' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='362' y='169' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>age?</text>
+<text x='588' y='169' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>integer</text>
+<text x='362' y='187' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>gender?</text>
+<text x='588' y='187' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='362' y='205' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>blood_type?</text>
+<text x='588' y='205' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='362' y='223' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>medical_history_summary?</text>
+<text x='588' y='223' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>text</text>
+<text x='362' y='241' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>is_verified</text>
+<text x='588' y='241' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>boolean</text>
+<rect x='670' y='70' width='250' height='184' rx='10' fill='#ffffff' stroke='#2563eb' stroke-width='1.5'/>
+<rect x='670' y='70' width='250' height='30' rx='10' fill='#2563eb'/>
+<rect x='670' y='90' width='250' height='10' fill='#2563eb'/>
+<text x='682' y='90' font-size='13' font-weight='700' fill='#ffffff' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>audit_logs</text>
+<text x='682' y='115' font-size='11.5' font-weight='700' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>+id</text>
+<text x='908' y='115' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='682' y='133' font-size='11.5' font-weight='400' font-style='italic' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>user_id?</text>
+<text x='908' y='133' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='682' y='151' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>action</text>
+<text x='908' y='151' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='682' y='169' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>resource_type</text>
+<text x='908' y='169' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='682' y='187' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>resource_id?</text>
+<text x='908' y='187' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='682' y='205' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>status</text>
+<text x='908' y='205' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='682' y='223' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>ip_address?</text>
+<text x='908' y='223' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='682' y='241' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>details?</text>
+<text x='908' y='241' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>text</text>
+<path d='M475.0,254 V272 H155.0 V236' fill='none' stroke='#475569' stroke-width='1.6' marker-end='url(#one)'/><text x='315.0' y='268' text-anchor='middle' font-size='10.5' fill='#334155' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>user_id → users (0..1 : 1)</text>
+<path d='M795.0,254 V290 H169.0 V236' fill='none' stroke='#475569' stroke-width='1.6' stroke-dasharray='6 4' marker-end='url(#one)'/><text x='482.0' y='286' text-anchor='middle' font-size='10.5' fill='#334155' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>user_id → users (0..* : 1)</text>
+</svg>

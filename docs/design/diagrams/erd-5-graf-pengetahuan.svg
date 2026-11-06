@@ -1,0 +1,33 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 630 292' width='630' height='292'>
+<defs><marker id='one' markerWidth='12' markerHeight='12' refX='6' refY='11' orient='auto-start-reverse'><path d='M1,11 H11 M1,8 H11' stroke='#475569' stroke-width='1.4'/></marker></defs>
+<rect width='100%' height='100%' fill='#ffffff'/>
+<text x='30' y='38' font-size='18' font-weight='700' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>ERD 5. Graf Pengetahuan Klinis</text>
+<rect x='30' y='70' width='250' height='112' rx='10' fill='#ffffff' stroke='#d97706' stroke-width='1.5'/>
+<rect x='30' y='70' width='250' height='30' rx='10' fill='#d97706'/>
+<rect x='30' y='90' width='250' height='10' fill='#d97706'/>
+<text x='42' y='90' font-size='13' font-weight='700' fill='#ffffff' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>graph_nodes</text>
+<text x='42' y='115' font-size='11.5' font-weight='700' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>+id</text>
+<text x='268' y='115' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='133' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>label</text>
+<text x='268' y='133' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='151' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>type</text>
+<text x='268' y='151' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='42' y='169' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>department?</text>
+<text x='268' y='169' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<rect x='350' y='70' width='250' height='130' rx='10' fill='#ffffff' stroke='#d97706' stroke-width='1.5'/>
+<rect x='350' y='70' width='250' height='30' rx='10' fill='#d97706'/>
+<rect x='350' y='90' width='250' height='10' fill='#d97706'/>
+<text x='362' y='90' font-size='13' font-weight='700' fill='#ffffff' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>graph_edges</text>
+<text x='362' y='115' font-size='11.5' font-weight='700' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>+id</text>
+<text x='588' y='115' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>integer</text>
+<text x='362' y='133' font-size='11.5' font-weight='400' font-style='italic' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>source</text>
+<text x='588' y='133' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='362' y='151' font-size='11.5' font-weight='400' font-style='italic' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>target</text>
+<text x='588' y='151' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='362' y='169' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>relation</text>
+<text x='588' y='169' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>varchar</text>
+<text x='362' y='187' font-size='11.5' font-weight='400' fill='#0f172a' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>reason?</text>
+<text x='588' y='187' font-size='10.5' text-anchor='end' fill='#64748b' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>text</text>
+<path d='M475.0,200 V218 H155.0 V182' fill='none' stroke='#475569' stroke-width='1.6' marker-end='url(#one)'/><text x='315.0' y='214' text-anchor='middle' font-size='10.5' fill='#334155' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>source → graph_nodes (0..* : 1)</text>
+<path d='M495.0,200 V236 H169.0 V182' fill='none' stroke='#475569' stroke-width='1.6' marker-end='url(#one)'/><text x='332.0' y='232' text-anchor='middle' font-size='10.5' fill='#334155' font-family='Plus Jakarta Sans, Segoe UI, sans-serif'>target → graph_nodes (0..* : 1)</text>
+</svg>

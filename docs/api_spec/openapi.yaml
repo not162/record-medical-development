@@ -1,0 +1,3522 @@
+openapi: 3.1.0
+info:
+  title: Klinik Terpadu API
+  description: Full-Stack Evidence-Grounded Clinical AI Assistant & Research Suite
+    (Klinik Terpadu)
+  version: 2.0.0
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+      - Authentication & Profile
+      summary: Register User
+      description: 'Registrasi Pengguna Standar (Peran USER).
+
+        Sesuai regulasi keamanan & UU PDP No. 27/2022:
+
+        - Rute publik ini TIDAK DAPAT digunakan untuk mendaftar sebagai ADMIN.
+
+        - Menolak pendaftaran dengan username khusus admin.
+
+        - Menolak pendaftaran jika akun/nama/email sudah terdaftar.'
+      operationId: register_user_api_v1_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/login:
+    post:
+      tags:
+      - Authentication & Profile
+      summary: Login User
+      description: 'Autentikasi Pengguna dan Penerbitan Token JWT Terproteksi.
+
+        Mendukung lazy migration password dan pencarian case-insensitive.'
+      operationId: login_user_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - Authentication & Profile
+      summary: Logout User
+      description: Logout Sesi Pengguna.
+      operationId: logout_user_api_v1_auth_logout_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/auth/me:
+    get:
+      tags:
+      - Authentication & Profile
+      summary: Get Current User Profile
+      description: Mengambil data akun pengguna yang sedang aktif dari klaim JWT terverifikasi.
+      operationId: get_current_user_profile_api_v1_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/profile:
+    get:
+      tags:
+      - Clinical Chat
+      summary: Get User Profile
+      description: Mengambil profil akun pasien / tenaga klinis terdaftar.
+      operationId: get_user_profile_api_v1_profile_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+    put:
+      tags:
+      - Authentication & Profile
+      summary: Update Patient Profile
+      description: Memperbarui profil pribadi dan preferensi kesehatan pengguna.
+      operationId: update_patient_profile_api_v1_profile_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientProfileResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/auth/forgot-password:
+    post:
+      tags:
+      - Authentication & Profile
+      summary: Forgot Password Request
+      description: 'Permintaan Pemulihan Kata Sandi (UU PDP No. 27/2022).
+
+        Menerbitkan kode verifikasi pemulihan untuk akun yang valid.'
+      operationId: forgot_password_request_api_v1_auth_forgot_password_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/reset-password:
+    post:
+      tags:
+      - Authentication & Profile
+      summary: Reset Password
+      description: Mereset Kata Sandi Pengguna dengan Kode Verifikasi yang Sah.
+      operationId: reset_password_api_v1_auth_reset_password_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/dashboard:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Admin Dashboard Summary
+      description: 'Ringkasan Metrik Operasional Workspace Administrator.
+
+        Memerlukan hak akses ADMIN server-side.
+
+        Dioptimalkan dengan Redis Caching (TTL 30 detik).'
+      operationId: get_admin_dashboard_summary_api_v1_admin_dashboard_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/audit-logs:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Audit Logs
+      description: 'Mengambil Log Audit Keamanan dan Akses Sistem.
+
+        Hanya dapat diakses oleh ADMINISTRATOR.'
+      operationId: get_audit_logs_api_v1_admin_audit_logs_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      - name: action
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Action
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLogResponse'
+                title: Response Get Audit Logs Api V1 Admin Audit Logs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/users:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: List System Users
+      description: Melihat daftar pengguna terdaftar untuk pengawasan keamanan administratif.
+      operationId: list_system_users_api_v1_admin_users_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+                title: Response List System Users Api V1 Admin Users Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/users/manage:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: List Users For Role Management
+      description: Daftar akun lengkap untuk Admin Periset (kelola peran dan status
+        akun).
+      operationId: list_users_for_role_management_api_v1_admin_users_manage_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 100
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      - name: role
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Role
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+                title: Response List Users For Role Management Api V1 Admin Users
+                  Manage Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/users/{user_id}:
+    patch:
+      tags:
+      - Administrator Workspace
+      summary: Update User Role Or Status
+      description: Ubah peran atau aktif/nonaktif akun. Tidak boleh mengubah diri
+        sendiri atau Admin Periset terakhir.
+      operationId: update_user_role_or_status_api_v1_admin_users__user_id__patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAdminUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/adaptation/status:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Adaptation Status
+      description: Status penyesuaian otomatis model keputusan (tahap, progres, waktu,
+        metrik). Hanya Admin Riset.
+      operationId: get_adaptation_status_api_v1_admin_adaptation_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/datasets:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: List Datasets
+      description: 'Mengambil inventaris seluruh rekam dataset klinis yang telah diingesti.
+
+        Hanya dapat diakses oleh ADMINISTRATOR.'
+      operationId: list_datasets_api_v1_admin_datasets_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/datasets/sync:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Sync Dataset Inbox
+      description: 'Sinkronisasi Manual Folder Inbox Dataset (CSV, TXT, JSONL).
+
+        Mendeteksi ekstensi berkas, memvalidasi skema, dan merekam manifes impor.'
+      operationId: sync_dataset_inbox_api_v1_admin_datasets_sync_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: force
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Force
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/admin/datasets/sync:
+    post:
+      tags:
+      - Administrator Workspace
+      - Administrator Workspace
+      summary: Sync Dataset Inbox
+      description: 'Sinkronisasi Manual Folder Inbox Dataset (CSV, TXT, JSONL).
+
+        Mendeteksi ekstensi berkas, memvalidasi skema, dan merekam manifes impor.'
+      operationId: sync_dataset_inbox_api_v1_admin_admin_datasets_sync_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: force
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Force
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/datasets/upload:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Upload Dataset File
+      description: 'Mengunggah berkas dataset baru (CSV, TXT, JSONL) ke folder inbox
+        terlindungi.
+
+        Mencegah path traversal dan berkas tidak didukung.'
+      operationId: upload_dataset_file_api_v1_admin_datasets_upload_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_dataset_file_api_v1_admin_datasets_upload_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/datasets/{id}/approve:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Approve Dataset Records
+      description: 'Menyetujui (Approve) dataset klinis agar dapat diindeks dan diakses
+        oleh Chatbot RAG.
+
+        Data yang belum disetujui TIDAK AKAN PERNAH tersedia untuk pengguna biasa.'
+      operationId: approve_dataset_records_api_v1_admin_datasets__id__approve_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/datasets/{id}/status:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Dataset Status
+      description: Mengambil status impor, checksum, dan laporan karantina untuk berkas
+        dataset tertentu.
+      operationId: get_dataset_status_api_v1_admin_datasets__id__status_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/datasets/{id}/index:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Index Dataset
+      description: Mengindeks rekam dataset yang telah disetujui ke SQLite FTS5 dan
+        sqlite-vec.
+      operationId: index_dataset_api_v1_admin_datasets__id__index_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/annotations:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: List Annotations
+      description: Mengambil daftar rekam anotasi klinis terawasi (Supervised Annotations).
+      operationId: list_annotations_api_v1_admin_annotations_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Submit Annotation
+      description: Menyimpan atau memperbarui label anotasi terawasi untuk suatu rekam
+        klinis.
+      operationId: submit_annotation_api_v1_admin_annotations_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnotationRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/exports/jsonl:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Download Exported Jsonl
+      description: Mengunduh berkas kanonikal JSONL yang diekspor.
+      operationId: download_exported_jsonl_api_v1_admin_exports_jsonl_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Export Datasets To Jsonl
+      description: Menarik data dari database dan berkas CSV/TXT secara real-time
+        ke canonical JSONL.
+      operationId: export_datasets_to_jsonl_api_v1_admin_exports_jsonl_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/exports/sync-to-rag:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Sync Exported Jsonl To Rag
+      description: 'Menyinkronkan data ekspor JSONL langsung ke basis data pengetahuan
+        terverifikasi
+
+        dan memicu re-indexing ke database vektor (sqlite-vec + FTS5).'
+      operationId: sync_exported_jsonl_to_rag_api_v1_admin_exports_sync_to_rag_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/graph/all:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Knowledge Graph All
+      description: 'Mengambil seluruh elemen simpul (nodes) dan relasi (edges) graf
+        pengetahuan
+
+        untuk visualisasi Cytoscape.js.'
+      operationId: get_knowledge_graph_all_api_v1_admin_graph_all_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/graph/subgraph:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Knowledge Subgraph
+      description: Subgraf di sekitar entitas klinis (mis. ?entity=Asma).
+      operationId: get_knowledge_subgraph_api_v1_admin_graph_subgraph_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: entity
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Entity
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/graph/optimize-15pct:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Optimize Knowledge Graph 15Pct
+      description: 'Code of Product 15% Graph & Database Optimization:
+
+        Prunes peripheral noise edges and prioritizes top 15% core hub clinical entities.'
+      operationId: optimize_knowledge_graph_15pct_api_v1_admin_graph_optimize_15pct_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/pipeline/simulate-modes:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Simulate Pipeline Modes
+      description: 'Simulates:
+
+        1. LCD Soft-Label Cross Entropy from synthetic data (teacher-taught + code-generated
+        QA).
+
+        2. Language Scanning & Neural Translation (Encoder-Decoder + Beam Search).
+
+        3. Training loop with cosine LR decay, crash-safe checkpoints, and on-policy
+        distillation.'
+      operationId: simulate_pipeline_modes_api_v1_admin_pipeline_simulate_modes_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+          description: Sample input
+          default: dada sakit sesak napas tembus ke punggung
+          title: Query
+        description: Sample input
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/models/train:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Launch Training Job
+      description: Meluncurkan background training job asinkron untuk model klasifikasi
+        terawasi.
+      operationId: launch_training_job_api_v1_admin_models_train_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainModelRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/models/jobs:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: List Training Jobs
+      description: Mengambil daftar riwayat dan status training jobs asinkron.
+      operationId: list_training_jobs_api_v1_admin_models_jobs_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/models/jobs/{job_id}:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Training Job Detail
+      description: Mengambil rincian progress dan log real-time dari suatu training
+        job.
+      operationId: get_training_job_detail_api_v1_admin_models_jobs__job_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/models:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: List Registered Models
+      description: Mengambil daftar model yang teregistrasi di Admin Model Registry.
+      operationId: list_registered_models_api_v1_admin_models_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: task_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Task Type
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/models/{model_id}:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Registered Model Detail
+      description: Mengambil rincian model dan Model Card lengkap berdasarkan Model
+        ID.
+      operationId: get_registered_model_detail_api_v1_admin_models__model_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: model_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Model Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/models/{model_id}/activate:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Activate Registered Model
+      description: 'Mengaktifkan model tertentu di Model Registry untuk digunakan
+        dalam inferensi produksi.
+
+        Menonaktifkan model lama dengan task_type yang sama.'
+      operationId: activate_registered_model_api_v1_admin_models__model_id__activate_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: model_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Model Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/models/predict/cardio:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Predict Cardio Risk
+      description: Menjalankan inferensi prediksi risiko kardiovaskular menggunakan
+        model aktif.
+      operationId: predict_cardio_risk_api_v1_admin_models_predict_cardio_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/app__routes__admin__CardioPredictRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/models/predict/text:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Predict Clinical Text
+      description: Menjalankan inferensi triase teks klinis & routing departemen menggunakan
+        model aktif.
+      operationId: predict_clinical_text_api_v1_admin_models_predict_text_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/app__routes__admin__TextPredictRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/evaluation:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Evaluation Dashboard Data
+      description: 'Mengambil metrik evaluasi lengkap, kurva kalibrasi, Cohen''s Kappa,
+
+        dan distribusi entropi Shannon untuk model-model aktif di Registry.
+
+        Setiap metrik dapat dihitung ulang secara matematis dari prediksi dan ground
+        truth.'
+      operationId: get_evaluation_dashboard_data_api_v1_admin_evaluation_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/evaluation/run-stress-test:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Run Noise Stress Test
+      description: 'Menjalankan pengujian ketahanan model terhadap 8 kondisi noise
+        teks klinis terkontrol:
+
+        1. PUNCTUATION_CHANGES (koma vs titik desimal, penghapusan titik)
+
+        2. MEDICAL_SYMBOLS (+, -, >, <, %, derajat)
+
+        3. NUMERICAL_UNITS (mg/dL vs mg%, mmHg, bpm)
+
+        4. NEGATION_ALTERATION (inversi negasi klinis)
+
+        5. TYPOGRAPHICAL_CHANGES (typo tetangga keyboard & OCR)
+
+        6. ABBREVIATIONS (akronim klinis Indonesia)
+
+        7. DIALECT_COLLOQUIAL (istilah keluhan bahasa percakapan)
+
+        8. SEMANTICALLY_DIFFERENT (injeksi keluhan pengalih)'
+      operationId: run_noise_stress_test_api_v1_admin_evaluation_run_stress_test_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StressTestRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/evaluation/consensus:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Run Model Consensus
+      description: 'Menjalankan evaluasi konsensus multi-model dan matriks Cohen''s
+        Kappa antar-rater
+
+        terhadap 13 kasus rekam medis terverifikasi (audited_clinical_predictions.csv).'
+      operationId: run_model_consensus_api_v1_admin_evaluation_consensus_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/exports:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Export Research Artifacts
+      description: 'Mengekspor artefak riset publikasi:
+
+        - CSV: Prediksi per sampel
+
+        - JSONL: Manifest evaluasi lengkap
+
+        - PNG: Figur publikasi Confusion Matrix, Calibration Curve, dan Noise Stress
+        Bar Chart'
+      operationId: export_research_artifacts_api_v1_admin_exports_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/exports/download/{filename}:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Download Export File
+      description: 'Mengunduh file artefak riset yang diekspor (CSV, JSONL, PNG).
+
+        Mencegah path traversal dengan validasi nama file.'
+      operationId: download_export_file_api_v1_admin_exports_download__filename__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: filename
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Filename
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/feedback:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Admin Feedback List
+      description: 'Mengambil data riwayat umpan balik (feedback) dan penilaian reward
+        secara transparan.
+
+        Menghitung agregat kepuasan klinis dan kualitas relatif.'
+      operationId: get_admin_feedback_list_api_v1_admin_feedback_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      - name: feedback_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Feedback Type
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/feedback/{feedback_id}:
+    patch:
+      tags:
+      - Administrator Workspace
+      summary: Update Admin Feedback Review
+      description: 'Memperbarui anotasi/catatan dokter auditor pada record feedback.
+
+        Memungkinkan review kualitatif sebelum diekspor ke dataset preference tuning
+        DPO.'
+      operationId: update_admin_feedback_review_api_v1_admin_feedback__feedback_id__patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: feedback_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Feedback Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminFeedbackUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/feedback/export-preference:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Export Dpo Preference Dataset
+      description: 'Mengekspor pasangan data preferensi offline (Direct Preference
+        Optimization - DPO / RLHF).
+
+        Format output JSONL standar:
+
+        { "prompt": "...", "chosen": "...", "rejected": "...", "score_delta": ...
+        }'
+      operationId: export_dpo_preference_dataset_api_v1_admin_feedback_export_preference_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/feedback/download/{filename}:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Download Preference Export
+      description: Mengunduh file preferensi DPO yang diekspor.
+      operationId: download_preference_export_api_v1_admin_feedback_download__filename__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: filename
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Filename
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/audit/run-periodic:
+    post:
+      tags:
+      - Administrator Workspace
+      summary: Trigger Periodic System Audit
+      description: 'Menjalankan audit sistem klinis, integritas database, dan kepatuhan
+        guardrail keselamatan
+
+        secara on-demand dari panel administrasi.'
+      operationId: trigger_periodic_system_audit_api_v1_admin_audit_run_periodic_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/audit/reports:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: List Periodic Audit Reports
+      description: Mengambil daftar laporan riwayat audit berkala yang tersimpan di
+        docs/audits.
+      operationId: list_periodic_audit_reports_api_v1_admin_audit_reports_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/audit/reports/{filename}:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Get Periodic Audit Report Detail
+      description: Mengambil rincian isi laporan audit berkala berdasarkan nama file.
+      operationId: get_periodic_audit_report_detail_api_v1_admin_audit_reports__filename__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: filename
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Filename
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/conversations/export:
+    get:
+      tags:
+      - Administrator Workspace
+      summary: Export Conversations For Colab
+      description: 'Mengekspor seluruh interaksi percakapan klinis antara AI dan pengguna
+        awam
+
+        dalam format CSV atau JSONL terstruktur yang siap pakai untuk pelatihan (fine-tuning)
+        di Google Colab.
+
+        Mematuhi prinsip de-identifikasi data privasi UU PDP No. 27/2022 & ISO 27001.'
+      operationId: export_conversations_for_colab_api_v1_admin_conversations_export_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: format
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(csv|jsonl)$
+          default: jsonl
+          title: Format
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rag/search:
+    post:
+      tags:
+      - Knowledge Index & Semantic Search
+      summary: Search Clinical Knowledge
+      description: 'Pencarian Semantik Hibrida Pengetahuan Medis Terverifikasi (FTS5
+        BM25 + sqlite-vec + RRF).
+
+        HANYA mengembalikan rekam yang telah disetujui (APPROVED) oleh administrator.
+
+        Dilengkapi caching Redis / In-memory untuk respon instan sub-millisecond.'
+      operationId: search_clinical_knowledge_api_v1_rag_search_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RAGSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/rag/index:
+    post:
+      tags:
+      - Knowledge Index & Semantic Search
+      summary: Trigger Rag Indexing
+      description: 'Memicu Re-Indexing Pengetahuan Klinis Disetujui ke SQLite FTS5
+        dan sqlite-vec.
+
+        Hanya dapat dijalankan oleh ADMINISTRATOR.'
+      operationId: trigger_rag_indexing_api_v1_admin_rag_index_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/rag/status:
+    get:
+      tags:
+      - Knowledge Index & Semantic Search
+      summary: Get Rag Index Status
+      description: Inspeksi Status Indeks FTS5 dan sqlite-vec.
+      operationId: get_rag_index_status_api_v1_admin_rag_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/rag/evaluate:
+    post:
+      tags:
+      - Knowledge Index & Semantic Search
+      summary: Evaluate Rag Retrieval
+      description: Mengevaluasi Metrik Pencarian (Recall@3, Precision@3, MRR, nDCG)
+        pada Kasus Benchmark.
+      operationId: evaluate_rag_retrieval_api_v1_admin_rag_evaluate_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/chat/sessions:
+    post:
+      tags:
+      - Clinical Chat
+      summary: Create Chat Session
+      description: Membuat sesi percakapan klinis baru untuk pengguna terautentikasi.
+      operationId: create_chat_session_api_v1_chat_sessions_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Clinical Chat
+      summary: List Chat Sessions
+      description: 'Mengambil riwayat sesi percakapan klinis milik pengguna saat ini
+        dengan paginasi cursor.
+
+        Jumlah pesan dihitung via satu query agregat COUNT SQL efisien tanpa eager-load
+        instance pesan.'
+      operationId: list_chat_sessions_api_v1_chat_sessions_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Jumlah sesi per halaman (default 20)
+          default: 20
+          title: Limit
+        description: Jumlah sesi per halaman (default 20)
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Cursor timestamp ISO (updated_at) untuk keyset pagination
+          title: Cursor
+        description: Cursor timestamp ISO (updated_at) untuk keyset pagination
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/chat/sessions/{session_id}:
+    get:
+      tags:
+      - Clinical Chat
+      summary: Get Chat Session
+      description: 'Mengambil rincian pesan dalam sesi percakapan dengan paginasi
+        cursor.
+
+        Menghilangkan scanning deteksi bahasa redundan pada pesan lama dan membersihkan
+
+        evidence_context serta data internal ML dari respons pasien demi privasi &
+        efisiensi.'
+      operationId: get_chat_session_api_v1_chat_sessions__session_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Maksimum pesan yang dimuat (default 20 pesan terbaru)
+          default: 20
+          title: Limit
+        description: Maksimum pesan yang dimuat (default 20 pesan terbaru)
+      - name: before
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Cursor timestamp ISO (created_at) untuk memuat pesan terdahulu
+          title: Before
+        description: Cursor timestamp ISO (created_at) untuk memuat pesan terdahulu
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Clinical Chat
+      summary: Delete Chat Session
+      description: Menghapus sesi percakapan klinis milik pengguna (soft-delete).
+      operationId: delete_chat_session_api_v1_chat_sessions__session_id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/chat/messages:
+    post:
+      tags:
+      - Clinical Chat
+      summary: Send Chat Message
+      operationId: send_chat_message_api_v1_chat_messages_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/chat/messages/stream:
+    post:
+      tags:
+      - Clinical Chat
+      summary: Stream Chat Message
+      operationId: stream_chat_message_api_v1_chat_messages_stream_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/chat/quota:
+    get:
+      tags:
+      - Clinical Chat
+      summary: Get Chat Quota Endpoint
+      description: Mengambil status kuota harian (maks 7 respon) dan status Clinic
+        Health Reset 24 jam.
+      operationId: get_chat_quota_endpoint_api_v1_chat_quota_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/chat/quota/reset:
+    post:
+      tags:
+      - Clinical Chat
+      summary: Reset Chat Quota Endpoint
+      description: 'Mereset kuota konsultasi dengan memindahkan timestamp pesan asisten
+        ke luar jendela 24 jam.
+
+        Memungkinkan pengujian ulang siklus Clinic Health Reset tanpa menunggu 24
+        jam.'
+      operationId: reset_chat_quota_endpoint_api_v1_chat_quota_reset_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/chat/feedback:
+    post:
+      tags:
+      - Clinical Chat
+      summary: Submit Chat Feedback
+      description: "Menyimpan umpan balik Reinforcement Learning from Human Feedback\
+        \ (RLHF):\n- LIKE: Sinyal Reward Positif (+1.0) untuk memperkuat bobot respon\
+        \ yang akurat.\n- DISLIKE: Sinyal Penalti Negatif (-1.0) dengan opsi kategori\
+        \ perbaikan kontekstual\n  (bahasa terlalu medis, rujukan tidak tepat, informasi\
+        \ kurang lengkap, dll).\nMencatat log audit RLHF untuk siklus perbaikan berkelanjutan\
+        \ tanpa mengekspos\nkomputasi teknis ML ke tampilan pasien."
+      operationId: submit_chat_feedback_api_v1_chat_feedback_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/chat/citations/{citation_id}:
+    get:
+      tags:
+      - Clinical Chat
+      summary: Get Citation Details
+      description: Mengambil metadata bukti terverifikasi untuk sitasi dokumen tertentu.
+      operationId: get_citation_details_api_v1_chat_citations__citation_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: citation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Citation Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/chat/sessions/upgrade:
+    post:
+      tags:
+      - Clinical Chat
+      summary: Upgrade Guest Session
+      operationId: upgrade_guest_session_api_v1_chat_sessions_upgrade_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeSessionRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpgradeSessionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/knowledge:
+    get:
+      tags:
+      - Knowledge Base CRUD
+      summary: List Knowledge
+      operationId: list_knowledge_api_v1_admin_knowledge_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          description: Cari pada judul/isi
+          title: Q
+        description: Cari pada judul/isi
+      - name: department
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Department
+      - name: approval_status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Approval Status
+      - name: all_sources
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Sertakan rekam dataset hasil impor, bukan hanya dokumen CRUD
+          default: false
+          title: All Sources
+        description: Sertakan rekam dataset hasil impor, bukan hanya dokumen CRUD
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Knowledge Base CRUD
+      summary: Create Knowledge
+      operationId: create_knowledge_api_v1_admin_knowledge_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/knowledge/reindex:
+    post:
+      tags:
+      - Knowledge Base CRUD
+      summary: Reindex Knowledge
+      description: Bangun ulang seluruh indeks RAG dari rekam APPROVED.
+      operationId: reindex_knowledge_api_v1_admin_knowledge_reindex_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/knowledge/{doc_id}:
+    get:
+      tags:
+      - Knowledge Base CRUD
+      summary: Get Knowledge
+      operationId: get_knowledge_api_v1_admin_knowledge__doc_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Doc Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Knowledge Base CRUD
+      summary: Update Knowledge
+      operationId: update_knowledge_api_v1_admin_knowledge__doc_id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Doc Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Knowledge Base CRUD
+      summary: Delete Knowledge
+      operationId: delete_knowledge_api_v1_admin_knowledge__doc_id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Doc Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/graph/schema:
+    get:
+      tags:
+      - Knowledge Graph CRUD
+      summary: Graph Schema
+      description: Daftar tipe simpul dan nama relasi yang diizinkan.
+      operationId: graph_schema_api_v1_admin_graph_schema_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/graph/nodes:
+    post:
+      tags:
+      - Knowledge Graph CRUD
+      summary: Create Node
+      operationId: create_node_api_v1_admin_graph_nodes_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/graph/nodes/{node_id}:
+    put:
+      tags:
+      - Knowledge Graph CRUD
+      summary: Update Node
+      operationId: update_node_api_v1_admin_graph_nodes__node_id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: node_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Node Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Knowledge Graph CRUD
+      summary: Delete Node
+      operationId: delete_node_api_v1_admin_graph_nodes__node_id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: node_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Node Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/graph/edges:
+    post:
+      tags:
+      - Knowledge Graph CRUD
+      summary: Create Edge
+      operationId: create_edge_api_v1_admin_graph_edges_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EdgeCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/graph/edges/{edge_id}:
+    delete:
+      tags:
+      - Knowledge Graph CRUD
+      summary: Delete Edge
+      operationId: delete_edge_api_v1_admin_graph_edges__edge_id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: edge_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Edge Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/graph/seed:
+    post:
+      tags:
+      - Knowledge Graph CRUD
+      summary: Seed Graph Endpoint
+      description: Mengisi graf dari data klinis standar (idempoten). reset=true mengosongkan
+        dulu.
+      operationId: seed_graph_endpoint_api_v1_admin_graph_seed_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/SeedRequest'
+              - type: 'null'
+              title: Payload
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/jobs/process:
+    get:
+      tags:
+      - Background Jobs
+      summary: Process Jobs
+      description: Claim dan jalankan satu job QUEUED (setelah memulihkan job TRAINING
+        yang macet).
+      operationId: process_jobs_api_v1_admin_jobs_process_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Background Jobs
+      summary: Process Jobs
+      description: Claim dan jalankan satu job QUEUED (setelah memulihkan job TRAINING
+        yang macet).
+      operationId: process_jobs_api_v1_admin_jobs_process_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/insights/train:
+    post:
+      tags:
+      - Patient Insights (Admin Riset)
+      summary: Train Insights
+      operationId: train_insights_api_v1_admin_insights_train_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/insights/report:
+    get:
+      tags:
+      - Patient Insights (Admin Riset)
+      summary: Get Report
+      operationId: get_report_api_v1_admin_insights_report_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/insights/predict/text:
+    post:
+      tags:
+      - Patient Insights (Admin Riset)
+      summary: Predict Text
+      operationId: predict_text_api_v1_admin_insights_predict_text_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/app__routes__insights__TextPredictRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/insights/predict/cardio:
+    post:
+      tags:
+      - Patient Insights (Admin Riset)
+      summary: Predict Cardio
+      operationId: predict_cardio_api_v1_admin_insights_predict_cardio_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/app__routes__insights__CardioPredictRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/insights/export/colab:
+    post:
+      tags:
+      - Patient Insights (Admin Riset)
+      summary: Export Colab
+      description: Siapkan berkas split pre-train/SFT/RLHF untuk pelatihan GPU di
+        Colab (unduh via /export/colab/{file}).
+      operationId: export_colab_api_v1_admin_insights_export_colab_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/insights/export/colab/{filename}:
+    get:
+      tags:
+      - Patient Insights (Admin Riset)
+      summary: Download Colab File
+      operationId: download_colab_file_api_v1_admin_insights_export_colab__filename__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: filename
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Filename
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /:
+    get:
+      summary: Root
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/health:
+    get:
+      summary: Health Check
+      operationId: health_check_api_v1_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /health:
+    get:
+      summary: Health Check
+      operationId: health_check_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    AdminFeedbackUpdateRequest:
+      properties:
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        adjusted_score:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          title: Adjusted Score
+        feedback_type:
+          anyOf:
+          - type: string
+            pattern: ^(LIKE|DISLIKE|like|dislike)$
+          - type: 'null'
+          title: Feedback Type
+      type: object
+      title: AdminFeedbackUpdateRequest
+    AnnotationRequest:
+      properties:
+        document_id:
+          type: string
+          title: Document Id
+          description: ID dokumen atau rekam klinis
+        annotation_label:
+          type: string
+          title: Annotation Label
+          description: 'Label anotasi terstandarisasi (contoh: Kardiologi, Reasoning
+            Error: Contraindicated Drug)'
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+          description: Catatan justifikasi klinis annotator
+      type: object
+      required:
+      - document_id
+      - annotation_label
+      title: AnnotationRequest
+    AuditLogResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+        user_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User Id
+        action:
+          type: string
+          title: Action
+        resource_type:
+          type: string
+          title: Resource Type
+        resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resource Id
+        status:
+          type: string
+          title: Status
+        ip_address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ip Address
+        details:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Details
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - user_id
+      - action
+      - resource_type
+      - resource_id
+      - status
+      - ip_address
+      - details
+      - created_at
+      title: AuditLogResponse
+    Body_upload_dataset_file_api_v1_admin_datasets_upload_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_upload_dataset_file_api_v1_admin_datasets_upload_post
+    ChatMessageRequest:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+          description: ID sesi percakapan klinis aktif
+        content:
+          type: string
+          maxLength: 2000
+          minLength: 1
+          title: Content
+          description: Pesan pertanyaan pengguna
+        reasoning_mode:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reasoning Mode
+          description: 'Mode penalaran: ''thinking'' (17 ML & 8 DL) atau ''fast''
+            (5 ML & 2 DL)'
+          default: thinking
+      type: object
+      required:
+      - session_id
+      - content
+      title: ChatMessageRequest
+    CreateSessionRequest:
+      properties:
+        title:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Title
+          default: Konsultasi Klinis Baru
+      type: object
+      title: CreateSessionRequest
+    EdgeCreate:
+      properties:
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        target:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Target
+        relation:
+          type: string
+          maxLength: 50
+          title: Relation
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Reason
+          default: ''
+      type: object
+      required:
+      - source
+      - target
+      - relation
+      title: EdgeCreate
+    ExportRequest:
+      properties:
+        model_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model Name
+          description: Nama model untuk export manifest
+          default: CardioClassifier
+        include_figures:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Include Figures
+          description: Render dan sertakan figur grafik PNG
+          default: true
+        include_csv:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Include Csv
+          description: Sertakan file CSV prediksi per sampel
+          default: true
+      type: object
+      title: ExportRequest
+    FeedbackRequest:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        message_id:
+          type: string
+          title: Message Id
+        feedback_type:
+          type: string
+          pattern: ^(LIKE|DISLIKE)$
+          title: Feedback Type
+          description: '''LIKE'' (Reward Positif) atau ''DISLIKE'' (Penalti RLHF)'
+        improvement_category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Improvement Category
+          description: 'Kategori perbaikan: ''BAHASA_TERLALU_MEDIS'', ''INFORMASI_KURANG_LENGKAP'',
+            ''RUJUKAN_TIDAK_TEPAT'', ''PROTOKOL_KURANG_RELEVAN'', ''KURANG_EMPATIK'',
+            atau ''LAINNYA'''
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+          description: Catatan perbaikan klinis kontekstual dari pasien atau tenaga
+            medis
+      type: object
+      required:
+      - session_id
+      - message_id
+      - feedback_type
+      title: FeedbackRequest
+    ForgotPasswordRequest:
+      properties:
+        username_or_email:
+          type: string
+          maxLength: 150
+          minLength: 3
+          title: Username Or Email
+      type: object
+      required:
+      - username_or_email
+      title: ForgotPasswordRequest
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    KnowledgeCreate:
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Title
+        department:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Department
+          default: Umum
+        content:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          title: Content
+        source:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Source
+        approval_status:
+          type: string
+          title: Approval Status
+          default: APPROVED
+      type: object
+      required:
+      - title
+      - content
+      title: KnowledgeCreate
+    KnowledgeUpdate:
+      properties:
+        title:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Title
+        department:
+          anyOf:
+          - type: string
+            maxLength: 100
+            minLength: 1
+          - type: 'null'
+          title: Department
+        content:
+          anyOf:
+          - type: string
+            maxLength: 100000
+            minLength: 1
+          - type: 'null'
+          title: Content
+        source:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Source
+        approval_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Approval Status
+      type: object
+      title: KnowledgeUpdate
+    NodeCreate:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: 'Contoh: DIS:Asma_Bronkial'
+        label:
+          type: string
+          maxLength: 300
+          minLength: 1
+          title: Label
+        type:
+          type: string
+          title: Type
+        department:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Department
+          default: ''
+      type: object
+      required:
+      - id
+      - label
+      - type
+      title: NodeCreate
+    NodeUpdate:
+      properties:
+        label:
+          anyOf:
+          - type: string
+            maxLength: 300
+            minLength: 1
+          - type: 'null'
+          title: Label
+        type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Type
+        department:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Department
+      type: object
+      title: NodeUpdate
+    PatientProfileResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+        user_id:
+          type: string
+          title: User Id
+        nik_anonymized:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nik Anonymized
+        age:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Age
+        gender:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Gender
+        blood_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Blood Type
+        medical_history_summary:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Medical History Summary
+        is_verified:
+          type: boolean
+          title: Is Verified
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - user_id
+      - nik_anonymized
+      - age
+      - gender
+      - blood_type
+      - medical_history_summary
+      - is_verified
+      - created_at
+      - updated_at
+      title: PatientProfileResponse
+    ProfileUpdateRequest:
+      properties:
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        age:
+          anyOf:
+          - type: integer
+            maximum: 130.0
+            minimum: 0.0
+          - type: 'null'
+          title: Age
+        gender:
+          anyOf:
+          - type: string
+            pattern: ^(L|P|Other)$
+          - type: 'null'
+          title: Gender
+        blood_type:
+          anyOf:
+          - type: string
+            pattern: ^(A|B|AB|O)[+-]?$
+          - type: 'null'
+          title: Blood Type
+        medical_history_summary:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Medical History Summary
+      type: object
+      title: ProfileUpdateRequest
+    RAGSearchRequest:
+      properties:
+        query:
+          type: string
+          minLength: 2
+          title: Query
+          description: Pertanyaan klinis atau keluhan untuk pencarian bukti
+        top_k:
+          anyOf:
+          - type: integer
+            maximum: 10.0
+            minimum: 1.0
+          - type: 'null'
+          title: Top K
+          description: Banyaknya dokumen bukti teratas yang diambil
+          default: 4
+        department:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Department
+          description: Filter opsional departemen spesialisasi
+      type: object
+      required:
+      - query
+      title: RAGSearchRequest
+    ResetPasswordRequest:
+      properties:
+        username_or_email:
+          type: string
+          maxLength: 150
+          minLength: 3
+          title: Username Or Email
+        token_or_code:
+          type: string
+          maxLength: 50
+          minLength: 4
+          title: Token Or Code
+        new_password:
+          type: string
+          maxLength: 128
+          minLength: 8
+          title: New Password
+        confirm_password:
+          type: string
+          maxLength: 128
+          minLength: 8
+          title: Confirm Password
+      type: object
+      required:
+      - username_or_email
+      - token_or_code
+      - new_password
+      - confirm_password
+      title: ResetPasswordRequest
+    SeedRequest:
+      properties:
+        reset:
+          type: boolean
+          title: Reset
+          default: false
+      type: object
+      title: SeedRequest
+    StressTestRequest:
+      properties:
+        sample_limit:
+          anyOf:
+          - type: integer
+            maximum: 500.0
+            minimum: 5.0
+          - type: 'null'
+          title: Sample Limit
+          description: Jumlah sampel teks untuk diuji perturbasi
+          default: 50
+      type: object
+      title: StressTestRequest
+    TokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+        user_id:
+          type: string
+          title: User Id
+        username:
+          type: string
+          title: Username
+        email:
+          type: string
+          title: Email
+        role:
+          type: string
+          title: Role
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+      type: object
+      required:
+      - access_token
+      - user_id
+      - username
+      - email
+      - role
+      title: TokenResponse
+    TrainModelRequest:
+      properties:
+        task_type:
+          type: string
+          title: Task Type
+          description: '''CARDIOVASCULAR_RISK'' atau ''CLINICAL_TEXT_CLASSIFICATION'''
+        algorithm:
+          type: string
+          title: Algorithm
+          description: '''random_forest'', ''logistic_regression'', atau ''gradient_boosting'''
+          default: random_forest
+        model_version:
+          type: string
+          title: Model Version
+          description: 'Versi model semantik (contoh: v1.0.0)'
+          default: v1.0.0
+        hyperparameters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Hyperparameters
+          description: Parameter tuning model
+        auto_activate:
+          type: boolean
+          title: Auto Activate
+          description: Otomatis aktifkan model jika pelatihan berhasil
+          default: false
+      type: object
+      required:
+      - task_type
+      title: TrainModelRequest
+    TrainRequest:
+      properties:
+        rounds:
+          type: integer
+          maximum: 8.0
+          minimum: 0.0
+          title: Rounds
+          default: 4
+        rlhf_random_rate:
+          type: number
+          maximum: 0.5
+          minimum: 0.0
+          title: Rlhf Random Rate
+          default: 0.2
+        rlhf_beta:
+          type: number
+          maximum: 2.0
+          minimum: 0.0
+          title: Rlhf Beta
+          default: 0.5
+        cardio_rows:
+          type: integer
+          maximum: 60000.0
+          minimum: 0.0
+          title: Cardio Rows
+          default: 15000
+        seed:
+          type: integer
+          title: Seed
+          default: 42
+      type: object
+      title: TrainRequest
+    UpgradeSessionRequest:
+      properties:
+        guest_session_id:
+          type: string
+          title: Guest Session Id
+        messages:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Messages
+      type: object
+      required:
+      - guest_session_id
+      - messages
+      title: UpgradeSessionRequest
+    UpgradeSessionResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+        session_id:
+          type: string
+          title: Session Id
+        title:
+          type: string
+          title: Title
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - status
+      - session_id
+      - title
+      - message
+      title: UpgradeSessionResponse
+    UserAdminUpdateRequest:
+      properties:
+        role:
+          anyOf:
+          - type: string
+            pattern: ^(USER|ADMIN|RESEARCHER)$
+          - type: 'null'
+          title: Role
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Active
+      additionalProperties: false
+      type: object
+      title: UserAdminUpdateRequest
+      description: Dipakai khusus Admin Periset untuk mengubah peran / status akun.
+    UserLoginRequest:
+      properties:
+        username_or_email:
+          type: string
+          title: Username Or Email
+          description: Username atau email terdaftar
+        password:
+          type: string
+          title: Password
+          description: Password pengguna
+      type: object
+      required:
+      - username_or_email
+      - password
+      title: UserLoginRequest
+    UserRegisterRequest:
+      properties:
+        username:
+          type: string
+          maxLength: 50
+          minLength: 3
+          title: Username
+          description: Username unik pengguna
+        email:
+          type: string
+          pattern: ^[\w\.-]+@[\w\.-]+\.\w+$
+          title: Email
+          description: Email valid pengguna
+        password:
+          type: string
+          minLength: 8
+          title: Password
+          description: Password minimal 8 karakter
+        full_name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Full Name
+          description: Nama lengkap pengguna
+      type: object
+      required:
+      - username
+      - email
+      - password
+      title: UserRegisterRequest
+    UserResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+        username:
+          type: string
+          title: Username
+        email:
+          type: string
+          title: Email
+        role:
+          type: string
+          title: Role
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        is_active:
+          type: boolean
+          title: Is Active
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - username
+      - email
+      - role
+      - full_name
+      - is_active
+      - created_at
+      title: UserResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    app__routes__admin__CardioPredictRequest:
+      properties:
+        age:
+          type: integer
+          maximum: 100.0
+          minimum: 18.0
+          title: Age
+          default: 50
+        gender:
+          type: string
+          title: Gender
+          default: Male
+        blood_pressure_systolic:
+          type: integer
+          maximum: 250.0
+          minimum: 70.0
+          title: Blood Pressure Systolic
+          default: 120
+        blood_pressure_diastolic:
+          type: integer
+          maximum: 160.0
+          minimum: 40.0
+          title: Blood Pressure Diastolic
+          default: 80
+        fasting_blood_sugar:
+          type: integer
+          maximum: 500.0
+          minimum: 50.0
+          title: Fasting Blood Sugar
+          default: 100
+        cholesterol_level:
+          type: integer
+          maximum: 600.0
+          minimum: 100.0
+          title: Cholesterol Level
+          default: 200
+        cholesterol_hdl:
+          type: integer
+          maximum: 120.0
+          minimum: 10.0
+          title: Cholesterol Hdl
+          default: 50
+        cholesterol_ldl:
+          type: integer
+          maximum: 350.0
+          minimum: 30.0
+          title: Cholesterol Ldl
+          default: 100
+        triglycerides:
+          type: integer
+          maximum: 800.0
+          minimum: 30.0
+          title: Triglycerides
+          default: 150
+        smoking_status:
+          type: string
+          title: Smoking Status
+          default: 'No'
+        physical_activity:
+          type: string
+          title: Physical Activity
+          default: Moderate
+        hypertension:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Hypertension
+          default: 0
+        diabetes:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Diabetes
+          default: 0
+        previous_heart_disease:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Previous Heart Disease
+          default: 0
+      type: object
+      title: CardioPredictRequest
+    app__routes__admin__TextPredictRequest:
+      properties:
+        text:
+          type: string
+          minLength: 5
+          title: Text
+          description: Teks klinis atau keluhan pasien yang akan diklasifikasikan
+      type: object
+      required:
+      - text
+      title: TextPredictRequest
+    app__routes__insights__CardioPredictRequest:
+      properties:
+        age:
+          type: number
+          maximum: 120.0
+          minimum: 1.0
+          title: Age
+        hypertension:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Hypertension
+          default: 0
+        diabetes:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Diabetes
+          default: 0
+        cholesterol_level:
+          type: number
+          maximum: 600.0
+          minimum: 50.0
+          title: Cholesterol Level
+          default: 200
+        obesity:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Obesity
+          default: 0
+        waist_circumference:
+          type: number
+          maximum: 200.0
+          minimum: 40.0
+          title: Waist Circumference
+          default: 85
+        family_history:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Family History
+          default: 0
+        sleep_hours:
+          type: number
+          maximum: 24.0
+          minimum: 0.0
+          title: Sleep Hours
+          default: 7
+        blood_pressure_systolic:
+          type: number
+          maximum: 260.0
+          minimum: 60.0
+          title: Blood Pressure Systolic
+          default: 120
+        blood_pressure_diastolic:
+          type: number
+          maximum: 160.0
+          minimum: 30.0
+          title: Blood Pressure Diastolic
+          default: 80
+        fasting_blood_sugar:
+          type: number
+          maximum: 600.0
+          minimum: 30.0
+          title: Fasting Blood Sugar
+          default: 95
+        cholesterol_hdl:
+          type: number
+          maximum: 150.0
+          minimum: 5.0
+          title: Cholesterol Hdl
+          default: 50
+        cholesterol_ldl:
+          type: number
+          maximum: 400.0
+          minimum: 10.0
+          title: Cholesterol Ldl
+          default: 120
+        triglycerides:
+          type: number
+          maximum: 1500.0
+          minimum: 20.0
+          title: Triglycerides
+          default: 150
+        previous_heart_disease:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Previous Heart Disease
+          default: 0
+        medication_usage:
+          type: integer
+          maximum: 1.0
+          minimum: 0.0
+          title: Medication Usage
+          default: 0
+        smoking_status:
+          type: string
+          pattern: ^(Never|Past|Current)$
+          title: Smoking Status
+          default: Never
+        physical_activity:
+          type: string
+          pattern: ^(Low|Moderate|High)$
+          title: Physical Activity
+          default: Moderate
+        stress_level:
+          type: string
+          pattern: ^(Low|Moderate|High)$
+          title: Stress Level
+          default: Moderate
+        dietary_habits:
+          type: string
+          pattern: ^(Healthy|Unhealthy)$
+          title: Dietary Habits
+          default: Healthy
+      type: object
+      required:
+      - age
+      title: CardioPredictRequest
+    app__routes__insights__TextPredictRequest:
+      properties:
+        text:
+          type: string
+          maxLength: 4000
+          minLength: 3
+          title: Text
+      type: object
+      required:
+      - text
+      title: TextPredictRequest
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/v1/auth/login
+servers:
+- url: https://ai-api-dusky-eight.vercel.app
+  description: Produksi (backend FastAPI)
+- url: https://clinic-with-agent-healthy.vercel.app
+  description: Produksi via proxy same-origin Next.js
+- url: http://localhost:8000
+  description: Lokal

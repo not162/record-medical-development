@@ -19,7 +19,7 @@ def reset_admin(email: str, new_password: str, username: str = "admin"):
     if len(new_password) < 8:
         raise ValueError("Password must be at least 8 characters.")
 
-    db_url = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_LaWS9INA1Qde@ep-rough-flower-b48s8vjt-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require")
+    db_url = os.environ["DATABASE_URL"]
     
     conn = psycopg2.connect(db_url)
     cur = conn.cursor()

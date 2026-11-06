@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AlertTriangle, ArrowLeft, ShieldAlert } from "lucide-react";
 
 export const metadata = {
-  title: "Syarat & Ketentuan Konsultasi Medis Digital | Web Klinik RSUKT",
+  title: "Syarat & Ketentuan Konsultasi Medis Digital | Clinic with Agent Healthy",
   description: "Syarat dan Ketentuan Penggunaan Sistem CDSS Asisten AI Medis RSUKT & Batasan Tanggung Jawab Medis.",
 };
 
@@ -89,7 +89,7 @@ export default function TermsPage() {
               5. Persetujuan atas Syarat & Ketentuan
             </h2>
             <p>
-              Dengan mengakses dan menggunakan Web Klinik RSUKT, baik melalui Mode Tamu maupun akun terdaftar, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh ketentuan ini tanpa syarat.
+              Dengan mengakses dan menggunakan Clinic with Agent Healthy, baik melalui Mode Tamu maupun akun terdaftar, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh ketentuan ini tanpa syarat.
             </p>
           </section>
         </div>

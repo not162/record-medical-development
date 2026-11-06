@@ -11,6 +11,9 @@ class UserRegisterRequest(BaseModel):
     email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$", description="Email valid pengguna")
     password: str = Field(..., min_length=8, description="Password minimal 8 karakter")
     full_name: Optional[str] = Field(None, max_length=100, description="Nama lengkap pengguna")
+    # Diisi sekali saat registrasi lalu terkunci (tidak bisa diubah dari profil).
+    birth_date: Optional[datetime.date] = Field(None, description="Tanggal lahir (YYYY-MM-DD); usia dihitung real-time")
+    blood_type: Optional[str] = Field(None, pattern="^(A|B|AB|O)[+-]$", description="Golongan darah + rhesus, mis. O+")
     # Note: No 'role' parameter allowed here. Public registration always creates role USER.
 
 class UserLoginRequest(BaseModel):
@@ -43,26 +46,47 @@ class UserAdminUpdateRequest(BaseModel):
     role: Optional[str] = Field(None, pattern="^(USER|ADMIN|RESEARCHER)$")
     is_active: Optional[bool] = None
 
+class AgeDetail(BaseModel):
+    years: int
+    months: int
+    days: int
+    as_of: datetime.date  # tanggal hari ini (WIB) yang dipakai menghitung usia
+
+
 class PatientProfileResponse(BaseModel):
     id: str
     user_id: str
+    email: Optional[str] = None             # hanya-baca, dari registrasi
+    full_name: Optional[str] = None
     nik_anonymized: Optional[str]
-    age: Optional[int]
+    birth_date: Optional[datetime.date] = None
+    age: Optional[int]                      # dihitung real-time dari birth_date (fallback: nilai lama)
+    age_detail: Optional[AgeDetail] = None
     gender: Optional[str]
     blood_type: Optional[str]
     medical_history_summary: Optional[str]
     is_verified: bool
+    photo_data_url: Optional[str] = None
+    locks: Dict[str, bool] = Field(default_factory=dict)  # field mana yang sudah terkunci
+    clinical_locked_at: Optional[datetime.datetime] = None
     created_at: datetime.datetime
     updated_at: datetime.datetime
-    
-    model_config = ConfigDict(from_attributes=True)
+
 
 class ProfileUpdateRequest(BaseModel):
-    full_name: Optional[str] = None
-    age: Optional[int] = Field(None, ge=0, le=130)
-    gender: Optional[str] = Field(None, pattern="^(L|P|Other)$")
-    blood_type: Optional[str] = Field(None, pattern="^(A|B|AB|O)[+-]?$")
-    medical_history_summary: Optional[str] = None
+    """Email, tanggal lahir/usia, dan golongan darah TIDAK ada di sini: ditetapkan saat registrasi.
+    Pengecualian: akun lama yang belum punya tanggal lahir / golongan darah boleh mengisinya SEKALI."""
+    model_config = ConfigDict(extra="forbid")
+    full_name: Optional[str] = Field(None, max_length=100)
+    birth_date: Optional[datetime.date] = None
+    blood_type: Optional[str] = Field(None, pattern="^(A|B|AB|O)[+-]$")
+    gender: Optional[str] = Field(None, pattern="^(L|P)$")
+    medical_history_summary: Optional[str] = Field(None, max_length=4000)
+
+
+class ProfilePhotoRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    data_url: str = Field(..., max_length=420_000, description="data:image/(jpeg|png|webp);base64,... maks ~300 KB")
 
 # ==============================================================================
 # CHAT SCHEMAS
