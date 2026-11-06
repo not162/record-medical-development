@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthShell, FieldHint, FieldLabel, FormAlert } from "@/components/auth/AuthShell";
 import { PasswordInput, StrengthMeter } from "@/components/auth/PasswordInput";
 import { BLOOD_TYPES, ageFromIso, todayLocalIso } from "@/lib/age";
@@ -98,6 +99,8 @@ export default function RegisterPage() {
       <p className="mt-1 text-sm text-slate-500">
         Gratis. Akun baru otomatis terdaftar sebagai pengguna biasa untuk bertanya seputar kesehatan.
       </p>
+
+      <GoogleSignInButton label="Daftar dengan Google" />
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {error && <FormAlert tone="error">{error}</FormAlert>}

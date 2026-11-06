@@ -88,6 +88,10 @@ Respons berisi `content`, `citations`, `evidence_context`, `triage_department`, 
 ### 3.5 Umpan Balik (RLHF)
 `POST /chat/feedback` — `{ "session_id", "message_id", "feedback_type": "LIKE|DISLIKE", "notes" }`. Umpan balik ini menjadi reward +1/−1 di pipeline insight (Sprint 23).
 
+### 3.5b Login Google (OAuth 2.0)
+- `GET /auth/oauth/config` → `{google_client_id, callback_path}`; `google_client_id` null bila belum dikonfigurasi.
+- `POST /auth/oauth/google` `{code, code_verifier, redirect_uri}` → respons sama dengan `/auth/login`. Authorization Code + PKCE; backend menukar code dengan client secret dan memeriksa `aud`, `iss`, dan `email_verified`. Email baru → akun pasien baru; email pasien yang sudah ada → masuk ke akun itu; email admin → 403. `redirect_uri` wajib `<origin terdaftar>/login/google/callback`.
+
 ### 3.6 Tips Hidup Sehat (khusus pasien)
 `POST /wellness/recommendations` — hanya peran `USER` (admin 403). Body opsional: `activity` (`rendah|sedang|tinggi`), `sleep_hours`, `water_glasses`, `height_cm`, `weight_kg`, `smoker`. Server membaca usia, jenis kelamin, golongan darah, dan riwayat dari profil pasien sendiri, lalu menyusun rekomendasi makanan, minuman, aktivitas, tidur, IMT, dan info donor darah dengan **mesin aturan** (`app/wellness.py`). Tidak ada panggilan LLM (`llm_used: false`), input gaya hidup tidak disimpan, dan audit log hanya mencatat aksi tanpa isi data.
 

@@ -40,6 +40,9 @@ Lingkungan lokal tidak butuh Neon: `DATABASE_URL` kosong berarti SQLite.
 | `CORS_ORIGINS` | — | Origin tambahan, dipisah koma |
 | `REDIS_URL` | — | Kosong = cache in-memory per instance |
 | `ENABLE_API_DOCS` | — | `1` untuk membuka `/docs` di preview |
+| `GOOGLE_CLIENT_ID` | — | Login Google; kosong = tombol Google disembunyikan |
+| `GOOGLE_CLIENT_SECRET` | — | Pasangan `GOOGLE_CLIENT_ID`, hanya di proyek API |
+| `GOOGLE_REDIRECT_ORIGINS` | — | Origin tambahan (koma) yang boleh jadi redirect Google, mis. URL preview |
 
 ### Proyek Web
 
@@ -48,6 +51,17 @@ Lingkungan lokal tidak butuh Neon: `DATABASE_URL` kosong berarti SQLite.
 | `BACKEND_API_URL` | ✓ | URL proyek API, dipakai proxy same-origin Next.js |
 
 Jangan menaruh kredensial Neon atau `JWT_SECRET_KEY` di repo; skrip membaca `DATABASE_URL` dari env.
+
+### Login Google (OAuth 2.0)
+
+1. Google Cloud Console → APIs & Services → OAuth consent screen: isi nama aplikasi "Clinic with Agent Healthy", scope `openid`, `email`, `profile`, lalu publikasikan.
+2. Credentials → Create OAuth client ID → *Web application*. Isi **Authorized redirect URIs** untuk setiap domain web, misalnya:
+   - `https://clinic-with-agent-healthy.vercel.app/login/google/callback`
+   - `https://web-omega-nine-24.vercel.app/login/google/callback`
+   - `http://localhost:3000/login/google/callback` (lokal)
+3. Simpan Client ID dan Client Secret sebagai `GOOGLE_CLIENT_ID` dan `GOOGLE_CLIENT_SECRET` di proyek **API**, lalu redeploy.
+
+Origin redirect juga harus terdaftar di `CORS_ORIGINS` atau `GOOGLE_REDIRECT_ORIGINS`. Akun baru lewat Google selalu berperan pasien; akun admin tetap masuk dengan username + kata sandi.
 
 ## 4. Batasan Paket Gratis
 

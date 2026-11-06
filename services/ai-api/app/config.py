@@ -131,6 +131,12 @@ class Settings(BaseSettings):
     GROQ_DEFAULT_MODEL: str = os.getenv("GROQ_DEFAULT_MODEL", "qwen/qwen3.8-27b")
     GROQ_FALLBACK_MODEL: str = os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-120b")
     
+    # Login Google (OAuth 2.0). Kosong = tombol "Masuk dengan Google" disembunyikan.
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    # Origin tambahan (koma) yang boleh menjadi redirect_uri selain CORS_ORIGINS
+    GOOGLE_REDIRECT_ORIGINS: str = os.getenv("GOOGLE_REDIRECT_ORIGINS", "")
+
     # CORS
     # Dapat diperluas lewat env CORS_ORIGINS (koma-separated atau JSON array)
     CORS_ORIGINS: Annotated[List[str], NoDecode] = list(DEFAULT_CORS_ORIGINS)
