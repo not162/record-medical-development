@@ -21,6 +21,8 @@ docs/
 
 ---
 
+> **Pembaruan November 2026:** fitur Konsultasi Suara & Kamera (ASR, prosodi, analisis wajah/pose on-device) dihapus permanen dan diganti **Tips Hidup Sehat** (`/chat/tips`, `POST /wellness/recommendations`). Dokumen arsitektur yang masih membahas pemrosesan on-device menggambarkan versi sebelumnya.
+
 ## 1. Spesifikasi API & Integrasi ([`docs/api_spec/`](api_spec/README.md))
 - **[README.md](api_spec/README.md)**: Ringkasan katalog endpoint per modul dan cara menguji API.
 - **[openapi.yaml](api_spec/openapi.yaml)**: Spesifikasi resmi **OpenAPI 3.1** yang dibangkitkan langsung dari aplikasi FastAPI. Di produksi `/docs` dimatikan; spesifikasi interaktif hanya aktif di lokal atau bila `ENABLE_API_DOCS=1`.

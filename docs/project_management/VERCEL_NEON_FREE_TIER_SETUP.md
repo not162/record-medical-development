@@ -62,5 +62,5 @@ Jangan menaruh kredensial Neon atau `JWT_SECRET_KEY` di repo; skrip membaca `DAT
 - Gunakan branch Neon untuk preview, hapus branch yang tidak terpakai.
 - Pakai connection string *pooled* agar fungsi serverless tidak menghabiskan koneksi.
 - Hindari `SELECT *` di endpoint yang sering dipanggil; muat kolom yang dibutuhkan saja.
-- Biarkan analisis kamera, suara, dan ASR tetap on-device sehingga tidak memakan waktu fungsi.
+- Tips hidup sehat dihitung dengan aturan sederhana tanpa LLM, jadi tidak memakan kuota Groq.
 - Pantau pemakaian di dashboard Vercel (Usage) dan Neon (Consumption) setiap sprint.

@@ -24,7 +24,7 @@
 |---|---|
 | `/chat` | Konsultasi (Thinking/Fast, sitasi, kuota, umpan balik) |
 | `/chat/history` | Riwayat sesi |
-| `/chat/suara` | Konsultasi Suara & Kamera (on-device) |
+| `/chat/tips` | Tips Hidup Sehat & rekomendasi dari biodata |
 | `/profile`, `/settings` | Profil kesehatan, pengaturan akun |
 
 ### Staff & Admin Dashboard (Requires Role)
@@ -53,6 +53,4 @@ apps/web/src/
     ├── auth-context.tsx    # login(remember), logout, refreshUser
     ├── realtime.tsx        # useLiveQuery, useLiveMutation, LiveIndicator
     ├── roles.ts            # canAccess, homePathForRole
-    ├── voice/prosody.ts    # analisis suara on-device
-    └── vision/face.ts      # analisis raut wajah on-device
 ```

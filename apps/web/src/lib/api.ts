@@ -370,6 +370,34 @@ export interface InsightsCardioPrediction {
   disclaimer: string;
 }
 
+export interface WellnessItem { title: string; detail: string; reason: string }
+export interface WellnessSection { id: "food" | "drink" | "activity" | "sleep" | "habits"; title: string; items: WellnessItem[] }
+export interface WellnessLifestyle {
+  activity?: "rendah" | "sedang" | "tinggi";
+  sleep_hours?: number;
+  water_glasses?: number;
+  height_cm?: number;
+  weight_kg?: number;
+  smoker?: boolean;
+}
+export interface WellnessResult {
+  basis: {
+    age: number | null;
+    age_group: string;
+    age_group_label: string;
+    gender: string | null;
+    blood_type: string | null;
+    conditions: string[];
+    missing_fields: string[];
+  };
+  sections: WellnessSection[];
+  body: { bmi: number; category: string; tip: string } | null;
+  blood: { blood_type: string; can_donate_to: string[]; can_receive_from: string[]; donor_eligible_by_age: boolean; note: string } | null;
+  sources: string[];
+  disclaimer: string;
+  llm_used: false;
+}
+
 export const api = {
   auth: {
     login: (credentials: { username_or_email: string; password: string }) =>
@@ -399,6 +427,13 @@ export const api = {
         body: JSON.stringify({ data_url: dataUrl }),
       }),
     deletePhoto: () => apiRequest<PatientProfile>("/profile/photo", { method: "DELETE" }),
+  },
+  wellness: {
+    recommendations: (lifestyle: WellnessLifestyle = {}) =>
+      apiRequest<WellnessResult>("/wellness/recommendations", {
+        method: "POST",
+        body: JSON.stringify(lifestyle),
+      }),
   },
   admin: {
     users: {

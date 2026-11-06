@@ -55,4 +55,5 @@ def require_researcher(current_user = Depends(get_current_user)):  # RESEARCHER 
 
 - **Unggah dataset:** khusus `RESEARCHER`, divalidasi format, dihitung checksum, masuk sebagai `PENDING` sampai disetujui.
 - **Unduh ekspor:** nama berkas divalidasi (daftar putih untuk ekspor insight), sehingga path traversal ditolak (`404`).
-- **Kamera & mikrofon:** hanya di `/chat/suara` (peran `USER`), setelah layar persetujuan. Kamera opsional. `Permissions-Policy: camera=(self), microphone=(self)` mencegah iframe asing memakainya. Video/audio diproses di perangkat dan tidak pernah diunggah; *track* media dihentikan saat pasien menekan Berhenti atau meninggalkan halaman.
+- **Kamera & mikrofon:** tidak dipakai. Fitur konsultasi suara & kamera sudah dihapus; `Permissions-Policy: camera=(), microphone=()` memblokir keduanya di seluruh situs (foto profil memakai unggah berkas biasa).
+- **Tips hidup sehat:** `POST /wellness/recommendations` hanya untuk `USER`; biodata diolah mesin aturan, tidak dikirim ke LLM.

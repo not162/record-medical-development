@@ -88,8 +88,10 @@ Respons berisi `content`, `citations`, `evidence_context`, `triage_department`, 
 ### 3.5 Umpan Balik (RLHF)
 `POST /chat/feedback` — `{ "session_id", "message_id", "feedback_type": "LIKE|DISLIKE", "notes" }`. Umpan balik ini menjadi reward +1/−1 di pipeline insight (Sprint 23).
 
-### 3.6 Konsultasi Suara & Kamera
-Tidak ada endpoint baru. Analisis kamera, prosodi suara, dan ASR berjalan **di perangkat** (`/chat/suara`). Yang dikirim ke server hanya teks yang disetujui pasien lewat `POST /chat/messages`.
+### 3.6 Tips Hidup Sehat (khusus pasien)
+`POST /wellness/recommendations` — hanya peran `USER` (admin 403). Body opsional: `activity` (`rendah|sedang|tinggi`), `sleep_hours`, `water_glasses`, `height_cm`, `weight_kg`, `smoker`. Server membaca usia, jenis kelamin, golongan darah, dan riwayat dari profil pasien sendiri, lalu menyusun rekomendasi makanan, minuman, aktivitas, tidur, IMT, dan info donor darah dengan **mesin aturan** (`app/wellness.py`). Tidak ada panggilan LLM (`llm_used: false`), input gaya hidup tidak disimpan, dan audit log hanya mencatat aksi tanpa isi data.
+
+Fitur Konsultasi Suara & Kamera (`/chat/suara`) sudah dihapus permanen.
 
 ## 4. Katalog Endpoint Administratif
 

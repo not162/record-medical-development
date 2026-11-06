@@ -283,7 +283,7 @@ export default function ChatPage() {
   ]);
   const [inputQuery, setInputQuery] = useState("");
 
-  // Teks dari halaman Konsultasi Suara & Kamera (ASR on-device) diisikan ke kotak pesan, tidak terkirim otomatis.
+  // Teks dari halaman lain (mis. "Tanyakan ke asisten" di Tips Hidup Sehat) diisikan ke kotak pesan, tidak terkirim otomatis.
   useEffect(() => {
     try {
       const prefill = sessionStorage.getItem("chat_prefill");

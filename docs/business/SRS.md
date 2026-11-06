@@ -11,7 +11,7 @@ Klinik Terpadu adalah aplikasi web + PWA yang membantu pasien menceritakan keluh
 | Aktor | Kode peran | Tanggung jawab |
 |---|---|---|
 | Tamu | — | Mencoba chat dengan kuota terbatas tanpa akun |
-| Pasien | `USER` | Konsultasi teks atau suara/kamera, riwayat sesi, profil kesehatan, umpan balik |
+| Pasien | `USER` | Konsultasi teks, tips hidup sehat, riwayat sesi, profil kesehatan, umpan balik |
 | Admin Operasional | `ADMIN` | Memantau ringkasan, umpan balik (isi chat disamarkan), catatan aktivitas, status sistem |
 | Admin Riset (superadmin) | `RESEARCHER` | Dataset, label, training, evaluasi, basis pengetahuan, graf, insight pasien & RLHF, kelola pengguna |
 
@@ -39,7 +39,7 @@ Setiap peran tidak dapat masuk ke ruang peran lain: admin tidak bisa membuka cha
 | FR-02 | Pasien berkonsultasi dengan jawaban bersitasi | `routes/chat.py`, `agents/clinical_agent.py`, `rag/hybrid_search.py` |
 | FR-03 | Kuota 7 jawaban AI per 24 jam per pasien | `GET /chat/quota` |
 | FR-04 | Tanda bahaya → mode teliti + arahan IGD 119 | `agents/safety.py`, `ml/mode_router.py` |
-| FR-05 | Konsultasi suara & kamera on-device (ASR, prosodi, raut wajah) | `app/chat/suara`, `lib/voice/prosody.ts`, `lib/vision/face.ts`, `public/workers/asr-worker.js` |
+| FR-05 | Tips hidup sehat & rekomendasi dari biodata (aturan, tanpa LLM) | `app/chat/tips`, `services/ai-api/app/wellness.py`, `routes/wellness.py` |
 | FR-06 | Admin Riset mengelola dataset, model, pengetahuan, graf, pengguna | `routes/admin.py`, `knowledge.py`, `graph_crud.py` |
 | FR-07 | Insight pasien: pola, prediksi numerik + reasoning, label, debias, RLHF ±, self-improvement | `ml/patient_insights.py`, `routes/insights.py`, `app/admin/insights` |
 | FR-08 | CRUD real-time (polling + sinkron antar-tab + optimistik) | `lib/realtime.tsx` |
@@ -61,4 +61,4 @@ Setiap peran tidak dapat masuk ke ruang peran lain: admin tidak bisa membuka cha
 2. **Diberikan** Admin Operasional, **ketika** memanggil `POST /admin/insights/train`, **maka** `403`.
 3. **Diberikan** Admin Riset melatih insight, **ketika** laporan dikembalikan, **maka** tidak ada potongan teks chat pasien di dalamnya.
 4. **Diberikan** putaran self-improvement, **ketika** skor validasi tidak naik, **maka** putaran ditandai "ditolak" dan model sebelumnya dipertahankan.
-5. **Diberikan** pasien di `/chat/suara`, **ketika** menekan "Lanjutkan ke chat", **maka** hanya transkrip (dan catatan non-verbal bila dicentang) yang diisikan ke kotak pesan, belum terkirim.
+5. **Diberikan** pasien di `/chat/tips`, **ketika** halaman dimuat atau isian gaya hidup dikirim, **maka** rekomendasi dihitung dari profilnya tanpa memanggil LLM, isian tidak disimpan, dan admin yang memanggil endpoint mendapat 403.
