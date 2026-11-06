@@ -26,7 +26,7 @@
 
 ## 4. Metadata SEO (Search Engine Optimization)
 
-- `metadataBase` dan `robots.ts`/`sitemap.ts` memakai `NEXT_PUBLIC_SITE_URL`, dengan fallback `https://klinik-terpadu.vercel.app`.
+- `metadataBase` dan `robots.ts`/`sitemap.ts` memakai `NEXT_PUBLIC_SITE_URL`, dengan fallback `https://clinic-with-agent-healthy.vercel.app`.
 - Judul bertemplat `%s | Web Klinik RSUKT`, deskripsi, Open Graph `id_ID`.
 - **PWA (`public/manifest.json`):** `id: "/"`, `start_url: /chat?source=pwa`, `display: standalone` (+ `window-controls-overlay`), ikon `any` + `maskable` 192/512, `apple-touch-icon`, dan tiga *shortcut* (Konsultasi Baru, Riwayat, Profil).
 - **Service worker v3 (`public/sw.js`):** halaman offline dipra-cache; navigasi memakai *network-first* dengan fallback `offline.html`; aset `/_next/static`, ikon, dan font memakai *cache-first*. **API, SSE, dan HTML tidak pernah dicache** karena bisa berisi data pribadi. SW disajikan dengan `Cache-Control: no-cache` dan menampilkan banner "Versi baru tersedia" saat ada pembaruan.
@@ -42,8 +42,8 @@ Aplikasi tidak meminta lokasi pengguna (`Permissions-Policy: geolocation=()`). W
   "@context": "https://schema.org",
   "@type": "MedicalOrganization",
   "name": "Web Klinik RSUKT",
-  "url": "https://klinik-terpadu.vercel.app",
-  "logo": "https://klinik-terpadu.vercel.app/icons/icon-512.png",
+  "url": "https://clinic-with-agent-healthy.vercel.app",
+  "logo": "https://clinic-with-agent-healthy.vercel.app/icons/icon-512.png",
   "address": { "@type": "PostalAddress", "addressCountry": "ID" },
   "medicalSpecialty": ["EmergencyMedicine", "Cardiovascular", "InternalMedicine"]
 }

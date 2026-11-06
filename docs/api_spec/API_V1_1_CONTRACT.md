@@ -53,5 +53,5 @@ Backend tetap REST. Sifat real-time dibangun di klien (`apps/web/src/lib/realtim
 Alasannya: fungsi Vercel dibatasi 60 detik, sehingga koneksi WebSocket/SSE panjang untuk sinkronisasi data tidak andal. SSE hanya dipakai untuk streaming jawaban chat.
 
 ### 3.5 Keamanan Lintas Asal
-- CORS hanya untuk origin terdaftar (`CORS_ORIGINS`, default menyertakan `klinik-terpadu.vercel.app` dan `web-omega-nine-24.vercel.app`) ditambah `CORS_ORIGIN_REGEX` opsional. Wildcard `*.vercel.app` sudah dihapus.
+- CORS hanya untuk origin terdaftar (`CORS_ORIGINS`, default menyertakan `clinic-with-agent-healthy.vercel.app`, `klinik-terpadu.vercel.app`, dan `web-omega-nine-24.vercel.app`) ditambah `CORS_ORIGIN_REGEX` opsional. Wildcard `*.vercel.app` sudah dihapus.
 - Proxy same-origin tidak meneruskan cookie maupun header hop-by-hop.

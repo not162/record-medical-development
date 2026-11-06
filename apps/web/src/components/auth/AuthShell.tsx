@@ -57,7 +57,7 @@ export function AuthShell({ children, wide = false }: { children: React.ReactNod
       </main>
 
       <footer className="pb-6 text-center text-[11px] text-slate-500">
-        © 2026 Web Klinik · Asisten kesehatan AI, bukan pengganti dokter.
+        © 2026 Clinic with Agent Healthy · Asisten kesehatan AI, bukan pengganti dokter.
       </footer>
     </div>
   );

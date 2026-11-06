@@ -1,7 +1,7 @@
 import urllib.request
 import json
 
-base_url = "https://halo-skut.vercel.app/api/v1/auth/login"
+base_url = "https://clinic-with-agent-healthy.vercel.app/api/v1/auth/login"
 
 test_cases = [
     # 1. Exact matches

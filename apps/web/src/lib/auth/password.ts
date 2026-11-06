@@ -1,5 +1,5 @@
 /**
- * Unified Password Management Module - Web Klinik RSUKT
+ * Unified Password Management Module - Clinic with Agent Healthy
  * Standardizes password validation, policy enforcement, and client-side security checks.
  */
 

@@ -46,7 +46,7 @@ flowchart LR
 | Cache | Redis bila `REDIS_URL` ada, jika tidak in-memory | `app/cache.py` |
 | On-device | MediaPipe tasks-vision 1.2.2, transformers.js 4.3.2 (Whisper base/tiny) | Dimuat dari CDN saat runtime |
 | Training GPU | Transformers, PEFT/LoRA, TRL, Optimum ONNX | `scripts/run_sft.py`, `scripts/colab/asr_whisper_finetune.py` |
-| Hosting | Vercel (2 proyek), Neon | Domain `klinik-terpadu.vercel.app` |
+| Hosting | Vercel (2 proyek), Neon | Domain `clinic-with-agent-healthy.vercel.app` |
 
 ## 3. Matriks Perbedaan Lingkungan: Lokal vs Staging vs Produksi
 
@@ -55,7 +55,7 @@ flowchart LR
 | Database | SQLite (`DATABASE_URL` kosong) | Neon (branch) | Neon |
 | `ENVIRONMENT` | `development` | `production` | `production` |
 | `/docs`, `/openapi.json` | Aktif | Mati (kecuali `ENABLE_API_DOCS=1`) | Mati |
-| CORS | localhost:3000/8000 | Origin terdaftar | `klinik-terpadu`, `web-omega-nine-24` + `CORS_ORIGINS` |
+| CORS | localhost:3000/8000 | Origin terdaftar | `clinic-with-agent-healthy`, `klinik-terpadu`, `web-omega-nine-24` + `CORS_ORIGINS` |
 | Service worker | Tidak didaftarkan (dev) | Aktif | Aktif |
 | Akun awal `admin`/`periset` | Dibuat bila belum ada | Hanya bila `ADMIN_BOOTSTRAP_PASSWORD` diisi | Sama |
 | JWT secret | Boleh bawaan (diberi peringatan) | Wajib | Wajib (start ditolak bila bawaan) |

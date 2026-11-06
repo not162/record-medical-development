@@ -1,6 +1,6 @@
 # Dokumentasi Spesifikasi API — Klinik Terpadu
 
-Basis URL: `https://klinik-terpadu.vercel.app/api/v1` (proxy same-origin) atau langsung `https://ai-api-dusky-eight.vercel.app/api/v1`. Autentikasi memakai header `Authorization: Bearer <JWT>` (HS256, berlaku 24 jam). Skema lengkap: [openapi.yaml](openapi.yaml).
+Basis URL: `https://clinic-with-agent-healthy.vercel.app/api/v1` (proxy same-origin) atau langsung `https://ai-api-dusky-eight.vercel.app/api/v1`. Autentikasi memakai header `Authorization: Bearer <JWT>` (HS256, berlaku 24 jam). Skema lengkap: [openapi.yaml](openapi.yaml).
 
 ## 1. Standar Format Respons (Envelope Pattern)
 

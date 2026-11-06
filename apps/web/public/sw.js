@@ -1,4 +1,4 @@
-// Service Worker - Web Klinik (PWA)
+// Service Worker - Clinic with Agent Healthy (PWA)
 // v3: offline fallback, cache-first untuk aset statis immutable,
 // dan NOL cache untuk data klinis/chat/auth (UU PDP No. 27/2022).
 const VERSION = 'klinik-v3';

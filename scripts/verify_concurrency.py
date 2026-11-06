@@ -4,7 +4,7 @@ import time
 import concurrent.futures
 
 backend = 'https://ai-api-dusky-eight.vercel.app'
-frontend = 'https://halo-skut.vercel.app'
+frontend = 'https://clinic-with-agent-healthy.vercel.app'
 
 print('=== 1. Live Health Check (Caching & Continuous Batching) ===')
 req = urllib.request.Request(f'{backend}/api/v1/health')

@@ -70,7 +70,7 @@ PASS bersyarat (tes lama perlu ditelusuri; rate limit global di backlog).
 ### Goal
 Siap dipakai harian.
 ### Tasks
-Redesign UI gaya PRISMA, tema gelap, PWA v3 (offline, install, update), CRUD real-time, konsultasi suara & kamera on-device, ASR worker, perbaikan Root Directory Vercel, domain `klinik-terpadu.vercel.app`.
+Redesign UI gaya PRISMA, tema gelap, PWA v3 (offline, install, update), CRUD real-time, konsultasi suara & kamera on-device, ASR worker, perbaikan Root Directory Vercel, domain `clinic-with-agent-healthy.vercel.app`.
 ### Gate
 PASS bersyarat (uji kamera/mikrofon di perangkat nyata belum dilakukan).
 

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   Design tokens - Web Klinik (gaya PRISMA: navy, gradien biru -> cyan)
+   Design tokens - Clinic with Agent Healthy (gaya PRISMA: navy, gradien biru -> cyan)
    Tema: light (default) / dark via kelas `.dark` pada <html> (lihat ThemeToggle)
    ========================================================================== */
 @custom-variant dark (&:where(.dark, .dark *));

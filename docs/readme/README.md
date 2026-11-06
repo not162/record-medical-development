@@ -108,8 +108,8 @@ graph LR
   - Production Deployment: [https://ai-api-dusky-eight.vercel.app](https://ai-api-dusky-eight.vercel.app)
   - Endpoint Dokumentasi OpenAPI/Swagger: `https://ai-api-dusky-eight.vercel.app/docs`
 - **Frontend Clinical Portal (Next.js 14):**
-  - Production URL: [https://halo-skut.vercel.app](https://halo-skut.vercel.app)
-  - Autentikasi Klinis: `https://halo-skut.vercel.app/login`
+  - Production URL: [https://clinic-with-agent-healthy.vercel.app](https://clinic-with-agent-healthy.vercel.app)
+  - Autentikasi Klinis: `https://clinic-with-agent-healthy.vercel.app/login`
 - **Repositori Kode Sumber:**
   - Git Branch: `main`
   - GitHub Remote: `https://github.com/not162/record-medical-development.git`

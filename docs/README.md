@@ -2,7 +2,7 @@
 
 Selamat datang di portal dokumentasi arsitektur, rekayasa perangkat lunak, dan tata kelola sistem **Klinik Terpadu**: asisten kesehatan berbasis AI (RAG) untuk pasien, dengan ruang kerja Admin Operasional dan Admin Riset.
 
-- **Aplikasi web (produksi):** [https://klinik-terpadu.vercel.app](https://klinik-terpadu.vercel.app)
+- **Aplikasi web (produksi):** [https://clinic-with-agent-healthy.vercel.app](https://clinic-with-agent-healthy.vercel.app)
 - **Backend API (produksi):** `https://ai-api-dusky-eight.vercel.app` (dipanggil lewat proxy same-origin `/api/v1` milik aplikasi web)
 - **Stack:** Next.js 16 + React 19 + Tailwind CSS 4 (`apps/web`) · FastAPI + SQLAlchemy + scikit-learn (`services/ai-api`) · PostgreSQL Neon (produksi) / SQLite (lokal)
 

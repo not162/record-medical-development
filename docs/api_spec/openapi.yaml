@@ -3516,7 +3516,7 @@ components:
 servers:
 - url: https://ai-api-dusky-eight.vercel.app
   description: Produksi (backend FastAPI)
-- url: https://klinik-terpadu.vercel.app
+- url: https://clinic-with-agent-healthy.vercel.app
   description: Produksi via proxy same-origin Next.js
 - url: http://localhost:8000
   description: Lokal

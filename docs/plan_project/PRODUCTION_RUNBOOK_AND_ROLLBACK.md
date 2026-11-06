@@ -6,7 +6,7 @@
 
 | Komponen | Proyek / layanan | Alamat | Sumber build |
 |---|---|---|---|
-| Aplikasi web (Next.js) | Vercel `web`, Root Directory **`apps/web`** | `https://klinik-terpadu.vercel.app`, `https://web-omega-nine-24.vercel.app` | Push ke `main` |
+| Aplikasi web (Next.js) | Vercel `web`, Root Directory **`apps/web`** | `https://clinic-with-agent-healthy.vercel.app`, `https://web-omega-nine-24.vercel.app` | Push ke `main` |
 | Backend (FastAPI) | Vercel `ai-api`, root repo (`vercel.json`, `api/index.py`) | `https://ai-api-dusky-eight.vercel.app` | Push ke `main` |
 | Database | Neon PostgreSQL | via `DATABASE_URL` | — |
 | Cron | Vercel cron | `GET /api/v1/admin/jobs/process` setiap 03:00 | `vercel.json` |
@@ -26,11 +26,11 @@ Variabel penting: web → `BACKEND_API_URL`, `NEXT_PUBLIC_SITE_URL` (opsional). 
 2. Pantau: `vercel ls web` dan `vercel ls ai-api` sampai status **Ready**.
 3. Uji asap:
    ```bash
-   curl -s -o /dev/null -w "%{http_code}\n" https://klinik-terpadu.vercel.app/login          # 200
+   curl -s -o /dev/null -w "%{http_code}\n" https://clinic-with-agent-healthy.vercel.app/login          # 200
    curl -s -o /dev/null -w "%{http_code}\n" https://ai-api-dusky-eight.vercel.app/health     # 200
    curl -s -o /dev/null -w "%{http_code}\n" https://ai-api-dusky-eight.vercel.app/docs       # 404 (sengaja)
    curl -s -o /dev/null -w "%{http_code}\n" -X POST -H "Content-Type: application/json" -d '{}' \
-        https://klinik-terpadu.vercel.app/api/v1/auth/login                                  # 422 = proxy & backend hidup
+        https://clinic-with-agent-healthy.vercel.app/api/v1/auth/login                                  # 422 = proxy & backend hidup
    ```
 4. Buka `/login` di browser, lalu pastikan service worker aktif dan header `Strict-Transport-Security` ada.
 
