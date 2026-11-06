@@ -36,14 +36,30 @@ export interface User {
 export interface PatientProfile {
   id: string;
   user_id: string;
+  email?: string | null;
+  full_name?: string | null;
   nik_anonymized?: string | null;
+  birth_date?: string | null;
   age?: number | null;
+  age_detail?: { years: number; months: number; days: number; as_of: string } | null;
   gender?: string | null;
   blood_type?: string | null;
   medical_history_summary?: string | null;
   is_verified: boolean;
+  photo_data_url?: string | null;
+  locks?: { email?: boolean; birth_date?: boolean; blood_type?: boolean; clinical?: boolean };
+  clinical_locked_at?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Field yang boleh dikirim ke PUT /profile (email & usia tidak pernah dikirim). */
+export interface ProfileUpdate {
+  full_name?: string;
+  birth_date?: string;
+  blood_type?: string;
+  gender?: string;
+  medical_history_summary?: string;
 }
 
 export interface AuthResponse {
@@ -152,6 +168,9 @@ export async function apiRequest<T>(
 /** Mengubah `detail` FastAPI (string / array validasi 422) menjadi pesan ramah. */
 export function formatErrorDetail(detail: unknown, status?: number): string {
   if (typeof detail === "string" && detail) return detail;
+  if (detail && typeof detail === "object" && !Array.isArray(detail) && typeof (detail as { message?: unknown }).message === "string") {
+    return (detail as { message: string }).message;
+  }
   if (Array.isArray(detail)) {
     const msgs = detail
       .map((d) => {
@@ -358,7 +377,7 @@ export const api = {
         method: "POST",
         body: JSON.stringify(credentials),
       }),
-    register: (data: { username: string; email: string; password: string; full_name?: string }) =>
+    register: (data: { username: string; email: string; password: string; full_name?: string; birth_date?: string; blood_type?: string }) =>
       apiRequest<User>("/auth/register", {
         method: "POST",
         body: JSON.stringify(data),
@@ -369,11 +388,17 @@ export const api = {
       }),
     me: () => apiRequest<User>("/auth/me"),
     getProfile: () => apiRequest<PatientProfile>("/profile"),
-    updateProfile: (data: Partial<PatientProfile> & { full_name?: string }) =>
+    updateProfile: (data: ProfileUpdate) =>
       apiRequest<PatientProfile>("/profile", {
         method: "PUT",
         body: JSON.stringify(data),
       }),
+    uploadPhoto: (dataUrl: string) =>
+      apiRequest<PatientProfile>("/profile/photo", {
+        method: "PUT",
+        body: JSON.stringify({ data_url: dataUrl }),
+      }),
+    deletePhoto: () => apiRequest<PatientProfile>("/profile/photo", { method: "DELETE" }),
   },
   admin: {
     users: {

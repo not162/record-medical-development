@@ -87,6 +87,22 @@ async def lifespan(app: FastAPI):
                     conn.commit()
         except Exception as _col_e:
             print(f"[!] Info: Column check chat_sessions.summary: {_col_e}")
+        # kolom profil baru (tanggal lahir, kunci data klinis, foto) untuk DB yang sudah ada
+        try:
+            from sqlalchemy import text
+            new_cols = {"birth_date": "DATE", "clinical_locked_at": "TIMESTAMP", "photo_data": "TEXT"}
+            with engine.connect() as conn:
+                if engine.dialect.name == "sqlite":
+                    have = {row[1] for row in conn.execute(text("PRAGMA table_info(patient_profiles)"))}
+                    for c, t in new_cols.items():
+                        if c not in have:
+                            conn.execute(text(f"ALTER TABLE patient_profiles ADD COLUMN {c} {t}"))
+                elif engine.dialect.name == "postgresql":
+                    for c, t in new_cols.items():
+                        conn.execute(text(f"ALTER TABLE patient_profiles ADD COLUMN IF NOT EXISTS {c} {t}"))
+                conn.commit()
+        except Exception as _pc_e:
+            print(f"[!] Info: Column check patient_profiles: {_pc_e}")
         ensure_default_admin()
     except Exception as e:
         print(f"[!] Warning: Database initialization exception (handled for serverless): {e}")

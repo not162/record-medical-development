@@ -2,7 +2,7 @@ import uuid
 import datetime
 from typing import Any
 from sqlalchemy import (
-    Column, String, Integer, Float, Boolean, Text, DateTime, ForeignKey, Index
+    Column, String, Integer, Float, Boolean, Text, DateTime, Date, ForeignKey, Index
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -35,10 +35,15 @@ class PatientProfile(Base):
     id: Any = Column(String(36), primary_key=True, default=generate_uuid)
     user_id: Any = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     nik_anonymized: Any = Column(String(64), nullable=True) # Pseudonymized NIK
-    age: Any = Column(Integer, nullable=True)
+    age: Any = Column(Integer, nullable=True)  # lama; usia kini dihitung real-time dari birth_date
+    birth_date: Any = Column(Date, nullable=True)  # diisi saat registrasi, tidak bisa diubah
     gender: Any = Column(String(10), nullable=True) # "L", "P"
-    blood_type: Any = Column(String(5), nullable=True)
+    blood_type: Any = Column(String(5), nullable=True)  # diisi saat registrasi, tidak bisa diubah
     medical_history_summary: Any = Column(Text, nullable=True)
+    # data klinis rahasia (jenis kelamin, riwayat penyakit) hanya bisa diisi/diubah SEKALI
+    clinical_locked_at: Any = Column(DateTime, nullable=True)
+    # foto profil (data URL kecil, sudah diperkecil di klien; tidak ada disk di serverless)
+    photo_data: Any = Column(Text, nullable=True)
     is_verified: Any = Column(Boolean, default=False, nullable=False)
     created_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)
     updated_at: Any = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)

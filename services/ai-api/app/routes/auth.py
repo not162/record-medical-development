@@ -1,14 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+import base64
+import binascii
+import calendar
 import datetime
+import re
+from typing import Any, Dict
 from pydantic import BaseModel, Field
 
 from app.database import get_db
 from app.models import User, PatientProfile, AuditLog
 from app.schemas import (
     UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse,
-    PatientProfileResponse, ProfileUpdateRequest
+    PatientProfileResponse, ProfileUpdateRequest, ProfilePhotoRequest
 )
 import json
 import logging
@@ -95,10 +100,14 @@ def register_user(req: UserRegisterRequest, request: Request, db: Session = Depe
     db.add(new_user)
     db.flush()
     
-    # 3. Inisialisasi profil pasien kosong yang terhubung
+    # 3. Inisialisasi profil pasien; tanggal lahir & golongan darah ditetapkan di sini lalu terkunci
+    if req.birth_date is not None:
+        _validate_birth_date(req.birth_date)
     profile = PatientProfile(
         user_id=new_user.id,
         nik_anonymized=None,
+        birth_date=req.birth_date,
+        blood_type=req.blood_type,
         is_verified=False
     )
     db.add(profile)
@@ -240,6 +249,82 @@ def get_current_user_profile(current_user: User = Depends(require_user)):
     """
     return current_user
 
+WIB = datetime.timezone(datetime.timedelta(hours=7))  # kalender real-time pasien (Asia/Jakarta)
+PHOTO_PREFIX = re.compile(r"^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$")
+PHOTO_MAGIC = {"jpeg": (b"\xff\xd8\xff",), "png": (b"\x89PNG\r\n\x1a\n",), "webp": (b"RIFF",)}
+PHOTO_MAX_BYTES = 300 * 1024
+
+
+def today_wib() -> datetime.date:
+    return datetime.datetime.now(WIB).date()
+
+
+def age_on(birth: datetime.date, today: datetime.date) -> Dict[str, Any]:
+    """Usia kalender (tahun, bulan, hari) per tanggal `today`; 29 Feb dihitung ulang tahun pada 28 Feb."""
+    years = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+    months = (today.year - birth.year) * 12 + today.month - birth.month - (today.day < birth.day)
+    months %= 12
+    anchor_month = today.month - (today.day < birth.day)
+    anchor_year = today.year
+    if anchor_month < 1:
+        anchor_month += 12
+        anchor_year -= 1
+    day = min(birth.day, calendar.monthrange(anchor_year, anchor_month)[1])
+    days = (today - datetime.date(anchor_year, anchor_month, day)).days
+    return {"years": years, "months": months, "days": days, "as_of": today}
+
+
+def _validate_birth_date(b: datetime.date) -> None:
+    today = today_wib()
+    if b > today:
+        raise HTTPException(status_code=422, detail="Tanggal lahir tidak boleh di masa depan.")
+    if age_on(b, today)["years"] > 130:
+        raise HTTPException(status_code=422, detail="Tanggal lahir tidak valid (usia > 130 tahun).")
+
+
+def _locks(p: PatientProfile) -> Dict[str, bool]:
+    return {
+        "email": True,                                   # selalu dari registrasi
+        "birth_date": p.birth_date is not None,
+        "blood_type": p.blood_type is not None,
+        "clinical": p.clinical_locked_at is not None,    # jenis kelamin + riwayat penyakit
+        "full_name": False,
+        "photo": False,
+    }
+
+
+def _utc(dt):
+    # SQLite mengembalikan datetime tanpa zona: tandai sebagai UTC agar klien menampilkan jam lokal yang benar
+    return dt.replace(tzinfo=datetime.timezone.utc) if dt is not None and dt.tzinfo is None else dt
+
+
+def _profile_out(p: PatientProfile, u: User) -> PatientProfileResponse:
+    detail = age_on(p.birth_date, today_wib()) if p.birth_date else None
+    return PatientProfileResponse(
+        id=p.id, user_id=p.user_id, email=u.email, full_name=u.full_name, nik_anonymized=p.nik_anonymized,
+        birth_date=p.birth_date, age=detail["years"] if detail else p.age, age_detail=detail,
+        gender=p.gender, blood_type=p.blood_type, medical_history_summary=p.medical_history_summary,
+        is_verified=bool(p.is_verified), photo_data_url=p.photo_data, locks=_locks(p),
+        clinical_locked_at=_utc(p.clinical_locked_at), created_at=_utc(p.created_at), updated_at=_utc(p.updated_at),
+    )
+
+
+def _get_or_create_profile(db: Session, user: User) -> PatientProfile:
+    profile = db.query(PatientProfile).filter(PatientProfile.user_id == user.id).first()
+    if not profile:
+        profile = PatientProfile(user_id=user.id)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+    return profile
+
+
+def _profile_audit(db: Session, user: User, action: str, fields: list) -> None:
+    # hanya NAMA field yang dicatat, bukan isinya (data klinis rahasia)
+    db.add(AuditLog(user_id=user.id, action=action, resource_type="PATIENT_PROFILE", resource_id=user.id,
+                    status="SUCCESS", details=json.dumps({"fields": fields})))
+
+
 @router.get("/profile", response_model=PatientProfileResponse)
 def get_patient_profile(
     current_user: User = Depends(require_user),
@@ -247,15 +332,10 @@ def get_patient_profile(
 ):
     """
     Mengambil profil rekam medis personal milik pengguna terotentikasi.
-    Akses lintas pengguna dicegah secara mutlak pada tingkat database.
+    Usia dihitung real-time dari tanggal lahir terhadap kalender hari ini (WIB).
     """
-    profile = db.query(PatientProfile).filter(PatientProfile.user_id == current_user.id).first()
-    if not profile:
-        profile = PatientProfile(user_id=current_user.id)
-        db.add(profile)
-        db.commit()
-        db.refresh(profile)
-    return profile
+    return _profile_out(_get_or_create_profile(db, current_user), current_user)
+
 
 @router.put("/profile", response_model=PatientProfileResponse)
 def update_patient_profile(
@@ -264,29 +344,92 @@ def update_patient_profile(
     db: Session = Depends(get_db)
 ):
     """
-    Memperbarui profil pribadi dan preferensi kesehatan pengguna.
+    Aturan perubahan profil:
+    - email               : tidak bisa diubah (bukan bagian dari permintaan ini)
+    - tanggal lahir, gol. darah : ditetapkan saat registrasi; akun lama yang belum punya boleh mengisi SEKALI
+    - data klinis (jenis kelamin, riwayat penyakit) : hanya bisa disimpan SEKALI, lalu terkunci
+    - nama lengkap        : bebas diubah
     """
-    profile = db.query(PatientProfile).filter(PatientProfile.user_id == current_user.id).first()
-    if not profile:
-        profile = PatientProfile(user_id=current_user.id)
-        db.add(profile)
-        
-    if req.full_name is not None:
-        current_user.full_name = req.full_name
-    if req.age is not None:
-        profile.age = req.age
-    if req.gender is not None:
-        profile.gender = req.gender
-    if req.blood_type is not None:
+    profile = _get_or_create_profile(db, current_user)
+    changed: list = []
+
+    def locked(field: str, msg: str):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"field": field, "message": msg})
+
+    if req.birth_date is not None and req.birth_date != profile.birth_date:
+        if profile.birth_date is not None:
+            locked("birth_date", "Tanggal lahir ditetapkan saat registrasi dan tidak dapat diubah.")
+        _validate_birth_date(req.birth_date)
+        profile.birth_date = req.birth_date
+        changed.append("birth_date")
+    if req.blood_type is not None and req.blood_type != profile.blood_type:
+        if profile.blood_type is not None:
+            locked("blood_type", "Golongan darah ditetapkan saat registrasi dan tidak dapat diubah.")
         profile.blood_type = req.blood_type
-    if req.medical_history_summary is not None:
-        profile.medical_history_summary = req.medical_history_summary
-        
+        changed.append("blood_type")
+
+    clinical = {k: v for k, v in (("gender", req.gender), ("medical_history_summary", req.medical_history_summary))
+                if v is not None and v != getattr(profile, k)}
+    if clinical:
+        if profile.clinical_locked_at is not None:
+            locked("clinical", "Data klinis rahasia hanya dapat disimpan satu kali dan sudah terkunci. "
+                               "Hubungi petugas rekam medis untuk koreksi.")
+        for k, v in clinical.items():
+            setattr(profile, k, v)
+        profile.clinical_locked_at = datetime.datetime.now(datetime.timezone.utc)
+        changed += list(clinical)
+
+    if req.full_name is not None and req.full_name != current_user.full_name:
+        current_user.full_name = req.full_name
+        changed.append("full_name")
+
+    if changed:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        profile.updated_at = now
+        current_user.updated_at = now
+        _profile_audit(db, current_user, "PROFILE_UPDATE", changed)
+        db.commit()
+        db.refresh(profile)
+    return _profile_out(profile, current_user)
+
+
+@router.put("/profile/photo", response_model=PatientProfileResponse)
+def upload_profile_photo(
+    req: ProfilePhotoRequest,
+    current_user: User = Depends(require_user),
+    db: Session = Depends(get_db)
+):
+    """Foto profil kustom (JPEG/PNG/WebP, maks 300 KB). Divalidasi lewat magic bytes, bukan hanya MIME."""
+    m = PHOTO_PREFIX.match(req.data_url.strip())
+    if not m:
+        raise HTTPException(status_code=422, detail="Format foto harus JPEG, PNG, atau WebP.")
+    try:
+        raw = base64.b64decode(m.group(2), validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=422, detail="Data foto rusak.")
+    if len(raw) > PHOTO_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Ukuran foto maksimal 300 KB.")
+    kind = m.group(1)
+    if not raw.startswith(PHOTO_MAGIC[kind]) or (kind == "webp" and raw[8:12] != b"WEBP"):
+        raise HTTPException(status_code=422, detail="Isi file tidak sesuai format gambar.")
+    profile = _get_or_create_profile(db, current_user)
+    profile.photo_data = f"data:image/{kind};base64,{base64.b64encode(raw).decode()}"
     profile.updated_at = datetime.datetime.now(datetime.timezone.utc)
-    current_user.updated_at = datetime.datetime.now(datetime.timezone.utc)
+    _profile_audit(db, current_user, "PROFILE_PHOTO_UPDATE", ["photo"])
     db.commit()
     db.refresh(profile)
-    return profile
+    return _profile_out(profile, current_user)
+
+
+@router.delete("/profile/photo", response_model=PatientProfileResponse)
+def delete_profile_photo(current_user: User = Depends(require_user), db: Session = Depends(get_db)):
+    profile = _get_or_create_profile(db, current_user)
+    profile.photo_data = None
+    profile.updated_at = datetime.datetime.now(datetime.timezone.utc)
+    _profile_audit(db, current_user, "PROFILE_PHOTO_DELETE", ["photo"])
+    db.commit()
+    db.refresh(profile)
+    return _profile_out(profile, current_user)
 
 class ForgotPasswordRequest(BaseModel):
     username_or_email: str = Field(..., min_length=3, max_length=150)
