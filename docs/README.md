@@ -23,7 +23,7 @@ docs/
 
 ## 1. Spesifikasi API & Integrasi ([`docs/api_spec/`](api_spec/README.md))
 - **[README.md](api_spec/README.md)**: Ringkasan katalog endpoint per modul dan cara menguji API.
-- **[openapi.yaml](api_spec/openapi.yaml)**: Spesifikasi resmi **OpenAPI 3.1** yang dibangkitkan langsung dari aplikasi FastAPI (salinan juga di [`docs/openapi.yaml`](openapi.yaml)). Di produksi `/docs` dimatikan; spesifikasi interaktif hanya aktif di lokal atau bila `ENABLE_API_DOCS=1`.
+- **[openapi.yaml](api_spec/openapi.yaml)**: Spesifikasi resmi **OpenAPI 3.1** yang dibangkitkan langsung dari aplikasi FastAPI. Di produksi `/docs` dimatikan; spesifikasi interaktif hanya aktif di lokal atau bila `ENABLE_API_DOCS=1`.
 - **[API_SPEC.md](api_spec/API_SPEC.md)**: Rincian endpoint API v1: autentikasi, chat klinis, admin operasional, riset, basis pengetahuan, graf, dan insight pasien.
 - **[API_V1_1_CONTRACT.md](api_spec/API_V1_1_CONTRACT.md)**: Kontrak data universal, taksonomi izin RBAC, dan peta rute v1.1 (insight pasien, real-time CRUD, proxy same-origin).
 
