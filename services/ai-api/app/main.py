@@ -142,7 +142,7 @@ app.include_router(rag.router, prefix=settings.API_V1_PREFIX)
 app.include_router(chat.router, prefix=settings.API_V1_PREFIX)
 
 # Router tambahan: knowledge CRUD, graph CRUD, jobs (diimpor defensif)
-for _name in ("knowledge", "graph_crud", "jobs", "insights", "wellness"):
+for _name in ("knowledge", "graph_crud", "jobs", "insights", "wellness", "oauth"):
     try:
         _router = importlib.import_module(f"app.routes.{_name}").router
         app.include_router(_router, prefix=settings.API_V1_PREFIX)

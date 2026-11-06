@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { homePathForRole } from "@/lib/roles";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthShell, FieldLabel, FormAlert } from "@/components/auth/AuthShell";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 
@@ -37,6 +38,8 @@ export default function LoginPage() {
     <AuthShell>
       <h1 className="text-[22px] font-extrabold tracking-tight text-slate-900">Masuk ke Clinic with Agent Healthy</h1>
       <p className="mt-1 text-sm text-slate-500">Gunakan username atau email dan kata sandi akun Anda.</p>
+
+      <GoogleSignInButton label="Masuk dengan Google" />
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate={false}>
         {error && <FormAlert tone="error">{error}</FormAlert>}

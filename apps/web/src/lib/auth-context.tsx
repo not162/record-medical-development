@@ -15,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: { username_or_email: string; password: string }, remember?: boolean) => Promise<User>;
+  loginWithGoogle: (data: { code: string; code_verifier: string; redirect_uri: string }, remember?: boolean) => Promise<User>;
   register: (data: Parameters<typeof api.auth.register>[0]) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -74,6 +75,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const acceptSession = (res: Awaited<ReturnType<typeof api.auth.login>>, remember: boolean): User => {
+    setToken(res.access_token, remember);
+    const currentUser: User = {
+      id: res.user_id,
+      username: res.username,
+      email: res.email,
+      role: normalizeRole(res.role) ?? "USER",
+      full_name: res.full_name,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+    setUser(currentUser);
+    return currentUser;
+  };
+
+  const loginWithGoogle = async (data: { code: string; code_verifier: string; redirect_uri: string }, remember = true) => {
+    setIsLoading(true);
+    try {
+      return acceptSession(await api.auth.googleLogin(data), remember);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const login = async (credentials: { username_or_email: string; password: string }, remember = true) => {
     setIsLoading(true);
     try {
@@ -127,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithGoogle,
         register,
         logout,
         refreshUser,

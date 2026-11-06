@@ -415,6 +415,12 @@ export const api = {
         method: "POST",
       }),
     me: () => apiRequest<User>("/auth/me"),
+    oauthConfig: () => apiRequest<{ google_client_id: string | null; callback_path: string }>("/auth/oauth/config"),
+    googleLogin: (data: { code: string; code_verifier: string; redirect_uri: string }) =>
+      apiRequest<AuthResponse>("/auth/oauth/google", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
     getProfile: () => apiRequest<PatientProfile>("/profile"),
     updateProfile: (data: ProfileUpdate) =>
       apiRequest<PatientProfile>("/profile", {
